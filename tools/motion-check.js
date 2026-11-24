@@ -24,7 +24,7 @@ const dir = __dirname;
     if (await count('#fx .fly-back')) { if (!seen.shuffle) await p.screenshot({ path: dir + '/m-shuffle.png' }); seen.shuffle = true; }
     for (let i = 0; i < 300; i++) {
       const labels = await p.$$eval('#actions button:not([disabled])', bs => bs.map(x => x.textContent));
-      if (labels.some(l => l.startsWith('$'))) break;
+      if (labels.some(l => /^(5|25|100|500|1K)$/.test(l))) break;
       if (!labels.length) {
         if (await count('#fx .fly-chip') && await p.$$eval('.hand', hs => hs.some(h => /Bust/.test(h.textContent)))) seen.bustTaken = true;
         await p.waitForTimeout(40); continue;
