@@ -89,6 +89,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
   background:repeating-linear-gradient(45deg,#7a1f24 0 4px,#8e2a2f 4px 8px);border:2px solid var(--card);box-shadow:0 2px 4px rgba(0,0,0,.45)}
 #insSpot{display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;color:var(--gold);min-height:28px}
 #insSpot[hidden]{display:none}
+#limits{position:absolute;top:4px;left:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:16px;line-height:1.2;background:rgba(0,0,0,.15)}
+#limits .lt{letter-spacing:.08em;text-transform:uppercase}
+#limits #limitsV{font-weight:700;white-space:nowrap}
 #shoeLabel{position:absolute;top:58px;right:0;width:72px;white-space:nowrap;text-align:center;font-size:16px;font-weight:600;color:var(--gold);line-height:1.1}
 #banner{position:absolute;left:50%;top:50%;z-index:4;transform:translate(-50%,-50%);pointer-events:none;
   width:max-content;max-width:92%;text-align:center;padding:8px 18px;border-radius:16px;
@@ -140,6 +143,7 @@ body.still #banner.pop{animation:none}
 
 /* controls */
 #ctl{border-top:1px solid var(--line);padding:8px 0 calc(4px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:8px}
+#msg:empty{display:none}
 #msg{min-height:2.7em;font-size:17px;text-align:center;display:flex;align-items:center;justify-content:center;text-wrap:balance}
 .row{display:flex;gap:8px}
 .row > button{flex:1;min-width:0;line-height:1.15}
@@ -220,6 +224,7 @@ body.still .card.flip{animation:none}
   <main id="table">
     <div id="shoe" aria-hidden="true"></div>
     <div id="shoeLabel" class="num"></div>
+    <div id="limits"><span class="lt">Limits</span><span class="num" id="limitsV"></span></div>
     <div id="banner" hidden role="status" aria-live="polite"><span class="big" id="bannerBig"></span><span class="amt num" id="bannerAmt"></span></div>
     <section class="zone" aria-label="Dealer">
       <div class="zlabel" id="dealerLabel">Dealer</div>
@@ -999,6 +1004,9 @@ function render(){
 
   // decks in the shoe
   $('shoeLabel').textContent = S.settings.decks + (S.settings.decks === 1 ? ' deck' : ' decks');
+  const short = v => v >= 1000 ? '$' + (v / 1000) + 'K' : '$' + v;
+  $('limitsV').textContent = '$5–' + (S.settings.max ? short(S.settings.max) : 'no max');
+  $('limits').setAttribute('aria-label', 'Table limits ' + money(5) + ' to ' + (S.settings.max ? money(S.settings.max) : 'no maximum'));
   // the result, big
   const ban = $('banner');
   if (R && R.phase === 'done' && R.net !== undefined){
@@ -1101,7 +1109,7 @@ function renderControls(){
       text = n > 0 ? 'You won ' + money(n) + ' this hand.' : n < 0 ? 'You lost ' + money(-n) + ' this hand.' : 'Even this hand. Your money is back.';
       text += ' Place your next bet.';
     } else if (R && R.msg) text = R.msg;
-    else text = 'Tap chips to bet, then Deal. Table limits ' + money(5) + ' to ' + (S.settings.max ? money(S.settings.max) : 'no maximum') + '.';
+    else text = '';
     if (S.bankroll < 5 && !S.bet){
       text = 'You’re out of chips. Start a new bankroll to keep playing.';
       a.append(row(btn('Start a new bankroll', () => openBank(), { primary:true })));
