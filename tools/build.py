@@ -15,7 +15,9 @@ head_part, body_part = src[:split], src[split:]
 
 # The Claude viewer pads the page for the iPhone notch; a home-screen app must do it itself.
 fixes = [
-    ("  padding-block:8px 6px;", "  padding-block:calc(env(safe-area-inset-top, 0px) + 10px) 6px;"),   # the app starts below the clock bar; this only matters if a phone still draws under it
+    ("  padding-block:8px 6px;", "  padding-block:calc(env(safe-area-inset-top, 0px) + 22px) 6px;"),   # well clear of the clock bar and the fade iOS draws under it
+    ("#ctl{border-top:1px solid var(--line);padding:8px 0 calc(4px + env(safe-area-inset-bottom, 0px));",
+     "#ctl{border-top:1px solid var(--line);padding:8px 0 calc(4px + var(--home-bar, env(safe-area-inset-bottom, 0px)));"),
     ("  -webkit-tap-highlight-color:transparent; overflow:hidden;",
      "  -webkit-tap-highlight-color:transparent; overflow:hidden; margin:0;\n  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; overscroll-behavior:none; position:fixed; inset:0;"),
 ]
@@ -31,7 +33,7 @@ page = f"""<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Blackjack">
 <meta name="theme-color" content="#09362b">
 <link rel="manifest" href="manifest.webmanifest">
@@ -43,6 +45,28 @@ page = f"""<!doctype html>
 <body>
 {body_part.strip()}
 <script>
+// Some iPhones draw a home-screen app under the clock but give it a screen one clock-bar
+// shorter, so the home bar falls in the part already cut off. In exactly that case the
+// margin kept for the home bar is wasted: drop it.
+(function () {{
+  var standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  if (!standalone) return;
+  var probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none';
+  document.body.appendChild(probe);
+  function check() {{
+    var top = probe.getBoundingClientRect().height;
+    var portrait = innerHeight > innerWidth;
+    var full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    var cutOff = full - innerHeight;
+    var bug = top > 0 && cutOff > 0 && Math.abs(cutOff - top) <= 3;
+    document.documentElement.style.setProperty('--home-bar', bug ? '0px' : 'env(safe-area-inset-bottom, 0px)');
+    dispatchEvent(new Event('bj-fit'));
+  }}
+  check();
+  addEventListener('resize', check);
+  addEventListener('orientationchange', function () {{ setTimeout(check, 300); }});
+}})();
 if ('serviceWorker' in navigator) {{
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {{}}));
 }}
