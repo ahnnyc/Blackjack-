@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Blackjack">
 <meta name="theme-color" content="#09362b">
 <link rel="manifest" href="manifest.webmanifest">
@@ -19,7 +19,7 @@
 <style>
 /* Layout: one phone screen — top bar, dealer, printed felt, player hands, bet spot, then a control rail at the bottom */
 :root{
-  --felt:#0f4c3d; --felt-deep:#09362b; --rail:#1d140e; --panel:#122a22;
+  --felt:#0f4c3d; --felt-deep:#09362b; --rail:#1d140e; --panel:#122a22; --rail-felt:#052219;
   --gold:#e4c57e; --text:#f5f2e9; --muted:#c6d6cd; --line:#3d6b5d;
   --card:#fbfaf5; --card-ink:#1d1d23; --card-red:#b3231b;
   --good:#9be3b4; --bad:#ffb8ab;
@@ -29,6 +29,7 @@
   color-scheme:dark;
 }
 html,body{height:100%;overflow:hidden;box-sizing:border-box}
+html{background:var(--rail-felt)}   /* anything below the game (an iPhone's cut-off strip) continues the bottom rail */
 #app,#app *{box-sizing:border-box}
 .card,.card *{box-sizing:content-box}
 body{
@@ -48,6 +49,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 
 /* top bar */
 #top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+#ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:#3a6e5d}
 #topgap{flex:1}
 #bank{display:flex;align-items:baseline;justify-content:flex-start;gap:10px}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
@@ -155,7 +157,8 @@ body.still #banner.pop{animation:none}
 #spot[disabled]{cursor:default}
 
 /* controls */
-#ctl{border-top:1px solid var(--line);padding:8px 0 calc(4px + var(--home-bar, env(safe-area-inset-bottom, 0px)));display:flex;flex-direction:column;gap:8px}
+#ctl{border-top:2px solid transparent;padding:10px 0 calc(4px + var(--home-bar, env(safe-area-inset-bottom, 0px)));display:flex;flex-direction:column;gap:8px;position:relative;
+  background:var(--rail-felt);box-shadow:0 0 0 100vmax var(--rail-felt), inset 0 10px 14px -12px rgba(0,0,0,.6);clip-path:inset(0 -100vmax -100vmax -100vmax)}
 #msg{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0}
 .row{display:flex;gap:8px}
 .row > button{flex:1;min-width:0;line-height:1.15}
