@@ -109,13 +109,15 @@ body.still #banner.pop{animation:none}
 .fly-chip{position:absolute;left:0;top:0;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;
   border:3px dashed rgba(255,255,255,.9);box-shadow:0 3px 6px rgba(0,0,0,.5)}
 .stack{display:inline-flex;align-items:center;vertical-align:middle}
-.stack i{display:block;width:24px;height:24px;border-radius:50%;border:2.5px dashed rgba(255,255,255,.88);box-shadow:0 1px 2px rgba(0,0,0,.55)}
-.stack i + i{margin-left:-17px}
+.stack i{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:3px dashed rgba(255,255,255,.88);box-shadow:0 1px 2px rgba(0,0,0,.55);
+  font-style:normal;font-size:16px;font-weight:700;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.7);font-variant-numeric:tabular-nums}
+.stack i + i{margin-left:-29px}
+.stack i:not(:last-child){color:transparent;text-shadow:none}
 .stack.ghost{visibility:hidden}
 .hinfo{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
 #spot .stack{margin-bottom:2px}
-#spot .stack i{width:28px;height:28px}
-#spot .stack i + i{margin-left:-20px}
+#spot .stack i{width:46px;height:46px;font-size:18px}
+#spot .stack i + i{margin-left:-35px}
 
 #print{width:100%;max-width:380px;text-align:center;margin:2px 0}
 #print svg{width:100%;height:auto;display:block}
@@ -143,8 +145,7 @@ body.still #banner.pop{animation:none}
 
 /* controls */
 #ctl{border-top:1px solid var(--line);padding:8px 0 calc(4px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:8px}
-#msg:empty{display:none}
-#msg{min-height:2.7em;font-size:17px;text-align:center;display:flex;align-items:center;justify-content:center;text-wrap:balance}
+#msg{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0}
 .row{display:flex;gap:8px}
 .row > button{flex:1;min-width:0;line-height:1.15}
 .btn{min-height:52px;border-radius:12px;border:1.5px solid var(--gold);background:rgba(0,0,0,.18);font-size:17px;font-weight:600;padding:0 4px}
@@ -946,7 +947,7 @@ function chipsFor(a){
 }
 function stackEl(amount, max){
   const st = document.createElement('span'); st.className = 'stack'; st.setAttribute('aria-hidden', 'true');
-  chipsFor(amount).slice(0, max || 5).forEach(v => { const i = document.createElement('i'); i.className = 'c' + v; st.append(i); });
+  chipsFor(amount).slice(0, max || 5).forEach(v => { const i = document.createElement('i'); i.className = 'c' + v; i.textContent = v >= 1000 ? (v / 1000) + 'K' : String(v); st.append(i); });
   return st;
 }
 function render(){
@@ -987,8 +988,8 @@ function render(){
       const showStack = !(R.phase === 'done' && R.paid);
       const st = stackEl(h.bet, 5); st.dataset.hand = i;
       if (R.ghost || h.ghost || h.taken || !showStack) st.classList.add('ghost');
-      const b = document.createElement('span'); b.className = 'bet'; b.textContent = money(h.bet) + (h.doubled ? ' doubled' : '');
-      info.append(st, b);
+      st.setAttribute('aria-hidden', 'false'); st.setAttribute('role', 'img'); st.setAttribute('aria-label', 'Bet ' + money(h.bet) + (h.doubled ? ', doubled' : ''));
+      info.append(st);
       if (tag.textContent) box.append(tag);
       box.append(cs, info);
       if (h.r && R.phase === 'done' && R.hands.length > 1){
@@ -1036,9 +1037,10 @@ function render(){
   // bet spot
   const inRound = !!S.round;
   const spotAmt = inRound ? R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0) : S.bet;
-  $('spotV').textContent = money(spotAmt);
+  $('spotV').textContent = '';
+  $('spot').setAttribute('aria-label', 'Your bet ' + money(spotAmt) + (spotAmt ? ', tap to clear' : ''));
   $('spotStack').replaceChildren(...stackEl(spotAmt, 5).childNodes);
-  $('spotH').textContent = inRound ? (R.ins ? 'In play, with insurance' : 'In play') : 'Your bet';
+  $('spotH').textContent = '';
   $('spot').disabled = inRound || busy || !S.bet;
   $('spot').hidden = !!(R && (R.dealer.length || R.phase === 'done'));
 
