@@ -19,7 +19,7 @@ const val = l => { const r = l.split(' of ')[0]; return ['2','3','4','5','6'].in
     await p.click('#actions button:has-text("Deal")');
     for (let i = 0; i < 300; i++) {
       const labels = await p.$$eval('#actions button:not([disabled])', bs => bs.map(x => x.textContent));
-      if (labels.some(l => l.startsWith('$'))) break;
+      if (labels.some(l => /^(5|25|100|500|1K)$/.test(l))) break;
       if (!labels.length) { await p.waitForTimeout(40); continue; }
       if (labels.includes('Stand')) {
         const mid = (await onScreen()).reduce((a, l) => a + val(l), 0);

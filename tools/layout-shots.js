@@ -4,7 +4,7 @@ const dir = __dirname;
 (async () => {
   const b = await chromium.launch();
   const report = [];
-  for (const [w, h] of [[390, 844], [375, 667], [320, 568]]) {
+  for (const [w, h] of (process.env.SIZES ? JSON.parse(process.env.SIZES) : [[390, 844], [375, 667], [320, 568]])) {
     const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
     await ctx.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
     const p = await ctx.newPage();
@@ -17,7 +17,7 @@ const dir = __dirname;
     let shotMid = false;
     for (let i = 0; i < 300; i++) {
       const labels = await p.$$eval('#actions button:not([disabled])', bs => bs.map(x => x.textContent));
-      if (labels.some(l => l.startsWith('$'))) break;
+      if (labels.some(l => /^(5|25|100|500|1K)$/.test(l))) break;
       if (!labels.length) { await p.waitForTimeout(60); continue; }
       if (labels.includes('Stand') && !shotMid) { await p.waitForTimeout(700); await p.screenshot({ path: `${dir}/L-${w}-play.png` }); shotMid = true; }
       const pick = labels.includes('Stand') ? 'Stand' : (['No insurance', 'No thanks'].find(l => labels.includes(l)) || labels[0]);

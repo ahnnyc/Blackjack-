@@ -43,28 +43,6 @@ page = f"""<!doctype html>
 <body>
 {body_part.strip()}
 <script>
-// Some iPhones report a home-screen app's screen as one clock-bar shorter than it is,
-// leaving an empty band at the bottom. Spot exactly that and use the true screen height.
-(function () {{
-  var standalone = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
-  if (!standalone) return;
-  var probe = document.createElement('div');
-  probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none';
-  document.body.appendChild(probe);
-  function fix() {{
-    var top = probe.getBoundingClientRect().height;
-    var portrait = innerHeight > innerWidth;
-    var full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    var gap = full - innerHeight;
-    if (top > 0 && Math.abs(gap - top) <= 3) {{ document.body.style.bottom = 'auto'; document.body.style.height = full + 'px'; }}
-    else {{ document.body.style.bottom = ''; document.body.style.height = ''; }}
-    if (window.dispatchEvent) dispatchEvent(new Event('bj-fit'));
-  }}
-  fix();
-  addEventListener('resize', fix);
-  addEventListener('orientationchange', function () {{ setTimeout(fix, 300); }});
-  document.addEventListener('visibilitychange', function () {{ if (!document.hidden) setTimeout(fix, 100); }});
-}})();
 if ('serviceWorker' in navigator) {{
   addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {{}}));
 }}

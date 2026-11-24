@@ -26,7 +26,7 @@ const dir = __dirname;
     });
     for (let i = 0; i < 300; i++) {
       const labels = await p.$$eval('#actions button:not([disabled])', bs => bs.map(x => x.textContent));
-      if (labels.some(l => l.startsWith('$'))) break;
+      if (labels.some(l => /^(5|25|100|500|1K)$/.test(l))) break;
       if (!labels.length) { await p.waitForTimeout(50); continue; }
       const pick = labels.includes('Stand') ? 'Stand' : (['No insurance', 'No thanks'].find(l => labels.includes(l)) || labels[0]);
       await p.click(`#actions button:not([disabled]):text-is("${pick}")`);
