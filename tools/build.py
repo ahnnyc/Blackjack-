@@ -15,7 +15,7 @@ head_part, body_part = src[:split], src[split:]
 
 # The Claude viewer pads the page for the iPhone notch; a home-screen app must do it itself.
 fixes = [
-    ("  padding-block:8px 6px;", "  padding-block:calc(env(safe-area-inset-top, 0px) + 14px) 6px;"),   # clear of the clock bar and its blurred edge
+    ("  padding-block:8px 6px;", "  padding-block:calc(env(safe-area-inset-top, 0px) + 10px) 6px;"),   # the app starts below the clock bar; this only matters if a phone still draws under it
     ("  -webkit-tap-highlight-color:transparent; overflow:hidden;",
      "  -webkit-tap-highlight-color:transparent; overflow:hidden; margin:0;\n  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; overscroll-behavior:none; position:fixed; inset:0;"),
 ]
@@ -31,7 +31,7 @@ page = f"""<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Blackjack">
 <meta name="theme-color" content="#09362b">
 <link rel="manifest" href="manifest.webmanifest">
