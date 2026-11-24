@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Blackjack">
+<meta name="theme-color" content="#09362b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>[hidden]{display:none!important}</style>
+<title>Blackjack Table</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone screen — top bar, dealer, printed felt, player hands, bet spot, then a control rail at the bottom */
+:root{
+  --felt:#0f4c3d; --felt-deep:#09362b; --rail:#1d140e; --panel:#122a22;
+  --gold:#e4c57e; --text:#f5f2e9; --muted:#c6d6cd; --line:#3d6b5d;
+  --card:#fbfaf5; --card-ink:#1d1d23; --card-red:#b3231b;
+  --good:#9be3b4; --bad:#ffb8ab;
+  --f-display:"Bodoni Moda", Didot, "Bodoni 72", "Times New Roman", serif;
+  --f-ui:"IBM Plex Sans Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --cw:76px;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{
+  background:radial-gradient(120% 80% at 50% 30%, var(--felt) 0%, var(--felt-deep) 78%) fixed, var(--felt-deep);
+  color:var(--text); font-family:var(--f-ui); font-size:17px; line-height:1.35;
+  -webkit-tap-highlight-color:transparent; overflow:hidden; margin:0;
+  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; overscroll-behavior:none;
+}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+#app{
+  height:100%; max-width:560px; margin:0 auto; display:grid; grid-template-rows:auto 1fr auto;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:max(8px, env(safe-area-inset-top, 0px)) 6px;
+}
+.num{font-variant-numeric:tabular-nums}
+
+/* top bar */
+#top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+#bank{flex:1;min-width:0}
+#bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+#bank .amt{font-size:26px;font-weight:700;line-height:1.1}
+.topbtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;font-size:16px;font-weight:600;color:var(--gold)}
+
+/* table */
+#table{min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0}
+.zone{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px}
+.zlabel{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.zlabel b{color:var(--text);letter-spacing:0;text-transform:none;font-size:18px}
+.cards{display:flex;justify-content:center;min-height:calc(var(--cw)*1.4)}
+.card{
+  width:var(--cw);height:calc(var(--cw)*1.4);border-radius:calc(var(--cw)*.09);background:var(--card);
+  color:var(--card-ink);position:relative;flex:none;box-shadow:0 2px 6px rgba(0,0,0,.45);
+  font-family:var(--f-display);
+}
+.card + .card{margin-left:calc(var(--cw)*-.40)}
+.card .ix.ten{letter-spacing:-.11em}
+.card.red{color:var(--card-red)}
+.card .ix{position:absolute;top:3px;left:4px;display:flex;flex-direction:column;align-items:center;line-height:.95;font-family:var(--f-ui);font-weight:700;letter-spacing:-.05em;font-size:max(21px, calc(var(--cw)*.46))}
+.card .ix i{font-style:normal;letter-spacing:0;margin-top:1px;font-size:max(19px, calc(var(--cw)*.36))}
+.card .pip{position:absolute;right:5px;bottom:3px;font-size:calc(var(--cw)*.62);line-height:1}
+.card.back{background:repeating-linear-gradient(45deg,#7a1f24 0 6px,#8e2a2f 6px 12px);border:3px solid var(--card)}
+.card.back::after{content:"";position:absolute;inset:5px;border:1.5px solid rgba(255,255,255,.55);border-radius:4px}
+.card.new{animation:dealIn .32s ease-out}
+.card.flip{animation:flipIn .36s ease-out}
+@keyframes dealIn{from{transform:translateY(-36px) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes flipIn{from{transform:rotateY(90deg)}to{transform:none}}
+
+#print{width:100%;max-width:380px;text-align:center;margin:2px 0}
+#print svg{width:100%;height:auto;display:block}
+#table.compact #print .line2{display:none}
+#table.compact{gap:2px;padding:4px 0}
+#print .line2{font-family:var(--f-display);color:var(--gold);font-size:16px;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+
+#hands{width:100%;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 14px}
+.hand{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;border-radius:12px;border:2px solid transparent;min-width:0}
+.hand.active{border-color:var(--gold);background:rgba(228,197,126,.08)}
+.htag{font-size:16px;color:var(--gold);font-weight:700;letter-spacing:.04em;min-height:1.3em}
+.hinfo{font-size:17px;text-align:center}
+.hinfo b{font-size:21px}
+.hinfo .bet{color:var(--muted)}
+.res{font-size:17px;font-weight:700;padding:2px 10px;border-radius:14px;border:1.5px solid currentColor}
+.res.good{color:var(--good)} .res.bad{color:var(--bad)} .res.even{color:var(--text)}
+
+#spot{
+  width:92px;height:92px;border-radius:50%;border:2px dashed var(--gold);display:grid;place-items:center;
+  background:rgba(0,0,0,.12);flex:none;text-align:center;padding:0
+}
+#spot .v{font-size:22px;font-weight:700}
+#spot .h{font-size:16px;color:var(--muted);line-height:1.1}
+#spot[disabled]{cursor:default}
+
+/* controls */
+#ctl{border-top:1px solid var(--line);padding:8px 0 calc(4px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:8px}
+#msg{min-height:2.7em;font-size:17px;text-align:center;display:flex;align-items:center;justify-content:center;text-wrap:balance}
+.row{display:flex;gap:8px}
+.row > button{flex:1;min-width:0;line-height:1.15}
+.btn{min-height:52px;border-radius:12px;border:1.5px solid var(--gold);background:rgba(0,0,0,.18);font-size:17px;font-weight:600;padding:0 4px}
+.btn.primary{background:var(--gold);color:#22180c;border-color:var(--gold)}
+.btn:disabled{opacity:.45;border-style:dashed;cursor:default}
+#chips{display:flex;justify-content:space-between;gap:6px}
+.chip{
+  width:58px;height:58px;border-radius:50%;flex:none;font-weight:700;font-size:16px;color:#fff;
+  border:4px dashed rgba(255,255,255,.85);box-shadow:0 2px 0 rgba(0,0,0,.45), inset 0 0 0 3px rgba(0,0,0,.18);
+  display:grid;place-items:center;padding:0;text-shadow:0 1px 1px rgba(0,0,0,.6)
+}
+.chip:disabled{opacity:.35;cursor:default}
+.c5{background:#b42b2b}.c25{background:#1f7a46}.c100{background:#24242a}.c500{background:#6b3aa0}.c1000{background:#b86a12}
+
+/* sheets */
+.sheet{position:fixed;inset:0;background:rgba(3,14,10,.72);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.panel{
+  width:100%;max-width:560px;max-height:90%;overflow-y:auto;background:var(--panel);border-radius:18px 18px 0 0;
+  border-top:2px solid var(--gold);
+  padding:16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display:flex;flex-direction:column;gap:14px
+}
+.phead{display:flex;align-items:center;gap:10px}
+.phead h2{flex:1;margin:0;font-family:var(--f-display);font-size:26px;font-weight:700;color:var(--gold);text-wrap:balance}
+.note{color:var(--muted);font-size:16px;margin:0}
+.group{display:flex;flex-direction:column;gap:2px}
+.gtitle{font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin:6px 0 2px}
+.rule{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #24453a;min-width:0}
+.rule .t{flex:1;min-width:0}
+.rule .t b{display:block;font-weight:600;font-size:17px}
+.rule .t span{display:block;font-size:16px;color:var(--muted)}
+.sw{flex:none;display:flex;align-items:center;gap:8px;min-height:44px;background:none;border:0;padding:0;font-size:16px;font-weight:700;width:96px;justify-content:flex-end}
+.sw .trk{width:46px;height:26px;border-radius:13px;border:2px solid var(--muted);position:relative;flex:none}
+.sw .trk::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:left .15s}
+.sw[aria-checked="true"] .trk{border-color:var(--gold);background:var(--gold)}
+.sw[aria-checked="true"] .trk::after{left:23px;background:#22180c}
+.sw:disabled{opacity:.5}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:48px;height:48px;border-radius:24px;border:1.5px solid var(--gold);background:none;font-size:24px;color:var(--gold)}
+.stepper button:disabled{opacity:.4;border-style:dashed}
+.stepper output{min-width:96px;text-align:center;font-size:19px;font-weight:700}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{min-height:44px;padding:0 12px;border-radius:22px;border:1.5px solid var(--line);background:none;font-size:16px}
+.seg button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);font-weight:700}
+.seg button[aria-pressed="true"]::before{content:"✓ "}
+.chart{width:100%;min-width:0}
+.chart svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.readout{margin:0;font-size:18px;font-weight:600;min-height:1.35em}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:rgba(0,0,0,.2);border-radius:10px;padding:8px}
+.stat .k{font-size:16px;color:var(--muted)}
+.stat .v{font-size:20px;font-weight:700}
+.log{display:flex;flex-direction:column}
+.entry{padding:10px 0;border-bottom:1px solid #24453a;display:grid;grid-template-columns:1fr auto;gap:2px 10px}
+.entry .when{font-size:16px;color:var(--muted)}
+.entry .net{font-weight:700;font-size:18px;text-align:right}
+.entry .what{grid-column:1/-1;font-size:16px}
+.entry .cardsline{grid-column:1/-1;font-size:16px;color:var(--muted)}
+.amt-in{display:flex;align-items:center;gap:6px;border:1.5px solid var(--gold);border-radius:12px;padding:0 12px;min-height:56px}
+.amt-in span{font-size:24px;color:var(--gold)}
+.amt-in input{flex:1;min-width:0;background:none;border:0;color:var(--text);font:inherit;font-size:24px;font-weight:700;outline:none}
+.err{color:var(--bad);font-size:16px;margin:0}
+.empty{color:var(--muted);font-size:16px;padding:10px 0}
+@media (prefers-reduced-motion: reduce){.card.new,.card.flip{animation:none}.sw .trk::after{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <div id="bank"><div class="lbl">Bankroll</div><div class="amt num" id="bankAmt">$1,000</div></div>
+    <button class="topbtn" id="openRules" type="button">Rules</button>
+    <button class="topbtn" id="openRecord" type="button">Record</button>
+  </header>
+
+  <main id="table">
+    <section class="zone" aria-label="Dealer">
+      <div class="zlabel" id="dealerLabel">Dealer</div>
+      <div class="cards" id="dealerCards"></div>
+    </section>
+    <div id="print" aria-label="Table rules printed on the felt">
+      <svg viewBox="0 0 380 64" role="img" aria-labelledby="printTitle">
+        <title id="printTitle">Blackjack pays 3 to 2</title>
+        <defs><path id="arc" d="M 14 58 Q 190 -6 366 58"/></defs>
+        <text fill="#e4c57e" font-family="Bodoni Moda, Didot, serif" font-weight="700" font-size="21" letter-spacing="2.5" text-anchor="middle">
+          <textPath href="#arc" startOffset="50%" id="printMain">BLACKJACK PAYS 3 TO 2</textPath>
+        </text>
+      </svg>
+      <div class="line2" id="printSub">Dealer must hit soft 17</div>
+      <div class="line2" id="printIns">Insurance pays 2 to 1</div>
+    </div>
+    <section class="zone" aria-label="Your hands">
+      <div id="hands"></div>
+    </section>
+    <button id="spot" type="button" aria-label="Your bet"><div><div class="v num" id="spotV">$0</div><div class="h" id="spotH">Bet</div></div></button>
+  </main>
+
+  <footer id="ctl">
+    <div id="msg" role="status" aria-live="polite"></div>
+    <div id="actions"></div>
+  </footer>
+</div>
+
+<div class="sheet" id="rulesSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="rulesH">
+    <div class="phead"><h2 id="rulesH">Table rules</h2><button class="topbtn" type="button" data-close>Done</button></div>
+    <p class="note" id="rulesNote">Changes take effect on the next hand.</p>
+    <div class="group">
+      <div class="gtitle">Decks in the shoe</div>
+      <div class="stepper"><button type="button" id="deckMinus" aria-label="Fewer decks">−</button><output id="deckOut" class="num">6 decks</output><button type="button" id="deckPlus" aria-label="More decks">+</button></div>
+      <p class="note num" id="shoeNote"></p>
+    </div>
+    <div class="group">
+      <div class="gtitle">Table maximum bet</div>
+      <div class="seg" id="limitSeg"></div>
+      <p class="note">Table minimum is $5.</p>
+    </div>
+    <div class="group" id="ruleList"></div>
+    <button class="btn" type="button" id="resetRules">Back to standard rules</button>
+  </div>
+</div>
+
+<div class="sheet" id="recordSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="recordH">
+    <div class="phead"><h2 id="recordH">Your record</h2><button class="topbtn" type="button" data-close>Done</button></div>
+    <div class="gtitle">Current roll, hand by hand</div>
+    <p class="readout num" id="chartRead1"></p>
+    <div class="chart" id="chart1"></div>
+    <p class="note" id="chartNote1"></p>
+    <div class="gtitle">Lifetime, hand by hand</div>
+    <p class="readout num" id="chartRead2"></p>
+    <div class="chart" id="chart2"></div>
+    <p class="note" id="chartNote2"></p>
+    <div class="gtitle">Totals and every hand</div>
+    <div class="seg" id="scopeSeg">
+      <button type="button" data-scope="session" aria-pressed="true">Current roll</button>
+      <button type="button" data-scope="all" aria-pressed="false">Lifetime</button>
+    </div>
+    <p class="note num" id="sessionNote"></p>
+    <div class="stats" id="stats"></div>
+    <div class="gtitle">Every hand, newest first</div>
+    <div class="log" id="log"></div>
+    <button class="btn" type="button" id="moreLog" hidden>Show 50 more</button>
+    <button class="btn" type="button" id="newBankBtn">Start a new bankroll</button>
+    <p class="note" id="syncNote"></p>
+  </div>
+</div>
+
+<div class="sheet" id="bankSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="bankH">
+    <div class="phead"><h2 id="bankH">Choose your bankroll</h2><button class="topbtn" type="button" id="bankCancel">Cancel</button></div>
+    <p class="note" id="bankNote">This is the money you sit down with. Your record of past hands is kept.</p>
+    <label class="amt-in" for="bankInput"><span>$</span><input id="bankInput" type="number" inputmode="numeric" min="5" max="1000000" step="5" value="1000" aria-label="Starting bankroll in dollars"></label>
+    <div class="seg" id="bankPresets"></div>
+    <p class="err" id="bankErr" hidden></p>
+    <button class="btn primary" type="button" id="bankStart">Sit down with $1,000</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+/* ---------- constants ---------- */
+const CHIPS = [5, 25, 100, 500, 1000];
+const LIMITS = [100, 500, 1000, 5000, 10000, 0];
+const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
+  resplit:true, resplitAces:false, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
+  charlie:false, push22:false, csm:false };
+const RULES = [
+  { g:'Dealer', k:'h17', label:'Dealer hits soft 17', desc:'Off: the dealer stands on every 17.' },
+  { g:'Dealer', k:'peek', label:'Dealer checks for blackjack', desc:'Off: no peek. If the dealer has blackjack, you lose doubles and splits too.' },
+  { g:'Dealer', k:'push22', label:'Dealer 22 is a push', desc:'When the dealer busts with exactly 22, standing hands tie.' },
+  { g:'Payouts', k:'bj32', label:'Blackjack pays 3 to 2', desc:'Off: blackjack pays 6 to 5.' },
+  { g:'Payouts', k:'insurance', label:'Insurance', desc:'Offered when the dealer shows an ace. Costs half your bet, pays 2 to 1.' },
+  { g:'Payouts', k:'evenMoney', label:'Even money', desc:'Take a sure 1 to 1 on your blackjack when the dealer shows an ace.' },
+  { g:'Payouts', k:'charlie', label:'Five-card Charlie', desc:'Five cards without busting wins outright.' },
+  { g:'Doubling', k:'doubleAny', label:'Double on any two cards', desc:'Off: double only on 9, 10 or 11.' },
+  { g:'Doubling', k:'das', label:'Double after splitting', desc:'' },
+  { g:'Splitting', k:'resplit', label:'Resplit pairs', desc:'Split again, up to four hands.' },
+  { g:'Splitting', k:'resplitAces', label:'Resplit aces', desc:'' },
+  { g:'Splitting', k:'hitSplitAces', label:'Hit split aces', desc:'Off: each split ace gets one card only.' },
+  { g:'Splitting', k:'splitTens', label:'Split any two ten-value cards', desc:'Off: only matching ranks, such as K and K.' },
+  { g:'Surrender', k:'lateSurrender', label:'Late surrender', desc:'Give up half your bet after the dealer checks for blackjack.' },
+  { g:'Surrender', k:'earlySurrender', label:'Early surrender', desc:'Give up half before the dealer checks, even against a blackjack.' },
+  { g:'Shoe', k:'csm', label:'Shuffle after every hand', desc:'Like a continuous shuffling machine.' },
+];
+const SUITS = ['♠','♥','♦','♣'];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const RES_WORD = { win:'Win', lose:'Lose', bust:'Bust', push:'Push', bj:'Blackjack', sur:'Surrendered', charlie:'Five-card Charlie', em:'Even money' };
+const LS_STATE = 'bj.state.v1', LS_HIST = 'bj.history.v1';
+const CHUNK = 200;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const D = reduced ? 140 : 420;
+
+/* ---------- state ---------- */
+let S = freshState(1000);
+let history = [];
+let R = null;          // the round on the table (in play, or just finished)
+let busy = false;
+let seen = new Set();  // card ids already drawn, so only new ones animate
+let flipped = false;
+let msgOverride = '';
+let firstVisit = false;
+let scope = 'session', logShown = 50;
+let sync = 'local';    // local | cloud | error
+let cloud = null;      // { col }
+
+function freshState(amount){
+  return { v:1, settings:{ decks:6, max:5000, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
+    sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0 };
+}
+const rules = () => S.settings.rules;
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const cents = x => Math.round(x * 100) / 100;
+function money(n){
+  const a = Math.abs(n), whole = Math.abs(a - Math.round(a)) < 0.001;
+  return (n < 0 ? '−' : '') + '$' + a.toLocaleString('en-US', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2 });
+}
+const signed = n => (n > 0 ? '+' : '') + money(n);
+const rk = c => c % 13;
+const cv = c => Math.min(rk(c) + 1, 10);
+const cardText = c => RANKS[rk(c)] + SUITS[Math.floor(c / 13) % 4];
+function val(cards){
+  let t = 0, a = 0;
+  for (const x of cards){ const c = x.c ?? x; if (rk(c) === 0){ a++; t += 1; } else t += cv(c); }
+  let soft = false; if (a && t + 10 <= 21){ t += 10; soft = true; }
+  return { t, soft };
+}
+const isBJ = h => !h.fromSplit && h.cards.length === 2 && val(h.cards).t === 21;
+const dealerBJ = () => R.dealer.length === 2 && val(R.dealer).t === 21;
+function rnd(n){ const a = new Uint32Array(1), lim = Math.floor(4294967296 / n) * n; let x; do { crypto.getRandomValues(a); x = a[0]; } while (x >= lim); return x % n; }
+
+/* ---------- shoe ---------- */
+function newShoe(){
+  const n = S.settings.decks, arr = [];
+  for (let d = 0; d < n; d++) for (let c = 0; c < 52; c++) arr.push(c);
+  for (let i = arr.length - 1; i > 0; i--){ const j = rnd(i + 1); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  S.shoe = arr; S.pos = 0; S.shoeDecks = n;
+}
+function needShuffle(){
+  if (!S.shoe || S.shoeDecks !== S.settings.decks || rules().csm) return true;
+  const left = S.shoe.length - S.pos;
+  return left < Math.max(20, S.shoe.length * 0.25);
+}
+function draw(){
+  if (!S.shoe || S.pos >= S.shoe.length) newShoe();
+  return { c: S.shoe[S.pos++], id: R.uid++ };
+}
+
+/* ---------- rules checks ---------- */
+const maxBet = () => S.settings.max || Infinity;
+const cur = () => R && R.hands[R.active];
+function canHit(h){ return !(h.splitAces && !rules().hitSplitAces) && val(h.cards).t < 21; }
+function canDouble(h){
+  if (h.cards.length !== 2 || h.doubled || S.bankroll < h.bet) return false;
+  if (h.fromSplit && !rules().das) return false;
+  if (h.splitAces && !rules().hitSplitAces) return false;
+  const t = val(h.cards).t;
+  return rules().doubleAny || (t >= 9 && t <= 11);
+}
+function canSplit(h){
+  if (h.cards.length !== 2 || S.bankroll < h.bet) return false;
+  const [a, b] = h.cards.map(x => x.c);
+  const pair = rk(a) === rk(b) || (rules().splitTens && cv(a) === 10 && cv(b) === 10);
+  if (!pair) return false;
+  if (R.hands.length > 1 && !rules().resplit) return false;
+  if (R.hands.length >= 4) return false;
+  if (rk(a) === 0 && h.fromSplit && !rules().resplitAces) return false;
+  return true;
+}
+function canSurrender(h){
+  if (R.hands.length !== 1 || h.cards.length !== 2 || h.acted) return false;
+  if (R.pendingPeek) return rules().earlySurrender;
+  return rules().lateSurrender || (rules().earlySurrender && !R.peekDone);
+}
+function newHand(bet){ return { cards:[], bet, doubled:false, fromSplit:false, splitAces:false, done:false, acted:false, surr:null, charlie:false, r:null, ret:0 }; }
+
+/* ---------- the round ---------- */
+function run(fn){
+  if (busy) return;
+  busy = true; msgOverride = ''; render();
+  Promise.resolve().then(fn).catch(e => { console.error(e); }).finally(() => { busy = false; saveLocal(); render(); });
+}
+
+async function deal(){
+  if (S.round) return;
+  const bet = S.bet;
+  if (bet < 5){ say('Tap a chip to place a bet of at least $5.'); return; }
+  if (bet > S.bankroll){ say("That's more than your bankroll."); return; }
+  if (bet > maxBet()){ say('That is over the table maximum of ' + money(maxBet()) + '.'); return; }
+  R = { uid:1, hands:[newHand(bet)], dealer:[], hole:true, active:0, phase:'deal', ins:0, insRet:0, pendingPeek:false, peekDone:false, offerEM:false, msg:'' };
+  seen = new Set(); flipped = false;
+  if (needShuffle()){ newShoe(); R.msg = 'Shuffling a fresh shoe of ' + S.settings.decks + (S.settings.decks === 1 ? ' deck' : ' decks') + '.'; render(); await wait(D * 2); }
+  S.bankroll = cents(S.bankroll - bet); S.lastBet = bet;
+  S.round = R;
+  R.msg = 'Dealing…';
+  for (const who of ['p','d','p','d']){
+    if (who === 'p') R.hands[0].cards.push(draw()); else R.dealer.push(draw());
+    render(); await wait(D);
+  }
+  touch(); saveCloudState();
+  await afterDeal();
+}
+
+async function afterDeal(){
+  const h = R.hands[0], up = R.dealer[0].c, upA = rk(up) === 0, pbj = isBJ(h);
+  R.offerEM = pbj && upA && rules().evenMoney;
+  if (upA && (rules().insurance || R.offerEM)){ R.phase = 'insurance'; R.msg = ''; return; }
+  await postInsurance();
+}
+
+async function postInsurance(){
+  const h = R.hands[0], up = R.dealer[0].c, upA = rk(up) === 0, upT = cv(up) === 10, pbj = isBJ(h);
+  const needPeek = rules().peek && (upA || upT);
+  if (needPeek && rules().earlySurrender && !pbj){ R.pendingPeek = true; R.phase = 'player'; R.msg = ''; return; }
+  if (needPeek){ if (await peek()) return; }
+  if (pbj){ await reveal(); h.r = dealerBJ() ? 'push' : 'bj'; h.done = true; settle(); return; }
+  R.phase = 'player'; R.active = 0; R.msg = '';
+}
+
+async function peek(){
+  R.peekDone = true; R.pendingPeek = false;
+  R.msg = 'Dealer checks for blackjack…'; render(); await wait(D * 1.6);
+  if (dealerBJ()){
+    await reveal();
+    for (const h of R.hands) if (!h.r) h.r = isBJ(h) ? 'push' : 'lose';
+    settle(); return true;
+  }
+  R.msg = 'No dealer blackjack.';
+  return false;
+}
+
+async function reveal(){
+  if (R.hole){ R.hole = false; flipped = true; render(); await wait(D); }
+}
+
+async function advance(){
+  const i = R.hands.findIndex(h => !h.done);
+  if (i < 0){ await dealerTurn(); return; }
+  R.active = i;
+  const h = R.hands[i];
+  if (h.cards.length === 1){
+    render(); await wait(D * 0.6);
+    h.cards.push(draw()); render(); await wait(D);
+    afterSplitCard(h);
+    if (h.done){ await advance(); }
+  }
+}
+function afterSplitCard(h){
+  if (val(h.cards).t === 21) h.done = true;
+  else if (h.splitAces && !rules().hitSplitAces && !canSplit(h)) h.done = true;
+}
+
+function action(kind){
+  run(async () => {
+    if (!R || R.phase !== 'player') return;
+    const h = cur();
+    const ok = { hit:canHit, stand:() => true, double:canDouble, split:canSplit, surrender:canSurrender }[kind](h);
+    if (!ok) return;
+    if (kind === 'surrender'){
+      h.surr = (R.pendingPeek || (rules().earlySurrender && !R.peekDone)) ? 'early' : 'late'; h.done = true; R.pendingPeek = false;
+      await dealerTurn(); return;
+    }
+    if (R.pendingPeek){ if (await peek()) return; }
+    R.msg = '';
+    if (kind === 'hit'){
+      h.acted = true; h.cards.push(draw()); render(); await wait(D);
+      const t = val(h.cards).t;
+      if (t >= 21) h.done = true;
+      else if (rules().charlie && h.cards.length >= 5){ h.charlie = true; h.done = true; }
+      if (h.done) await advance();
+    } else if (kind === 'stand'){
+      h.done = true; await advance();
+    } else if (kind === 'double'){
+      S.bankroll = cents(S.bankroll - h.bet); h.bet *= 2; h.doubled = true; h.acted = true;
+      h.cards.push(draw()); render(); await wait(D);
+      h.done = true; await advance();
+    } else if (kind === 'split'){
+      S.bankroll = cents(S.bankroll - h.bet);
+      const moved = h.cards.pop(), ace = rk(moved.c) === 0;
+      const nh = newHand(h.bet); nh.cards = [moved]; nh.fromSplit = true; nh.splitAces = ace;
+      h.fromSplit = true; h.splitAces = ace; h.acted = true;
+      R.hands.splice(R.active + 1, 0, nh);
+      render(); await wait(D * 0.7);
+      h.cards.push(draw()); render(); await wait(D);
+      afterSplitCard(h);
+      if (h.done) await advance();
+    }
+  });
+}
+
+function insuranceChoice(kind){
+  run(async () => {
+    if (!R || R.phase !== 'insurance') return;
+    const h = R.hands[0];
+    R.phase = 'deal';
+    if (kind === 'em'){ h.r = 'em'; h.done = true; await reveal(); settle(); return; }
+    if (kind === 'take'){ R.ins = cents(h.bet / 2); S.bankroll = cents(S.bankroll - R.ins); }
+    await postInsurance();
+  });
+}
+
+async function dealerTurn(){
+  R.phase = 'dealer'; R.active = -1; R.msg = '';
+  await reveal();
+  const live = R.hands.some(h => !h.surr && !h.r && !h.charlie && val(h.cards).t <= 21);
+  if (live && !dealerBJ()){
+    while (true){
+      const v = val(R.dealer);
+      if (!(v.t < 17 || (v.t === 17 && v.soft && rules().h17))) break;
+      R.msg = 'Dealer draws…'; render(); await wait(D * 0.9);
+      R.dealer.push(draw()); render(); await wait(D * 0.6);
+    }
+  }
+  settle();
+}
+
+function payout(h){
+  const b = h.bet;
+  switch (h.r){
+    case 'win': case 'charlie': case 'em': return 2 * b;
+    case 'bj': return b + b * (rules().bj32 ? 1.5 : 1.2);
+    case 'push': return b;
+    case 'sur': return b / 2;
+    default: return 0;
+  }
+}
+
+function settle(){
+  if (R.hole){ R.hole = false; flipped = true; }
+  const dv = val(R.dealer), dbj = dealerBJ();
+  for (const h of R.hands){
+    if (!h.r){
+      const pv = val(h.cards).t;
+      if (h.surr) h.r = (h.surr === 'late' && !rules().peek && dbj) ? 'lose' : 'sur';
+      else if (pv > 21) h.r = 'bust';
+      else if (h.charlie) h.r = 'charlie';
+      else if (dbj) h.r = isBJ(h) ? 'push' : 'lose';
+      else if (dv.t > 21) h.r = (rules().push22 && dv.t === 22) ? 'push' : 'win';
+      else h.r = pv > dv.t ? 'win' : pv < dv.t ? 'lose' : 'push';
+    }
+    h.ret = cents(payout(h));
+    S.bankroll = cents(S.bankroll + h.ret);
+  }
+  if (R.ins){ R.insRet = dbj ? cents(R.ins * 3) : 0; S.bankroll = cents(S.bankroll + R.insRet); }
+  const rec = {
+    t: Date.now(), s: S.session, b: S.bankroll,
+    d: R.dealer.map(x => x.c),
+    h: R.hands.map(h => ({ c: h.cards.map(x => x.c), bet: h.bet, r: h.r, n: cents(h.ret - h.bet), dbl: h.doubled ? 1 : 0 })),
+  };
+  if (R.ins) rec.ins = { bet: R.ins, n: cents(R.insRet - R.ins) };
+  rec.w = cents(R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0));
+  rec.n = cents(rec.h.reduce((a, h) => a + h.n, 0) + (rec.ins ? rec.ins.n : 0));
+  history.push(rec);
+  R.phase = 'done'; R.net = rec.n; R.msg = '';
+  S.round = null;
+  S.bet = 0;
+  touch(); saveLocal(); saveHistLocal(); saveCloudRound();
+}
+
+/* ---------- betting ---------- */
+function clearTableIfDone(){ if (R && R.phase === 'done'){ R = null; seen = new Set(); } }
+function addChip(v){
+  if (busy || S.round) return;
+  clearTableIfDone();
+  if (S.bet + v > S.bankroll){ say("You don't have enough for that chip."); return; }
+  if (S.bet + v > maxBet()){ say('The table maximum is ' + money(maxBet()) + '.'); return; }
+  S.bet += v; msgOverride = ''; saveLocal(); render();
+}
+function clearBet(){ if (busy || S.round) return; S.bet = 0; msgOverride = ''; saveLocal(); render(); }
+function rebet(){
+  if (busy || S.round) return;
+  clearTableIfDone();
+  const b = Math.min(S.lastBet, maxBet());
+  if (b < 5 || b > S.bankroll){ say("You can't cover your last bet."); return; }
+  S.bet = b; saveLocal(); render();
+}
+function say(t){ msgOverride = t; render(); }
+
+/* ---------- rendering ---------- */
+function cardEl(card, hidden){
+  const el = document.createElement('div');
+  if (hidden){
+    el.className = 'card back'; el.setAttribute('aria-label', 'Face-down card');
+  } else {
+    const c = card.c, suit = Math.floor(c / 13) % 4, red = suit === 1 || suit === 2;
+    el.className = 'card' + (red ? ' red' : '');
+    el.setAttribute('aria-label', RANKS[rk(c)] + ' of ' + ['spades','hearts','diamonds','clubs'][suit]);
+    const ix = document.createElement('div'); ix.className = 'ix' + (rk(c) === 9 ? ' ten' : '');
+    ix.append(RANKS[rk(c)]); const s = document.createElement('i'); s.textContent = SUITS[suit]; ix.append(s);
+    const pip = document.createElement('div'); pip.className = 'pip'; pip.textContent = SUITS[suit];
+    el.append(ix, pip);
+  }
+  const key = card.id + (hidden ? 'b' : 'f');
+  if (!seen.has(card.id)){ el.classList.add('new'); seen.add(card.id); seen.add(key); }
+  else if (!seen.has(key)){ el.classList.add('flip'); seen.add(key); }
+  return el;
+}
+
+function totalText(cards){
+  const v = val(cards);
+  if (cards.length === 2 && v.t === 21) return '21';
+  if (v.t > 21) return 'Bust ' + v.t;
+  return (v.soft ? 'Soft ' : '') + v.t;
+}
+
+function render(){
+  $('bankAmt').textContent = money(S.bankroll);
+  renderPrint();
+  const n = R ? R.hands.length : 1;
+  const w = Math.min(innerWidth, 560) - 32;
+  const cw = n === 1 ? Math.min(88, w * 0.24) : n === 2 ? Math.min(70, w * 0.19) : Math.min(56, w * 0.145);
+
+  // dealer
+  const dc = $('dealerCards'); dc.replaceChildren();
+  const dl = $('dealerLabel');
+  if (R && R.dealer.length){
+    R.dealer.forEach((card, i) => dc.append(cardEl(card, i === 1 && R.hole)));
+    if (R.hole){ const up = R.dealer[0].c; dl.replaceChildren('Dealer shows ', bold(rk(up) === 0 ? 'Ace' : String(cv(up)))); }
+    else { const t = R.dealer.length === 2 && val(R.dealer).t === 21 ? 'Blackjack' : totalText(R.dealer); dl.replaceChildren('Dealer ', bold(t)); }
+  } else { dl.textContent = 'Dealer'; }
+
+  // hands
+  const hs = $('hands'); hs.replaceChildren();
+  if (R){
+    R.hands.forEach((h, i) => {
+      if (!h.cards.length) return;
+      const box = document.createElement('div');
+      const active = R.phase === 'player' && i === R.active;
+      box.className = 'hand' + (active ? ' active' : '');
+      const tag = document.createElement('div'); tag.className = 'htag';
+      tag.textContent = R.hands.length > 1 ? (active ? '▶ Playing hand ' + (i + 1) : 'Hand ' + (i + 1)) : '';
+      const cs = document.createElement('div'); cs.className = 'cards';
+      h.cards.forEach(card => cs.append(cardEl(card, false)));
+      const info = document.createElement('div'); info.className = 'hinfo num';
+      const tt = isBJ(h) ? 'Blackjack' : totalText(h.cards);
+      info.append(bold(tt), ' ');
+      const b = document.createElement('span'); b.className = 'bet'; b.textContent = '· ' + money(h.bet) + (h.doubled ? ' doubled' : '');
+      info.append(b);
+      if (tag.textContent) box.append(tag);
+      box.append(cs, info);
+      if (h.r && R.phase === 'done'){
+        const res = document.createElement('div');
+        const net = cents(h.ret - h.bet);
+        res.className = 'res num ' + (net > 0 ? 'good' : net < 0 ? 'bad' : 'even');
+        res.textContent = (net > 0 ? '✓ ' : net < 0 ? '✕ ' : '= ') + RES_WORD[h.r] + ' ' + signed(net);
+        box.append(res);
+      }
+      hs.append(box);
+    });
+  }
+
+  // bet spot
+  const inRound = !!S.round;
+  const spotAmt = inRound ? R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0) : S.bet;
+  $('spotV').textContent = money(spotAmt);
+  $('spotH').textContent = inRound ? (R.ins ? 'In play, with insurance' : 'In play') : (S.bet ? 'Tap to clear' : 'Your bet');
+  $('spot').disabled = inRound || busy || !S.bet;
+  $('spot').hidden = !!R;
+
+  renderControls();
+  fit(cw);
+}
+function fit(cw){
+  const t = $('table'), root = document.documentElement;
+  t.classList.remove('compact');
+  let size = Math.max(44, Math.round(cw));
+  root.style.setProperty('--cw', size + 'px');
+  if (t.scrollHeight <= t.clientHeight + 1) return;
+  t.classList.add('compact');
+  while (t.scrollHeight > t.clientHeight + 1 && size > 44){ size -= 3; root.style.setProperty('--cw', size + 'px'); }
+}
+function bold(t){ const b = document.createElement('b'); b.textContent = t; return b; }
+
+function renderPrint(){
+  const r = rules();
+  const main = r.bj32 ? 'BLACKJACK PAYS 3 TO 2' : 'BLACKJACK PAYS 6 TO 5';
+  $('printMain').textContent = main; $('printTitle').textContent = main;
+  $('printSub').textContent = r.h17 ? 'Dealer must hit soft 17' : 'Dealer must stand on all 17s';
+  $('printIns').textContent = r.insurance ? 'Insurance pays 2 to 1' : S.settings.decks + (S.settings.decks === 1 ? ' deck' : ' decks') + ' · No insurance';
+}
+
+function btn(label, onClick, opts = {}){
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'btn' + (opts.primary ? ' primary' : ''); b.textContent = label;
+  b.disabled = !!opts.disabled || busy; b.addEventListener('click', onClick);
+  return b;
+}
+function row(...els){ const d = document.createElement('div'); d.className = 'row'; d.append(...els); return d; }
+
+function renderControls(){
+  const a = $('actions'); a.replaceChildren();
+  const msg = $('msg');
+  let text = '';
+  if (S.round && R){
+    if (R.phase === 'insurance'){
+      const h = R.hands[0], cost = cents(h.bet / 2);
+      if (R.offerEM){
+        text = 'You have blackjack and the dealer shows an ace. Take even money (' + signed(h.bet) + ' for sure)?';
+        a.append(row(btn('No thanks', () => insuranceChoice('no')), btn('Even money', () => insuranceChoice('em'), { primary:true })));
+      } else {
+        text = 'Dealer shows an ace. Insurance costs ' + money(cost) + ' and pays 2 to 1 if the dealer has blackjack.';
+        a.append(row(btn('No insurance', () => insuranceChoice('no')), btn('Insure ' + money(cost), () => insuranceChoice('take'), { primary:true, disabled: S.bankroll < cost })));
+      }
+    } else if (R.phase === 'player'){
+      const h = cur();
+      const up = R.dealer[0].c;
+      text = R.msg || ((R.hands.length > 1 ? 'Hand ' + (R.active + 1) + ' of ' + R.hands.length + ': ' : 'You have ') + totalText(h.cards) + ' against the dealer’s ' + (rk(up) === 0 ? 'ace' : cv(up)) + '.');
+      a.append(row(btn('Hit', () => action('hit'), { disabled: !canHit(h) }), btn('Stand', () => action('stand'), { primary:true })));
+      const r2 = row(btn('Double', () => action('double'), { disabled: !canDouble(h) }), btn('Split', () => action('split'), { disabled: !canSplit(h) }));
+      if (canSurrender(h)) r2.append(btn('Surrender', () => action('surrender')));
+      a.append(r2);
+    } else {
+      text = R.msg || 'Dealer’s turn…';
+      a.append(row(btn('Hit', () => {}, { disabled:true }), btn('Stand', () => {}, { disabled:true })));
+    }
+  } else {
+    if (R && R.phase === 'done' && R.net !== undefined){
+      const n = R.net;
+      text = n > 0 ? 'You won ' + money(n) + ' this hand.' : n < 0 ? 'You lost ' + money(-n) + ' this hand.' : 'Even this hand. Your money is back.';
+      text += ' Place your next bet.';
+    } else if (R && R.msg) text = R.msg;
+    else text = 'Tap chips to bet, then Deal. Table limits ' + money(5) + ' to ' + (S.settings.max ? money(S.settings.max) : 'no maximum') + '.';
+    if (S.bankroll < 5 && !S.bet){
+      text = 'You’re out of chips. Start a new bankroll to keep playing.';
+      a.append(row(btn('Start a new bankroll', () => openBank(), { primary:true })));
+    } else {
+      const chips = document.createElement('div'); chips.id = 'chips';
+      CHIPS.forEach(v => {
+        const c = document.createElement('button'); c.type = 'button'; c.className = 'chip num c' + v;
+        c.textContent = v >= 1000 ? '$' + (v / 1000) + 'K' : '$' + v;
+        c.setAttribute('aria-label', 'Add a ' + money(v) + ' chip');
+        c.disabled = busy || S.bet + v > S.bankroll || S.bet + v > maxBet();
+        c.addEventListener('click', () => addChip(v));
+        chips.append(c);
+      });
+      a.append(chips);
+      const canRe = S.lastBet >= 5 && !S.bet && Math.min(S.lastBet, maxBet()) <= S.bankroll;
+      a.append(row(
+        btn('Clear', clearBet, { disabled: !S.bet }),
+        btn(S.lastBet ? 'Rebet ' + money(Math.min(S.lastBet, maxBet())) : 'Rebet', rebet, { disabled: !canRe }),
+        btn(S.bet ? 'Deal ' + money(S.bet) : 'Deal', () => run(deal), { primary:true, disabled: S.bet < 5 })
+      ));
+    }
+  }
+  msg.textContent = msgOverride || text;
+}
+
+/* ---------- rules sheet ---------- */
+function renderRules(){
+  const locked = !!S.round;
+  $('rulesNote').textContent = locked ? 'Finish this hand to change the rules.' : 'Changes take effect on the next hand.';
+  const d = S.settings.decks;
+  $('deckOut').textContent = d + (d === 1 ? ' deck' : ' decks');
+  $('deckMinus').disabled = locked || d <= 1; $('deckPlus').disabled = locked || d >= 8;
+  const left = S.shoe && S.shoeDecks === d ? S.shoe.length - S.pos : d * 52;
+  $('shoeNote').textContent = left + ' of ' + d * 52 + ' cards left before the next shuffle point.';
+  const seg = $('limitSeg'); seg.replaceChildren();
+  LIMITS.forEach(l => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = l ? money(l) : 'No limit';
+    b.setAttribute('aria-pressed', String(S.settings.max === l)); b.disabled = locked;
+    b.addEventListener('click', () => { S.settings.max = l; if (S.bet > maxBet()) S.bet = 0; settingsChanged(); });
+    seg.append(b);
+  });
+  const list = $('ruleList'); list.replaceChildren();
+  let g = '';
+  RULES.forEach(r => {
+    if (r.g !== g){ g = r.g; const t = document.createElement('div'); t.className = 'gtitle'; t.textContent = g; list.append(t); }
+    const rowEl = document.createElement('div'); rowEl.className = 'rule';
+    const t = document.createElement('div'); t.className = 't';
+    const b = document.createElement('b'); b.textContent = r.label; b.id = 'rl-' + r.k; t.append(b);
+    if (r.desc){ const s = document.createElement('span'); s.textContent = r.desc; t.append(s); }
+    const on = !!rules()[r.k];
+    const sw = document.createElement('button'); sw.type = 'button'; sw.className = 'sw'; sw.id = 'sw-' + r.k;
+    sw.setAttribute('role', 'switch'); sw.setAttribute('aria-checked', String(on)); sw.setAttribute('aria-labelledby', 'rl-' + r.k);
+    sw.disabled = locked;
+    const word = document.createElement('span'); word.textContent = on ? 'On' : 'Off';
+    const trk = document.createElement('span'); trk.className = 'trk';
+    sw.append(word, trk);
+    sw.addEventListener('click', () => { rules()[r.k] = !rules()[r.k]; settingsChanged(); });
+    rowEl.append(t, sw); list.append(rowEl);
+  });
+  $('resetRules').disabled = locked;
+}
+function settingsChanged(){ touch(); saveLocal(); saveCloudState(); renderRules(); render(); }
+
+/* ---------- record sheet ---------- */
+function stats(list){
+  const s = { rounds:list.length, hands:0, won:0, lost:0, push:0, bj:0, sur:0, w:0, n:0, best:0, worst:0 };
+  for (const r of list){
+    s.w += r.w; s.n += r.n; s.best = Math.max(s.best, r.n); s.worst = Math.min(s.worst, r.n);
+    for (const h of r.h){
+      s.hands++;
+      if (['win','bj','charlie','em'].includes(h.r)) s.won++;
+      else if (h.r === 'lose' || h.r === 'bust') s.lost++;
+      else if (h.r === 'push') s.push++;
+      else if (h.r === 'sur') s.sur++;
+      if (h.r === 'bj' || h.r === 'em') s.bj++;
+    }
+  }
+  s.w = cents(s.w); s.n = cents(s.n);
+  return s;
+}
+function renderRecord(){
+  document.querySelectorAll('#scopeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scope === scope)));
+  const list = scope === 'session' ? history.filter(r => r.s === S.session) : history;
+  const sess = S.sessions.find(x => x.s === S.session);
+  $('sessionNote').textContent = scope === 'session'
+    ? 'Bankroll ' + S.session + ', started ' + new Date(sess ? sess.at : Date.now()).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) + ' with ' + money(sess ? sess.start : S.bankroll) + '. Now ' + money(S.bankroll) + '.'
+    : S.sessions.length + (S.sessions.length === 1 ? ' bankroll' : ' bankrolls') + ' so far, ' + history.length + ' hands in all.';
+  drawChart(history.filter(r => r.s === S.session), 'session', '1');
+  drawChart(history, 'all', '2');
+  const s = stats(list);
+  const box = $('stats'); box.replaceChildren();
+  const add = (k, v) => { const d = document.createElement('div'); d.className = 'stat'; const a = document.createElement('div'); a.className = 'k'; a.textContent = k; const b = document.createElement('div'); b.className = 'v num'; b.textContent = v; d.append(a, b); box.append(d); };
+  add('Net result', signed(s.n)); add('Total bet', money(s.w)); add('Hands', String(s.rounds));
+  add('Won', String(s.won)); add('Lost', String(s.lost)); add('Pushed', String(s.push));
+  add('Blackjacks', String(s.bj)); add('Biggest win', s.best > 0 ? signed(s.best) : '—'); add('Biggest loss', s.worst < 0 ? signed(s.worst) : '—');
+  const log = $('log'); log.replaceChildren();
+  if (!list.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No hands yet. Every bet you place will be listed here.'; log.append(e); }
+  const show = list.slice(-logShown).reverse();
+  const base = list.length;
+  show.forEach((r, i) => {
+    const e = document.createElement('div'); e.className = 'entry';
+    const when = document.createElement('div'); when.className = 'when';
+    when.textContent = 'Hand ' + (base - i) + ' · ' + new Date(r.t).toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    const net = document.createElement('div'); net.className = 'net num'; net.style.color = r.n > 0 ? 'var(--good)' : r.n < 0 ? 'var(--bad)' : 'var(--text)';
+    net.textContent = (r.n > 0 ? '✓ ' : r.n < 0 ? '✕ ' : '= ') + signed(r.n);
+    const what = document.createElement('div'); what.className = 'what num';
+    const parts = r.h.map(h => RES_WORD[h.r] + (h.dbl ? ' (doubled)' : ''));
+    what.textContent = 'Bet ' + money(r.w) + ' · ' + parts.join(', ') + (r.ins ? ' · Insurance ' + signed(r.ins.n) : '') + ' · Bankroll ' + money(r.b);
+    const cl = document.createElement('div'); cl.className = 'cardsline';
+    cl.textContent = r.h.map((h, j) => (r.h.length > 1 ? 'Hand ' + (j + 1) : 'You') + ': ' + h.c.map(cardText).join(' ') + ' (' + val(h.c).t + ')').join(' · ') + ' · Dealer: ' + r.d.map(cardText).join(' ') + ' (' + val(r.d).t + ')';
+    e.append(when, net, what, cl); log.append(e);
+  });
+  $('moreLog').hidden = list.length <= logShown;
+  $('newBankBtn').disabled = !!S.round;
+  $('syncNote').textContent = sync === 'cloud' ? 'Saved to your Claude account, so your bankroll and record follow you to any device you sign in on.'
+    : sync === 'error' ? 'Your account could not be reached just now. Everything is saved on this device and will sync when it can.'
+    : 'Saved on this device.';
+}
+
+
+/* ---------- bankroll chart ---------- */
+function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+function shortMoney(v){ return Math.abs(v) >= 10000 ? (v < 0 ? '−' : '') + '$' + (Math.round(Math.abs(v) / 100) / 10).toLocaleString('en-US') + 'K' : money(v); }
+function drawChart(list, scope, n){
+  const box = $('chart' + n); box.replaceChildren();
+  const series = []; let x = 0, cur = null, ser = null, hand = 0;
+  for (const r of list){
+    if (r.s !== cur){
+      cur = r.s; const st = S.sessions.find(z => z.s === r.s);
+      ser = { s:r.s, pts:[{ x, y: st ? st.start : cents(r.b - r.n), hand:null, s:r.s }] }; series.push(ser);
+    }
+    hand++; x++; ser.pts.push({ x, y:r.b, hand, n:r.n, s:r.s });
+  }
+  if (!series.length){ const st = S.sessions.find(z => z.s === S.session); series.push({ s:S.session, pts:[{ x:0, y: st ? st.start : S.bankroll, hand:null, s:S.session }] }); }
+  const chartPts = series.flatMap(z => z.pts);
+  const W = Math.max(260, box.clientWidth || 340), H = 210, padL = 70, padR = 14, padT = 14, padB = 34;
+  let lo = Math.min(...chartPts.map(p => p.y)), hi = Math.max(...chartPts.map(p => p.y));
+  if (hi - lo < 1){ const d = Math.max(5, hi * 0.05); lo -= d; hi += d; }
+  const step = niceStep((hi - lo) / 3);
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  if (lo < 0 && Math.min(...chartPts.map(p => p.y)) >= 0) lo = 0;
+  const xMax = Math.max(1, x);
+  const X = v => padL + (W - padL - padR) * v / xMax;
+  const Y = v => padT + (H - padT - padB) * (1 - (v - lo) / (hi - lo));
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); (parent || svg).append(e); return e; };
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.setAttribute('role', 'img');
+  const last = chartPts[chartPts.length - 1];
+  svg.setAttribute('aria-label', (scope === 'session' ? 'Current roll' : 'Lifetime') + ' line chart of your bankroll after each hand, from ' + money(chartPts[0].y) + ' to ' + money(last.y) + '.');
+  for (let v = lo; v <= hi + step / 2; v += step){
+    el('line', { x1:padL, x2:W - padR, y1:Y(v), y2:Y(v), stroke:'#2c5446', 'stroke-width':1 });
+    const t = el('text', { x:padL - 8, y:Y(v) + 5, 'text-anchor':'end', fill:'#c6d6cd', 'font-size':16, 'font-family':'IBM Plex Sans Condensed, Arial Narrow, sans-serif' }); t.textContent = shortMoney(v);
+  }
+  const lab = (txt, xx, anchor) => { const t = el('text', { x:xx, y:H - 8, 'text-anchor':anchor, fill:'#c6d6cd', 'font-size':16, 'font-family':'IBM Plex Sans Condensed, Arial Narrow, sans-serif' }); t.textContent = txt; };
+  lab('Start', padL, 'start');
+  if (x > 0) lab('Hand ' + x.toLocaleString('en-US'), W - padR, 'end');
+  if (scope === 'session') el('line', { x1:padL, x2:W - padR, y1:Y(chartPts[0].y), y2:Y(chartPts[0].y), stroke:'#c6d6cd', 'stroke-width':1.5, 'stroke-dasharray':'6 5' });
+  series.forEach((z, k) => {
+    if (k > 0) el('line', { x1:X(z.pts[0].x), x2:X(z.pts[0].x), y1:padT, y2:H - padB, stroke:'#c6d6cd', 'stroke-width':1.5, 'stroke-dasharray':'2 4' });
+    if (z.pts.length > 1) el('path', { d: z.pts.map((p, i) => (i ? 'L' : 'M') + X(p.x).toFixed(1) + ' ' + Y(p.y).toFixed(1)).join(' '), fill:'none', stroke:'#e4c57e', 'stroke-width':2.5, 'stroke-linejoin':'round', 'stroke-linecap':'round' });
+  });
+  const guide = el('line', { y1:padT, y2:H - padB, stroke:'#f5f2e9', 'stroke-width':1, visibility:'hidden' });
+  const dot = el('circle', { r:6, fill:'#e4c57e', stroke:'#0b1f19', 'stroke-width':2.5 });
+  const pick = i => {
+    const p = chartPts[i];
+    dot.setAttribute('cx', X(p.x)); dot.setAttribute('cy', Y(p.y));
+    const latest = i === chartPts.length - 1;
+    guide.setAttribute('x1', X(p.x)); guide.setAttribute('x2', X(p.x)); guide.setAttribute('visibility', latest ? 'hidden' : 'visible');
+    $('chartRead' + n).textContent = p.hand == null
+      ? 'Started bankroll ' + p.s + ' with ' + money(p.y)
+      : (latest ? 'Now ' : 'After hand ' + p.hand.toLocaleString('en-US') + ': ') + money(p.y) + (p.n ? ' (' + (p.n > 0 ? 'won ' + money(p.n) : 'lost ' + money(-p.n)) + (latest ? ' on hand ' + p.hand.toLocaleString('en-US') : '') + ')' : ' (pushed' + (latest ? ' on hand ' + p.hand.toLocaleString('en-US') : '') + ')');
+  };
+  const hit = el('rect', { x:padL - 10, y:0, width:W - padL - padR + 20, height:H, fill:'transparent' });
+  hit.style.cursor = 'crosshair';
+  const fromEvent = e => {
+    const r = svg.getBoundingClientRect(), vx = (e.clientX - r.left) * W / r.width;
+    const xv = (vx - padL) / (W - padL - padR) * xMax;
+    let best = 0, bd = Infinity;
+    chartPts.forEach((p, i) => { const d = Math.abs(p.x - xv); if (d <= bd){ bd = d; best = i; } });
+    pick(best);
+  };
+  hit.addEventListener('pointerdown', fromEvent);
+  hit.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'mouse') fromEvent(e); });
+  box.append(svg);
+  pick(chartPts.length - 1);
+  $('chartNote' + n).textContent = chartPts.length === 1
+    ? 'Play a hand and your bankroll will be drawn here.'
+    : 'Touch the chart to see your bankroll after any hand.' + (scope === 'session' ? ' The dashed line is the ' + money(chartPts[0].y) + ' you started with.' : series.length > 1 ? ' Dotted upright lines mark where you started a new bankroll.' : '');
+}
+
+/* ---------- bankroll sheet ---------- */
+function openBank(first){
+  $('bankH').textContent = first ? 'Choose your bankroll' : 'Start a new bankroll';
+  $('bankNote').textContent = first ? 'This is the money you sit down with. You can start a new bankroll any time from your Record.' : 'Your record of past hands is kept. The new bankroll is tracked as its own session.';
+  $('bankCancel').hidden = !!first;
+  $('bankErr').hidden = true;
+  const ps = $('bankPresets'); ps.replaceChildren();
+  [100, 500, 1000, 5000, 10000, 25000].forEach(v => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = money(v);
+    b.setAttribute('aria-pressed', String(Number($('bankInput').value) === v));
+    b.addEventListener('click', () => { $('bankInput').value = v; bankInputChanged(); });
+    ps.append(b);
+  });
+  bankInputChanged();
+  hideSheets(); $('bankSheet').hidden = false;
+}
+function bankInputChanged(){
+  const v = Math.floor(Number($('bankInput').value) || 0);
+  $('bankStart').textContent = v >= 5 ? 'Sit down with ' + money(v) : 'Sit down';
+  document.querySelectorAll('#bankPresets button').forEach(b => b.setAttribute('aria-pressed', String(b.textContent === money(v))));
+}
+function startBank(){
+  const v = Math.floor(Number($('bankInput').value) || 0);
+  if (v < 5 || v > 1000000){ $('bankErr').textContent = 'Choose an amount from $5 to $1,000,000.'; $('bankErr').hidden = false; return; }
+  if (S.round) return;
+  if (firstVisit && !history.length){ S.bankroll = v; S.sessions = [{ s:1, start:v, at:Date.now() }]; S.session = 1; }
+  else { S.session = Math.max(0, ...S.sessions.map(x => x.s)) + 1; S.sessions.push({ s:S.session, start:v, at:Date.now() }); S.bankroll = v; }
+  firstVisit = false; S.bet = 0; R = null;
+  touch(); saveLocal(); saveCloudState();
+  hideSheets(); render();
+}
+
+function hideSheets(){ document.querySelectorAll('.sheet').forEach(s => s.hidden = true); }
+
+/* ---------- saving ---------- */
+function touch(){ S.updatedAt = Date.now(); }
+function saveLocal(){ try { localStorage.setItem(LS_STATE, JSON.stringify(S)); } catch (e) {} }
+function saveHistLocal(){ try { localStorage.setItem(LS_HIST, JSON.stringify(history)); } catch (e) {} }
+function loadLocal(){
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_STATE) || 'null');
+    const h = JSON.parse(localStorage.getItem(LS_HIST) || 'null');
+    if (s && s.v === 1){ S = s; S.settings.rules = { ...DEFAULT_RULES, ...S.settings.rules }; }
+    else firstVisit = true;
+    if (Array.isArray(h)) history = h;
+  } catch (e) { firstVisit = true; }
+}
+let chain = Promise.resolve();
+function queue(fn){
+  if (!cloud) return;
+  chain = chain.then(fn).then(() => { if (sync !== 'cloud'){ sync = 'cloud'; } }).catch(e => { console.warn('save failed', e); sync = 'error'; });
+}
+const stateDoc = () => ({ ...S, histCount: history.length });
+function saveCloudState(){ queue(() => cloud.col.doc('state').set(stateDoc())); }
+function chunkId(i){ return 'log-' + String(i).padStart(5, '0'); }
+function saveChunk(i){ const part = history.slice(i * CHUNK, (i + 1) * CHUNK); return cloud.col.doc(chunkId(i)).set({ rounds: part }); }
+function saveCloudRound(){
+  if (!cloud) return;
+  const i = Math.floor((history.length - 1) / CHUNK);
+  queue(() => saveChunk(i));
+  queue(() => cloud.col.doc('state').set(stateDoc()));
+}
+
+async function initCloud(){
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return;
+    const id = await user.id();
+    if (!id) return;
+    const col = db.collection('data/users/' + id);
+    const snap = await col.get();
+    const docs = {}; snap.docs.forEach(d => { docs[d.id] = d.data(); });
+    cloud = { col };
+    const cs = docs.state;
+    if (cs && cs.v === 1 && (cs.updatedAt || 0) > (S.updatedAt || 0) && !busy){
+      const logIds = Object.keys(docs).filter(k => k.startsWith('log-')).sort();
+      const hist = [];
+      logIds.forEach(k => { (docs[k].rounds || []).forEach(r => hist.push(r)); });
+      const { histCount, ...rest } = cs;
+      S = { ...freshState(1000), ...rest };
+      S.settings.rules = { ...DEFAULT_RULES, ...(S.settings.rules || {}) };
+      history = hist;
+      firstVisit = false;
+      if (!$('bankSheet').hidden && $('bankCancel').hidden) hideSheets();
+      saveLocal(); saveHistLocal();
+      R = null; seen = new Set();
+      resumeRound();
+      render();
+    } else if (!cs || (S.updatedAt || 0) > (cs.updatedAt || 0)){
+      if (S.updatedAt){
+        const chunks = Math.ceil(history.length / CHUNK);
+        for (let i = 0; i < chunks; i++) queue(() => saveChunk(i));
+        saveCloudState();
+      }
+    }
+    sync = 'cloud';
+    if (!$('recordSheet').hidden) renderRecord();
+  } catch (e) { console.warn(e); sync = 'error'; }
+}
+
+/* ---------- resume an interrupted hand ---------- */
+function resumeRound(){
+  if (!S.round) return;
+  R = S.round;
+  R.hands.concat([{ cards:R.dealer }]).forEach(h => h.cards.forEach(c => { seen.add(c.id); seen.add(c.id + 'f'); seen.add(c.id + 'b'); }));
+  if (R.phase === 'deal'){
+    if (R.dealer.length === 2 && R.hands[0].cards.length === 2){ run(afterDeal); }
+    else { // interrupted while dealing: give the bet back
+      S.bankroll = cents(S.bankroll + R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0));
+      S.round = null; R = null; touch(); saveLocal();
+    }
+  } else if (R.phase === 'dealer'){ run(dealerTurn); }
+}
+
+/* ---------- wiring ---------- */
+$('spot').addEventListener('click', clearBet);
+$('openRules').addEventListener('click', () => { hideSheets(); renderRules(); $('rulesSheet').hidden = false; });
+$('openRecord').addEventListener('click', () => { hideSheets(); logShown = 50; $('recordSheet').hidden = false; renderRecord(); });
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', hideSheets));
+document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e => { if (e.target === s && !(s.id === 'bankSheet' && $('bankCancel').hidden)) hideSheets(); }));
+$('bankCancel').addEventListener('click', hideSheets);
+$('deckMinus').addEventListener('click', () => { S.settings.decks = Math.max(1, S.settings.decks - 1); settingsChanged(); });
+$('deckPlus').addEventListener('click', () => { S.settings.decks = Math.min(8, S.settings.decks + 1); settingsChanged(); });
+$('resetRules').addEventListener('click', () => { S.settings.rules = { ...DEFAULT_RULES }; S.settings.decks = 6; S.settings.max = 5000; settingsChanged(); });
+$('scopeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scope = b.dataset.scope; logShown = 50; renderRecord(); });
+$('moreLog').addEventListener('click', () => { logShown += 50; renderRecord(); });
+$('newBankBtn').addEventListener('click', () => openBank(false));
+$('bankInput').addEventListener('input', bankInputChanged);
+$('bankStart').addEventListener('click', startBank);
+addEventListener('resize', () => { render(); if (!$('recordSheet').hidden) renderRecord(); });
+addEventListener('keydown', e => { if (e.key === 'Escape' && !($('bankSheet').hidden === false && $('bankCancel').hidden)) hideSheets(); });
+
+/* ---------- boot ---------- */
+loadLocal();
+resumeRound();
+render();
+if (firstVisit) openBank(true);
+initCloud();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
