@@ -8,7 +8,7 @@ const url = process.argv[2];
   await ctx.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
   const p = await ctx.newPage();
   const errs = [];
-  p.on('pageerror', e => errs.push(e.message));
+  p.on('pageerror', e => errs.push(e.stack || e.message));
   await p.goto(url);
   await p.evaluate(() => navigator.serviceWorker.ready);
   await p.reload();
