@@ -1,6 +1,6 @@
 // Keeps the game on the phone so it opens with no internet connection.
 // Change VERSION whenever index.html changes, so phones pick up the new copy.
-const VERSION = 'bj-2026-11-24.9';
+const VERSION = 'bj-2026-11-24.10';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
