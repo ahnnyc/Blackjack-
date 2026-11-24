@@ -27,7 +27,7 @@ const val = l => { const r = l.split(' of ')[0]; return ['2','3','4','5','6'].in
         if (!midShot) { await p.screenshot({ path: dir + '/count-open.png' }); midShot = true; }
       }
       const pick = ['Stand', 'No insurance', 'No thanks'].find(l => labels.includes(l)) || labels[0];
-      await p.click(`#actions button:not([disabled]):text-is("${pick}")`);
+      await p.click(`#actions button:not([disabled]):text-is("${pick}")`); if (await p.isVisible('#warnGo')) await p.click('#warnGo');
     }
     await p.waitForTimeout(1500);
     past += (await onScreen()).reduce((a, l) => a + val(l), 0);

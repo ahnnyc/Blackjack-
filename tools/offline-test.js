@@ -27,7 +27,7 @@ const url = process.argv[2];
     if (labels.some(l => l.startsWith('Deal'))) { await p.click('#actions button:has-text("Deal")'); played++; continue; }
     if (labels.some(l => l.startsWith('$'))) { await p.click('#actions .chip:not([disabled])'); continue; }
     const pick = ['Stand', 'No insurance', 'No thanks'].find(l => labels.includes(l)) || labels[0];
-    await p.click(`#actions button:not([disabled]):text-is("${pick}")`);
+    await p.click(`#actions button:not([disabled]):text-is("${pick}")`); if (await p.isVisible('#warnGo')) await p.click('#warnGo');
   }
   await p.waitForTimeout(3000);
   await p.reload();
