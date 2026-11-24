@@ -14,7 +14,9 @@
   --cw:76px;
   color-scheme:dark;
 }
-html,body{height:100%}
+html,body{height:100%;overflow:hidden;box-sizing:border-box}
+#app,#app *{box-sizing:border-box}
+.card,.card *{box-sizing:content-box}
 body{
   background:radial-gradient(120% 80% at 50% 30%, var(--felt) 0%, var(--felt-deep) 78%) fixed, var(--felt-deep);
   color:var(--text); font-family:var(--f-ui); font-size:17px; line-height:1.35;
@@ -101,8 +103,8 @@ body.still #banner.pop{animation:none}
 .stack.ghost{visibility:hidden}
 .hinfo{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
 #spot .stack{margin-bottom:2px}
-#spot .stack i{width:46px;height:46px;font-size:18px}
-#spot .stack i + i{margin-left:-35px}
+#spot .stack i{width:42px;height:42px;font-size:17px}
+#spot .stack i + i{margin-left:-32px}
 
 #print{width:100%;max-width:380px;text-align:center;margin:2px 0}
 #print svg{width:100%;height:auto;display:block}
@@ -121,7 +123,7 @@ body.still #banner.pop{animation:none}
 .res.good{color:var(--good)} .res.bad{color:var(--bad)} .res.even{color:var(--text)}
 
 #spot{
-  width:108px;height:108px;border-radius:50%;border:2px dashed var(--gold);display:grid;place-items:center;
+  width:96px;height:96px;border-radius:50%;border:2px dashed var(--gold);display:grid;place-items:center;
   background:rgba(0,0,0,.12);flex:none;text-align:center;padding:0
 }
 #spot .v{font-size:22px;font-weight:700}
@@ -138,7 +140,7 @@ body.still #banner.pop{animation:none}
 .btn:disabled{opacity:.45;border-style:dashed;cursor:default}
 #chips{display:flex;justify-content:space-between;gap:6px}
 .chip{
-  width:clamp(48px, calc((100vw - 64px) / 5), 58px);height:clamp(48px, calc((100vw - 64px) / 5), 58px);border-radius:50%;flex:none;font-weight:700;font-size:16px;color:#fff;
+  width:clamp(44px, calc((100vw - 64px) / 5), 52px);height:clamp(44px, calc((100vw - 64px) / 5), 52px);border-radius:50%;flex:none;font-weight:700;font-size:16px;color:#fff;
   border:4px dashed rgba(255,255,255,.85);box-shadow:0 2px 0 rgba(0,0,0,.45), inset 0 0 0 3px rgba(0,0,0,.18);
   display:grid;place-items:center;padding:0;text-shadow:0 1px 1px rgba(0,0,0,.6)
 }
@@ -941,7 +943,7 @@ function render(){
   renderPrint();
   const n = R ? R.hands.length : 1;
   const w = Math.min(innerWidth, 560) - 32;
-  const cw = n === 1 ? Math.min(88, w * 0.24) : n === 2 ? Math.min(70, w * 0.19) : Math.min(56, w * 0.145);
+  const cw = n === 1 ? Math.min(78, w * 0.22) : n === 2 ? Math.min(62, w * 0.18) : Math.min(50, w * 0.14);
 
   // dealer
   lastRects = new Map();

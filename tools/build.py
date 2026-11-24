@@ -17,7 +17,7 @@ head_part, body_part = src[:split], src[split:]
 fixes = [
     ("  padding-block:8px 6px;", "  padding-block:max(8px, env(safe-area-inset-top, 0px)) 6px;"),
     ("  -webkit-tap-highlight-color:transparent; overflow:hidden;",
-     "  -webkit-tap-highlight-color:transparent; overflow:hidden; margin:0;\n  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; overscroll-behavior:none;"),
+     "  -webkit-tap-highlight-color:transparent; overflow:hidden; margin:0;\n  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; overscroll-behavior:none; position:fixed; inset:0;"),
 ]
 for old, new in fixes:
     if head_part.count(old) != 1:
