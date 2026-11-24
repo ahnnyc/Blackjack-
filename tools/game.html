@@ -32,7 +32,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 /* top bar */
 #top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 #topgap{flex:1}
-#bank{display:flex;align-items:baseline;justify-content:center;gap:10px}
+#bank{display:flex;align-items:baseline;justify-content:flex-start;gap:10px}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 #bank .amt{font-size:28px;font-weight:700;line-height:1.1}
 .topbtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;font-size:16px;font-weight:600;color:var(--gold)}
@@ -833,10 +833,10 @@ function flyChips(fromX, toX, amount, opts = {}){
   const a = center(fromX), b = center(toX), list = chipsFor(amount).slice(0, 5), fx = $('fx');
   return Promise.all(list.map((v, k) => new Promise(res => {
     const c = document.createElement('div'); c.className = 'fly-chip c' + v; fx.append(c);
-    const lift = Math.min(90, Math.abs(b.y - a.y) * .25 + 30);
+    const lift = Math.min(24, Math.abs(b.x - a.x) * .12);   // a gentle curve, never a bounce
     const anim = c.animate([
       { transform: `translate(${a.x}px, ${a.y}px) scale(.9)`, opacity: 1 },
-      { transform: `translate(${(a.x + b.x) / 2}px, ${Math.min(a.y, b.y) - lift}px) scale(1.15)`, opacity: 1, offset: .5 },
+      { transform: `translate(${(a.x + b.x) / 2}px, ${(a.y + b.y) / 2 - lift}px) scale(1.1)`, opacity: 1, offset: .5 },
       { transform: `translate(${b.x}px, ${b.y - k * 3}px) scale(1)`, opacity: opts.fade ? 0 : 1 }
     ], { duration: 840, delay: (opts.delay || 0) + k * 120, easing: 'cubic-bezier(.3,.6,.3,1)', fill: 'both' });
     anim.onfinish = () => { c.remove(); res(); };
