@@ -31,9 +31,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 
 /* top bar */
 #top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-#bank{flex:1;min-width:0}
+#topgap{flex:1}
+#bank{display:flex;align-items:baseline;justify-content:center;gap:10px}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
-#bank .amt{font-size:26px;font-weight:700;line-height:1.1}
+#bank .amt{font-size:28px;font-weight:700;line-height:1.1}
 .topbtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;font-size:16px;font-weight:600;color:var(--gold)}
 
 /* table */
@@ -60,8 +61,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #shoe{position:absolute;top:6px;right:8px;width:34px;height:46px;border-radius:5px;transform:rotate(7deg);
   background:repeating-linear-gradient(45deg,#7a1f24 0 4px,#8e2a2f 4px 8px);border:2px solid var(--card);
   box-shadow:2px 2px 0 #d9d4c6,4px 4px 0 #b9b3a3,0 6px 10px rgba(0,0,0,.45)}
-#countBtn{position:absolute;top:4px;left:0;z-index:3;min-height:44px;padding:0 14px;border-radius:22px;
-  border:1.5px solid var(--gold);background:rgba(0,0,0,.28);color:var(--gold);font-size:16px;font-weight:600}
+#countBtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;font-weight:600}
 #countBtn[aria-expanded="true"]{background:var(--gold);color:#22180c}
 #countBox{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 14px;font-size:17px;padding:6px 10px;
   border:1.5px dashed var(--gold);border-radius:10px;background:rgba(0,0,0,.2)}
@@ -195,7 +195,8 @@ body.still .card.flip{animation:none}
 
 <div id="app">
   <header id="top">
-    <div id="bank"><div class="lbl">Bankroll</div><div class="amt num" id="bankAmt">$1,000</div></div>
+    <button id="countBtn" type="button" aria-expanded="false" aria-controls="countBox">Count</button>
+    <div id="topgap"></div>
     <button class="topbtn" id="openRules" type="button">Rules</button>
     <button class="topbtn" id="openRecord" type="button">Record</button>
   </header>
@@ -204,7 +205,6 @@ body.still .card.flip{animation:none}
     <div id="shoe" aria-hidden="true"></div>
     <div id="shoeLabel" class="num"></div>
     <div id="banner" hidden role="status" aria-live="polite"><span class="big" id="bannerBig"></span><span class="amt num" id="bannerAmt"></span></div>
-    <button id="countBtn" type="button" aria-expanded="false" aria-controls="countBox">Count</button>
     <section class="zone" aria-label="Dealer">
       <div class="zlabel" id="dealerLabel">Dealer</div>
       <div class="cards" id="dealerCards"></div>
@@ -228,6 +228,7 @@ body.still .card.flip{animation:none}
   </main>
 
   <footer id="ctl">
+    <div id="bank"><span class="lbl">Bankroll</span><span class="amt num" id="bankAmt">$1,000</span></div>
     <div id="countBox" hidden><span>Running count <b class="num" id="rcV">0</b></span><span>True count <b class="num" id="tcV">0</b></span><span class="num" id="decksV"></span></div>
     <div id="msg" role="status" aria-live="polite"></div>
     <div id="actions"></div>
