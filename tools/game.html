@@ -1489,6 +1489,7 @@ $('newBankBtn').addEventListener('click', () => openBank(false));
 $('bankInput').addEventListener('input', bankInputChanged);
 $('bankStart').addEventListener('click', startBank);
 addEventListener('resize', () => { render(); if (!$('recordSheet').hidden) renderRecord(); });
+addEventListener('bj-fit', () => render());   // sent by the home-screen app after it corrects the screen height
 addEventListener('keydown', e => { if (e.key === 'Escape' && !($('bankSheet').hidden === false && $('bankCancel').hidden)) hideSheets(); });
 
 /* ---------- boot ---------- */
