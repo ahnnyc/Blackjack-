@@ -185,7 +185,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .amt-in input{flex:1;min-width:0;background:none;border:0;color:var(--text);font:inherit;font-size:24px;font-weight:700;outline:none}
 .err{color:var(--bad);font-size:16px;margin:0}
 .empty{color:var(--muted);font-size:16px;padding:10px 0}
-@media (prefers-reduced-motion: reduce){.card.flip{animation:none}.sw .trk::after{transition:none}}
+body.still .card.flip{animation:none}
+@media (prefers-reduced-motion: reduce){.sw .trk::after{transition:none}}
 </style>
 </head>
 <body>
@@ -294,7 +295,7 @@ const CHIPS = [5, 25, 100, 500, 1000];
 const LIMITS = [100, 500, 1000, 5000, 10000, 0];
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
   resplit:true, resplitAces:false, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
-  charlie:false, push22:false, csm:false, totals:false };
+  charlie:false, push22:false, csm:false, totals:false, motion:true };
 const RULES = [
   { g:'Dealer', k:'h17', label:'Dealer hits soft 17', desc:'Off: the dealer stands on every 17.' },
   { g:'Dealer', k:'peek', label:'Dealer checks for blackjack', desc:'Off: no peek. If the dealer has blackjack, you lose doubles and splits too.' },
@@ -312,6 +313,7 @@ const RULES = [
   { g:'Surrender', k:'lateSurrender', label:'Late surrender', desc:'Give up half your bet after the dealer checks for blackjack.' },
   { g:'Surrender', k:'earlySurrender', label:'Early surrender', desc:'Give up half before the dealer checks, even against a blackjack.' },
   { g:'Shoe', k:'csm', label:'Shuffle after every hand', desc:'Like a continuous shuffling machine.' },
+  { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
@@ -319,8 +321,8 @@ const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const RES_WORD = { win:'Win', lose:'Lose', bust:'Bust', push:'Push', bj:'Blackjack', sur:'Surrendered', charlie:'Five-card Charlie', em:'Even money' };
 const LS_STATE = 'bj.state.v1', LS_HIST = 'bj.history.v1';
 const CHUNK = 200;
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const D = reduced ? 140 : 420;
+let reduced = false, D = 480;   // set from the Animations switch on every draw
+function applyMotion(){ reduced = !rules().motion; D = reduced ? 140 : 480; document.body.classList.toggle('still', reduced); }
 
 /* ---------- state ---------- */
 let S = freshState(1000);
@@ -670,7 +672,7 @@ function flyNewCards(){
       { transform: `translate(${from.x - to.x}px, ${from.y - to.y}px) rotate(-28deg) scale(.45)`, opacity: .6 },
       { transform: 'rotate(4deg) scale(1.04)', opacity: 1, offset: .82 },
       { transform: 'none', opacity: 1 }
-    ], { duration: 440, easing: 'cubic-bezier(.2,.7,.25,1)' });
+    ], { duration: 560, easing: 'cubic-bezier(.2,.7,.25,1)' });
   });
 }
 function flyChips(fromX, toX, amount, opts = {}){
@@ -683,7 +685,7 @@ function flyChips(fromX, toX, amount, opts = {}){
       { transform: `translate(${a.x}px, ${a.y}px) scale(.9)`, opacity: 1 },
       { transform: `translate(${(a.x + b.x) / 2}px, ${Math.min(a.y, b.y) - lift}px) scale(1.15)`, opacity: 1, offset: .5 },
       { transform: `translate(${b.x}px, ${b.y - k * 3}px) scale(1)`, opacity: opts.fade ? 0 : 1 }
-    ], { duration: 460, delay: (opts.delay || 0) + k * 70, easing: 'cubic-bezier(.3,.6,.3,1)', fill: 'both' });
+    ], { duration: 600, delay: (opts.delay || 0) + k * 90, easing: 'cubic-bezier(.3,.6,.3,1)', fill: 'both' });
     anim.onfinish = () => { c.remove(); res(); };
     anim.oncancel = () => { c.remove(); res(); };
   })));
@@ -692,7 +694,7 @@ function countUp(from, to){
   const el = $('bankAmt');
   if (reduced || from === to){ el.textContent = money(to); return Promise.resolve(); }
   return new Promise(res => {
-    const t0 = performance.now(), dur = 650;
+    const t0 = performance.now(), dur = 900;
     const step = t => {
       const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
       el.textContent = money(cents(from + (to - from) * e));
@@ -768,6 +770,7 @@ function stackEl(amount, max){
   return st;
 }
 function render(){
+  applyMotion();
   if (S.round && !R) R = S.round;
   $('bankAmt').textContent = money(R && R.countFrom != null ? R.countFrom : S.bankroll);
   renderPrint();
