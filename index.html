@@ -561,7 +561,7 @@ function settle(){
   R.phase = 'done'; R.net = rec.n; R.msg = '';
   S.round = null;
   S.bet = 0;
-  touch(); saveLocal(); saveHistLocal(); saveCloudRound();
+  touch(); saveHistLocal(); try { localStorage.setItem(LS_STATE, JSON.stringify(S)); } catch (e) {} idbSaveRound(history.length - 1); saveCloudRound();
 }
 
 /* ---------- betting ---------- */
@@ -611,6 +611,7 @@ function totalText(cards){
 }
 
 function render(){
+  if (S.round && !R) R = S.round;
   $('bankAmt').textContent = money(S.bankroll);
   renderPrint();
   const n = R ? R.hands.length : 1;
@@ -955,13 +956,71 @@ function hideSheets(){ document.querySelectorAll('.sheet').forEach(s => s.hidden
 
 /* ---------- saving ---------- */
 function touch(){ S.updatedAt = Date.now(); }
-function saveLocal(){ try { localStorage.setItem(LS_STATE, JSON.stringify(S)); } catch (e) {} }
+function saveLocal(){ if (!S.updatedAt) return; try { localStorage.setItem(LS_STATE, JSON.stringify(S)); } catch (e) {} idbSaveState(); }
 function saveHistLocal(){ try { localStorage.setItem(LS_HIST, JSON.stringify(history)); } catch (e) {} }
+
+/* ---------- sturdier save (IndexedDB): each write is confirmed on disk ---------- */
+let idbP = null;
+function idbOpen(){
+  if (idbP) return idbP;
+  idbP = new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open('blackjack', 1);
+      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('kv'); d.createObjectStore('rounds'); };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); }
+  });
+  return idbP;
+}
+async function idbTx(stores, fn){
+  const d = await idbOpen();
+  return new Promise((res, rej) => {
+    const t = d.transaction(stores, 'readwrite', { durability: 'strict' });
+    const out = fn(t);
+    t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  });
+}
+function idbSaveState(){ idbTx(['kv'], t => { t.objectStore('kv').put(JSON.parse(JSON.stringify(S)), 'state'); }).catch(e => console.warn('save', e)); }
+function idbSaveRound(i){ const r = history[i]; idbTx(['kv','rounds'], t => { t.objectStore('rounds').put(r, i); t.objectStore('kv').put(JSON.parse(JSON.stringify(S)), 'state'); }).catch(e => console.warn('save', e)); }
+async function idbLoad(){
+  const d = await idbOpen();
+  return new Promise((res, rej) => {
+    const t = d.transaction(['kv','rounds'], 'readonly');
+    const st = t.objectStore('kv').get('state');
+    const rs = t.objectStore('rounds').getAll();
+    t.oncomplete = () => res({ state: st.result, rounds: rs.result || [] });
+    t.onerror = () => rej(t.error);
+  });
+}
+async function idbReconcile(){
+  try {
+    const got = await idbLoad();
+    const s = got.state;
+    // The bankroll and settings: whichever save is newer wins.
+    const idbNewer = s && s.v === 1 && (s.updatedAt || 0) > (S.updatedAt || 0);
+    if (idbNewer){ S = s; S.settings.rules = { ...DEFAULT_RULES, ...S.settings.rules }; firstVisit = false; }
+    // Hands are only ever added, never removed: the longer list is the complete one.
+    const idbMore = got.rounds.length > history.length;
+    if (idbMore) history = got.rounds;
+    if (idbNewer || idbMore){
+      try { localStorage.setItem(LS_STATE, JSON.stringify(S)); localStorage.setItem(LS_HIST, JSON.stringify(history)); } catch (e) {}
+    }
+    if (S.updatedAt && (!idbNewer && (!s || (s.updatedAt || 0) < S.updatedAt) || got.rounds.length < history.length)){
+      await idbTx(['kv','rounds'], t => {
+        const rs = t.objectStore('rounds');
+        for (let i = got.rounds.length; i < history.length; i++) rs.put(history[i], i);
+        t.objectStore('kv').put(JSON.parse(JSON.stringify(S)), 'state');
+      });
+    }
+  } catch (e) { console.warn('load', e); }
+}
+
 function loadLocal(){
   try {
     const s = JSON.parse(localStorage.getItem(LS_STATE) || 'null');
     const h = JSON.parse(localStorage.getItem(LS_HIST) || 'null');
-    if (s && s.v === 1){ S = s; S.settings.rules = { ...DEFAULT_RULES, ...S.settings.rules }; }
+    if (s && s.v === 1 && s.updatedAt){ S = s; S.settings.rules = { ...DEFAULT_RULES, ...S.settings.rules }; }
     else firstVisit = true;
     if (Array.isArray(h)) history = h;
   } catch (e) { firstVisit = true; }
@@ -1053,11 +1112,18 @@ addEventListener('resize', () => { render(); if (!$('recordSheet').hidden) rende
 addEventListener('keydown', e => { if (e.key === 'Escape' && !($('bankSheet').hidden === false && $('bankCancel').hidden)) hideSheets(); });
 
 /* ---------- boot ---------- */
+addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && S.updatedAt) saveLocal(); });
+addEventListener('pagehide', () => { if (S.updatedAt){ saveLocal(); saveHistLocal(); } });
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch (e) {}
 loadLocal();
-resumeRound();
-render();
-if (firstVisit) openBank(true);
-initCloud();
+if (!S.round) render();
+(async () => {
+  await Promise.race([idbReconcile(), wait(1500)]);
+  resumeRound();
+  render();
+  if (firstVisit) openBank(true);
+  initCloud();
+})();
 })();
 </script>
 <script>
