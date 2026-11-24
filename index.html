@@ -52,7 +52,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .topbtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;font-size:16px;font-weight:600;color:var(--gold)}
 
 /* table */
-#table{min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0}
+#table{position:relative;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0}
 .zone{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px}
 .zlabel{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 .zlabel b{color:var(--text);letter-spacing:0;text-transform:none;font-size:18px}
@@ -70,10 +70,22 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .card .pip{position:absolute;right:5px;bottom:3px;font-size:calc(var(--cw)*.62);line-height:1}
 .card.back{background:repeating-linear-gradient(45deg,#7a1f24 0 6px,#8e2a2f 6px 12px);border:3px solid var(--card)}
 .card.back::after{content:"";position:absolute;inset:5px;border:1.5px solid rgba(255,255,255,.55);border-radius:4px}
-.card.new{animation:dealIn .32s ease-out}
-.card.flip{animation:flipIn .36s ease-out}
-@keyframes dealIn{from{transform:translateY(-36px) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
-@keyframes flipIn{from{transform:rotateY(90deg)}to{transform:none}}
+.card.flip{animation:flipIn .42s cubic-bezier(.2,.7,.3,1)}
+@keyframes flipIn{0%{transform:perspective(500px) rotateY(90deg) scale(1.08)}60%{transform:perspective(500px) rotateY(-8deg) scale(1.04)}100%{transform:none}}
+#shoe{position:absolute;top:6px;right:8px;width:34px;height:46px;border-radius:5px;transform:rotate(7deg);
+  background:repeating-linear-gradient(45deg,#7a1f24 0 4px,#8e2a2f 4px 8px);border:2px solid var(--card);
+  box-shadow:2px 2px 0 #d9d4c6,4px 4px 0 #b9b3a3,0 6px 10px rgba(0,0,0,.45)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:15;overflow:hidden}
+.fly-chip{position:absolute;left:0;top:0;width:32px;height:32px;margin:-16px 0 0 -16px;border-radius:50%;
+  border:3px dashed rgba(255,255,255,.9);box-shadow:0 3px 6px rgba(0,0,0,.5)}
+.stack{display:inline-flex;align-items:center;vertical-align:middle}
+.stack i{display:block;width:24px;height:24px;border-radius:50%;border:2.5px dashed rgba(255,255,255,.88);box-shadow:0 1px 2px rgba(0,0,0,.55)}
+.stack i + i{margin-left:-17px}
+.stack.ghost{visibility:hidden}
+.hinfo{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+#spot .stack{margin-bottom:2px}
+#spot .stack i{width:28px;height:28px}
+#spot .stack i + i{margin-left:-20px}
 
 #print{width:100%;max-width:380px;text-align:center;margin:2px 0}
 #print svg{width:100%;height:auto;display:block}
@@ -86,13 +98,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .hand.active{border-color:var(--gold);background:rgba(228,197,126,.08)}
 .htag{font-size:16px;color:var(--gold);font-weight:700;letter-spacing:.04em;min-height:1.3em}
 .hinfo{font-size:17px;text-align:center}
-.hinfo b{font-size:21px}
+.hinfo b{font-size:21px;letter-spacing:.02em}
 .hinfo .bet{color:var(--muted)}
 .res{font-size:17px;font-weight:700;padding:2px 10px;border-radius:14px;border:1.5px solid currentColor}
 .res.good{color:var(--good)} .res.bad{color:var(--bad)} .res.even{color:var(--text)}
 
 #spot{
-  width:92px;height:92px;border-radius:50%;border:2px dashed var(--gold);display:grid;place-items:center;
+  width:108px;height:108px;border-radius:50%;border:2px dashed var(--gold);display:grid;place-items:center;
   background:rgba(0,0,0,.12);flex:none;text-align:center;padding:0
 }
 #spot .v{font-size:22px;font-weight:700}
@@ -109,7 +121,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .btn:disabled{opacity:.45;border-style:dashed;cursor:default}
 #chips{display:flex;justify-content:space-between;gap:6px}
 .chip{
-  width:58px;height:58px;border-radius:50%;flex:none;font-weight:700;font-size:16px;color:#fff;
+  width:clamp(48px, calc((100vw - 64px) / 5), 58px);height:clamp(48px, calc((100vw - 64px) / 5), 58px);border-radius:50%;flex:none;font-weight:700;font-size:16px;color:#fff;
   border:4px dashed rgba(255,255,255,.85);box-shadow:0 2px 0 rgba(0,0,0,.45), inset 0 0 0 3px rgba(0,0,0,.18);
   display:grid;place-items:center;padding:0;text-shadow:0 1px 1px rgba(0,0,0,.6)
 }
@@ -165,7 +177,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .amt-in input{flex:1;min-width:0;background:none;border:0;color:var(--text);font:inherit;font-size:24px;font-weight:700;outline:none}
 .err{color:var(--bad);font-size:16px;margin:0}
 .empty{color:var(--muted);font-size:16px;padding:10px 0}
-@media (prefers-reduced-motion: reduce){.card.new,.card.flip{animation:none}.sw .trk::after{transition:none}}
+@media (prefers-reduced-motion: reduce){.card.flip{animation:none}.sw .trk::after{transition:none}}
 </style>
 </head>
 <body>
@@ -177,6 +189,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
   </header>
 
   <main id="table">
+    <div id="shoe" aria-hidden="true"></div>
     <section class="zone" aria-label="Dealer">
       <div class="zlabel" id="dealerLabel">Dealer</div>
       <div class="cards" id="dealerCards"></div>
@@ -195,7 +208,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
     <section class="zone" aria-label="Your hands">
       <div id="hands"></div>
     </section>
-    <button id="spot" type="button" aria-label="Your bet"><div><div class="v num" id="spotV">$0</div><div class="h" id="spotH">Bet</div></div></button>
+    <button id="spot" type="button" aria-label="Your bet"><div><div class="stack" id="spotStack"></div><div class="v num" id="spotV">$0</div><div class="h" id="spotH">Bet</div></div></button>
   </main>
 
   <footer id="ctl">
@@ -203,6 +216,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
     <div id="actions"></div>
   </footer>
 </div>
+
+<div id="fx" aria-hidden="true"></div>
 
 <div class="sheet" id="rulesSheet" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="rulesH">
@@ -268,7 +283,7 @@ const CHIPS = [5, 25, 100, 500, 1000];
 const LIMITS = [100, 500, 1000, 5000, 10000, 0];
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
   resplit:true, resplitAces:false, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
-  charlie:false, push22:false, csm:false };
+  charlie:false, push22:false, csm:false, totals:false };
 const RULES = [
   { g:'Dealer', k:'h17', label:'Dealer hits soft 17', desc:'Off: the dealer stands on every 17.' },
   { g:'Dealer', k:'peek', label:'Dealer checks for blackjack', desc:'Off: no peek. If the dealer has blackjack, you lose doubles and splits too.' },
@@ -286,6 +301,7 @@ const RULES = [
   { g:'Surrender', k:'lateSurrender', label:'Late surrender', desc:'Give up half your bet after the dealer checks for blackjack.' },
   { g:'Surrender', k:'earlySurrender', label:'Early surrender', desc:'Give up half before the dealer checks, even against a blackjack.' },
   { g:'Shoe', k:'csm', label:'Shuffle after every hand', desc:'Like a continuous shuffling machine.' },
+  { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -385,7 +401,10 @@ function newHand(bet){ return { cards:[], bet, doubled:false, fromSplit:false, s
 function run(fn){
   if (busy) return;
   busy = true; msgOverride = ''; render();
-  Promise.resolve().then(fn).catch(e => { console.error(e); }).finally(() => { busy = false; saveLocal(); render(); });
+  Promise.resolve().then(fn)
+    .then(async () => { if (R && R.phase === 'done' && !R.paid){ render(); await payoutAnim(); } })
+    .catch(e => { console.error(e); if (R) { R.countFrom = null; R.paid = true; } })
+    .finally(() => { busy = false; saveLocal(); render(); });
 }
 
 async function deal(){
@@ -394,16 +413,21 @@ async function deal(){
   if (bet < 5){ say('Tap a chip to place a bet of at least $5.'); return; }
   if (bet > S.bankroll){ say("That's more than your bankroll."); return; }
   if (bet > maxBet()){ say('That is over the table maximum of ' + money(maxBet()) + '.'); return; }
-  R = { uid:1, hands:[newHand(bet)], dealer:[], hole:true, active:0, phase:'deal', ins:0, insRet:0, pendingPeek:false, peekDone:false, offerEM:false, msg:'' };
+  const spotBox = $('spot').getBoundingClientRect();
+  R = { uid:1, hands:[newHand(bet)], dealer:[], hole:true, active:0, phase:'deal', ins:0, insRet:0, pendingPeek:false, peekDone:false, offerEM:false, msg:'', ghost:true };
   seen = new Set(); flipped = false;
   if (needShuffle()){ newShoe(); R.msg = 'Shuffling a fresh shoe of ' + S.settings.decks + (S.settings.decks === 1 ? ' deck' : ' decks') + '.'; render(); await wait(D * 2); }
   S.bankroll = cents(S.bankroll - bet); S.lastBet = bet;
   S.round = R;
   R.msg = 'Dealing…';
+  let chipsIn = null;
   for (const who of ['p','d','p','d']){
     if (who === 'p') R.hands[0].cards.push(draw()); else R.dealer.push(draw());
-    render(); await wait(D);
+    render();
+    if (!chipsIn) chipsIn = flyChips(spotBox, handStack(0), bet).then(() => { R.ghost = false; render(); });
+    await wait(D);
   }
+  await chipsIn;
   touch(); saveCloudState();
   await afterDeal();
 }
@@ -478,6 +502,8 @@ function action(kind){
     } else if (kind === 'stand'){
       h.done = true; await advance();
     } else if (kind === 'double'){
+      const add = h.bet;
+      await flyChips($('bankAmt'), handStack(R.active), add);
       S.bankroll = cents(S.bankroll - h.bet); h.bet *= 2; h.doubled = true; h.acted = true;
       h.cards.push(draw()); render(); await wait(D);
       h.done = true; await advance();
@@ -487,7 +513,9 @@ function action(kind){
       const nh = newHand(h.bet); nh.cards = [moved]; nh.fromSplit = true; nh.splitAces = ace;
       h.fromSplit = true; h.splitAces = ace; h.acted = true;
       R.hands.splice(R.active + 1, 0, nh);
-      render(); await wait(D * 0.7);
+      render();
+      await flyChips($('bankAmt'), handStack(R.active + 1), nh.bet);
+      await wait(D * 0.4);
       h.cards.push(draw()); render(); await wait(D);
       afterSplitCard(h);
       if (h.done) await advance();
@@ -534,6 +562,7 @@ function payout(h){
 
 function settle(){
   if (R.hole){ R.hole = false; flipped = true; }
+  R.countFrom = S.bankroll;
   const dv = val(R.dealer), dbj = dealerBJ();
   for (const h of R.hands){
     if (!h.r){
@@ -566,22 +595,98 @@ function settle(){
 
 /* ---------- betting ---------- */
 function clearTableIfDone(){ if (R && R.phase === 'done'){ R = null; seen = new Set(); } }
-function addChip(v){
+function addChip(v, from){
   if (busy || S.round) return;
   clearTableIfDone();
   if (S.bet + v > S.bankroll){ say("You don't have enough for that chip."); return; }
   if (S.bet + v > maxBet()){ say('The table maximum is ' + money(maxBet()) + '.'); return; }
+  const fromBox = from && from.getBoundingClientRect();
   S.bet += v; msgOverride = ''; saveLocal(); render();
+  flyChips(fromBox, $('spotStack'), v);
 }
-function clearBet(){ if (busy || S.round) return; S.bet = 0; msgOverride = ''; saveLocal(); render(); }
+function clearBet(){
+  if (busy || S.round) return;
+  const amt = S.bet, fromBox = $('spot').getBoundingClientRect();
+  S.bet = 0; msgOverride = ''; saveLocal(); render();
+  if (amt) flyChips(fromBox, $('bankAmt'), amt, { fade: true });
+}
 function rebet(){
   if (busy || S.round) return;
   clearTableIfDone();
   const b = Math.min(S.lastBet, maxBet());
   if (b < 5 || b > S.bankroll){ say("You can't cover your last bet."); return; }
+  const fromBox = $('chips') && $('chips').getBoundingClientRect();
   S.bet = b; saveLocal(); render();
+  flyChips(fromBox, $('spotStack'), b);
 }
 function say(t){ msgOverride = t; render(); }
+
+/* ---------- motion ---------- */
+const center = x => { const r = x instanceof Element ? x.getBoundingClientRect() : x; return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+function flyNewCards(){
+  const cards = document.querySelectorAll('.card.new');
+  if (!cards.length) return;
+  const from = center($('shoe'));
+  cards.forEach(el => {
+    el.classList.remove('new');
+    if (reduced || !el.animate) return;
+    const to = center(el);
+    el.animate([
+      { transform: `translate(${from.x - to.x}px, ${from.y - to.y}px) rotate(-28deg) scale(.45)`, opacity: .6 },
+      { transform: 'rotate(4deg) scale(1.04)', opacity: 1, offset: .82 },
+      { transform: 'none', opacity: 1 }
+    ], { duration: 440, easing: 'cubic-bezier(.2,.7,.25,1)' });
+  });
+}
+function flyChips(fromX, toX, amount, opts = {}){
+  if (reduced || !document.body.animate || !fromX || !toX) return Promise.resolve();
+  const a = center(fromX), b = center(toX), list = chipsFor(amount).slice(0, 5), fx = $('fx');
+  return Promise.all(list.map((v, k) => new Promise(res => {
+    const c = document.createElement('div'); c.className = 'fly-chip c' + v; fx.append(c);
+    const lift = Math.min(90, Math.abs(b.y - a.y) * .25 + 30);
+    const anim = c.animate([
+      { transform: `translate(${a.x}px, ${a.y}px) scale(.9)`, opacity: 1 },
+      { transform: `translate(${(a.x + b.x) / 2}px, ${Math.min(a.y, b.y) - lift}px) scale(1.15)`, opacity: 1, offset: .5 },
+      { transform: `translate(${b.x}px, ${b.y - k * 3}px) scale(1)`, opacity: opts.fade ? 0 : 1 }
+    ], { duration: 460, delay: (opts.delay || 0) + k * 70, easing: 'cubic-bezier(.3,.6,.3,1)', fill: 'both' });
+    anim.onfinish = () => { c.remove(); res(); };
+    anim.oncancel = () => { c.remove(); res(); };
+  })));
+}
+function countUp(from, to){
+  const el = $('bankAmt');
+  if (reduced || from === to){ el.textContent = money(to); return Promise.resolve(); }
+  return new Promise(res => {
+    const t0 = performance.now(), dur = 650;
+    const step = t => {
+      const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = money(cents(from + (to - from) * e));
+      if (k < 1) requestAnimationFrame(step); else res();
+    };
+    requestAnimationFrame(step);
+  });
+}
+const handStack = i => document.querySelector('#hands .stack[data-hand="' + i + '"]');
+async function payoutAnim(){
+  const dealer = $('dealerCards'), bank = $('bankAmt');
+  // the dealer pays winners and collects losers
+  await Promise.all(R.hands.map((h, i) => {
+    const st = handStack(i); if (!st) return null;
+    const net = cents(h.ret - h.bet);
+    if (net > 0) return flyChips(dealer, st, net, { delay: i * 140 });
+    if (h.ret === 0){ st.classList.add('ghost'); return flyChips(st, dealer, h.bet, { delay: i * 140, fade: true }); }
+    if (h.ret < h.bet) return flyChips(st, dealer, h.bet - h.ret, { delay: i * 140, fade: true });
+    return null;
+  }));
+  // what is yours comes back to your bankroll
+  const back = R.hands.map((h, i) => [h, i]).filter(([h]) => h.ret > 0);
+  if (back.length || R.insRet > 0){
+    await wait(reduced ? 0 : 160);
+    const flights = back.map(([h, i], k) => { const st = handStack(i); if (st) st.classList.add('ghost'); return flyChips(st, bank, h.ret, { delay: k * 120 }); });
+    await Promise.all([...flights, countUp(R.countFrom, S.bankroll)]);
+  }
+  R.countFrom = null; R.paid = true;
+}
 
 /* ---------- rendering ---------- */
 function cardEl(card, hidden){
@@ -610,9 +715,26 @@ function totalText(cards){
   return (v.soft ? 'Soft ' : '') + v.t;
 }
 
+function handLabel(cards, fromSplit){
+  const v = val(cards);
+  if (!fromSplit && cards.length === 2 && v.t === 21) return 'Blackjack';
+  if (v.t > 21) return rules().totals ? 'Bust ' + v.t : 'Bust';
+  return rules().totals ? (v.soft ? 'Soft ' : '') + v.t : '';
+}
+function chipsFor(a){
+  const out = []; let r = Math.round(a * 100) / 100;
+  for (const v of [1000, 500, 100, 25, 5]) while (r >= v - 0.001 && out.length < 6){ out.push(v); r -= v; }
+  if (!out.length && a > 0) out.push(5);
+  return out;
+}
+function stackEl(amount, max){
+  const st = document.createElement('span'); st.className = 'stack'; st.setAttribute('aria-hidden', 'true');
+  chipsFor(amount).slice(0, max || 5).forEach(v => { const i = document.createElement('i'); i.className = 'c' + v; st.append(i); });
+  return st;
+}
 function render(){
   if (S.round && !R) R = S.round;
-  $('bankAmt').textContent = money(S.bankroll);
+  $('bankAmt').textContent = money(R && R.countFrom != null ? R.countFrom : S.bankroll);
   renderPrint();
   const n = R ? R.hands.length : 1;
   const w = Math.min(innerWidth, 560) - 32;
@@ -623,8 +745,8 @@ function render(){
   const dl = $('dealerLabel');
   if (R && R.dealer.length){
     R.dealer.forEach((card, i) => dc.append(cardEl(card, i === 1 && R.hole)));
-    if (R.hole){ const up = R.dealer[0].c; dl.replaceChildren('Dealer shows ', bold(rk(up) === 0 ? 'Ace' : String(cv(up)))); }
-    else { const t = R.dealer.length === 2 && val(R.dealer).t === 21 ? 'Blackjack' : totalText(R.dealer); dl.replaceChildren('Dealer ', bold(t)); }
+    if (R.hole){ const up = R.dealer[0].c; if (rules().totals) dl.replaceChildren('Dealer shows ', bold(rk(up) === 0 ? 'Ace' : String(cv(up)))); else dl.textContent = 'Dealer'; }
+    else { const t = handLabel(R.dealer, false); if (t) dl.replaceChildren('Dealer ', bold(t)); else dl.textContent = 'Dealer'; }
   } else { dl.textContent = 'Dealer'; }
 
   // hands
@@ -640,10 +762,13 @@ function render(){
       const cs = document.createElement('div'); cs.className = 'cards';
       h.cards.forEach(card => cs.append(cardEl(card, false)));
       const info = document.createElement('div'); info.className = 'hinfo num';
-      const tt = isBJ(h) ? 'Blackjack' : totalText(h.cards);
-      info.append(bold(tt), ' ');
-      const b = document.createElement('span'); b.className = 'bet'; b.textContent = '· ' + money(h.bet) + (h.doubled ? ' doubled' : '');
-      info.append(b);
+      const tt = handLabel(h.cards, h.fromSplit);
+      if (tt) info.append(bold(tt));
+      const showStack = !(R.phase === 'done' && R.paid);
+      const st = stackEl(h.bet, 5); st.dataset.hand = i;
+      if (R.ghost || !showStack) st.classList.add('ghost');
+      const b = document.createElement('span'); b.className = 'bet'; b.textContent = money(h.bet) + (h.doubled ? ' doubled' : '');
+      info.append(st, b);
       if (tag.textContent) box.append(tag);
       box.append(cs, info);
       if (h.r && R.phase === 'done'){
@@ -661,12 +786,14 @@ function render(){
   const inRound = !!S.round;
   const spotAmt = inRound ? R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0) : S.bet;
   $('spotV').textContent = money(spotAmt);
-  $('spotH').textContent = inRound ? (R.ins ? 'In play, with insurance' : 'In play') : (S.bet ? 'Tap to clear' : 'Your bet');
+  $('spotStack').replaceChildren(...stackEl(spotAmt, 5).childNodes);
+  $('spotH').textContent = inRound ? (R.ins ? 'In play, with insurance' : 'In play') : 'Your bet';
   $('spot').disabled = inRound || busy || !S.bet;
   $('spot').hidden = !!R;
 
   renderControls();
   fit(cw);
+  flyNewCards();
 }
 function fit(cw){
   const t = $('table'), root = document.documentElement;
@@ -712,7 +839,9 @@ function renderControls(){
     } else if (R.phase === 'player'){
       const h = cur();
       const up = R.dealer[0].c;
-      text = R.msg || ((R.hands.length > 1 ? 'Hand ' + (R.active + 1) + ' of ' + R.hands.length + ': ' : 'You have ') + totalText(h.cards) + ' against the dealer’s ' + (rk(up) === 0 ? 'ace' : cv(up)) + '.');
+      text = R.msg || (rules().totals
+        ? (R.hands.length > 1 ? 'Hand ' + (R.active + 1) + ' of ' + R.hands.length + ': ' : 'You have ') + totalText(h.cards) + ' against the dealer’s ' + (rk(up) === 0 ? 'ace' : cv(up)) + '.'
+        : (R.hands.length > 1 ? 'Hand ' + (R.active + 1) + ' of ' + R.hands.length + '. ' : '') + 'Your move.');
       a.append(row(btn('Hit', () => action('hit'), { disabled: !canHit(h) }), btn('Stand', () => action('stand'), { primary:true })));
       const r2 = row(btn('Double', () => action('double'), { disabled: !canDouble(h) }), btn('Split', () => action('split'), { disabled: !canSplit(h) }));
       if (canSurrender(h)) r2.append(btn('Surrender', () => action('surrender')));
@@ -738,7 +867,7 @@ function renderControls(){
         c.textContent = v >= 1000 ? '$' + (v / 1000) + 'K' : '$' + v;
         c.setAttribute('aria-label', 'Add a ' + money(v) + ' chip');
         c.disabled = busy || S.bet + v > S.bankroll || S.bet + v > maxBet();
-        c.addEventListener('click', () => addChip(v));
+        c.addEventListener('click', () => addChip(v, c));
         chips.append(c);
       });
       a.append(chips);
