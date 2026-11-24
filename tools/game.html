@@ -40,7 +40,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .topbtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;font-size:16px;font-weight:600;color:var(--gold)}
 
 /* table */
-#table{position:relative;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0}
+/* the table: dealer row at the top, felt print takes the slack in the middle, player area sits at the bottom */
+#table{position:relative;min-height:0;overflow-y:auto;overflow-x:hidden;display:grid;grid-template-rows:auto auto 1fr auto;
+  justify-items:center;align-items:center;row-gap:8px;padding:8px 0 12px}
+#topRow{width:100%;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:8px;min-height:58px}
+#dealerZone{align-self:start}
+#playerZone{align-self:end;justify-content:center;min-height:calc(var(--cw)*1.4 + 60px)}
 .zone{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px}
 .zlabel{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 .zlabel b{color:var(--text);letter-spacing:0;text-transform:none;font-size:18px}
@@ -60,7 +65,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .card.back::after{content:"";position:absolute;inset:5px;border:1.5px solid rgba(255,255,255,.55);border-radius:4px}
 .card.flip{animation:flipIn .62s cubic-bezier(.2,.7,.3,1)}
 @keyframes flipIn{0%{transform:perspective(500px) rotateY(90deg) scale(1.08)}60%{transform:perspective(500px) rotateY(-8deg) scale(1.04)}100%{transform:none}}
-#shoe{position:absolute;top:6px;right:8px;width:34px;height:46px;border-radius:5px;transform:rotate(7deg);
+#shoeBox{justify-self:end;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:64px}
+#shoe{position:relative;width:34px;height:46px;border-radius:5px;transform:rotate(7deg);
   background:repeating-linear-gradient(45deg,#7a1f24 0 4px,#8e2a2f 4px 8px);border:2px solid var(--card);
   box-shadow:2px 2px 0 #d9d4c6,4px 4px 0 #b9b3a3,0 6px 10px rgba(0,0,0,.45)}
 #countBtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;font-weight:600}
@@ -76,16 +82,16 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
   background:repeating-linear-gradient(45deg,#7a1f24 0 4px,#8e2a2f 4px 8px);border:2px solid var(--card);box-shadow:0 2px 4px rgba(0,0,0,.45)}
 #insSpot{display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;color:var(--gold);min-height:28px}
 #insSpot[hidden]{display:none}
-#limits{position:absolute;top:4px;left:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:16px;line-height:1.2;background:rgba(0,0,0,.15)}
+#limits{justify-self:start;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:16px;line-height:1.2;background:rgba(0,0,0,.15)}
 #limits .lt{letter-spacing:.08em;text-transform:uppercase}
 #limits #limitsV{font-weight:700;white-space:nowrap}
-#shoeLabel{position:absolute;top:58px;right:0;width:72px;white-space:nowrap;text-align:center;font-size:16px;font-weight:600;color:var(--gold);line-height:1.1}
+#shoeLabel{white-space:nowrap;text-align:center;font-size:16px;font-weight:600;color:var(--gold);line-height:1.1}
 #banner{position:absolute;left:50%;top:50%;z-index:4;transform:translate(-50%,-50%);pointer-events:none;
-  width:max-content;max-width:92%;text-align:center;padding:8px 18px;border-radius:16px;
+  width:max-content;max-width:98%;text-align:center;padding:6px 14px;border-radius:16px;
   background:var(--panel);border:3px solid var(--text);box-shadow:0 12px 30px rgba(0,0,0,.55)}
 #banner[hidden]{display:none}
-#banner .big{font-size:30px;font-weight:700;line-height:1.15}
-#banner .amt{font-size:30px;font-weight:700;margin-left:12px;white-space:nowrap}
+#banner .big{font-size:clamp(19px, 6.4vw, 26px);font-weight:700;line-height:1.15;white-space:nowrap}
+#banner .amt{font-size:clamp(19px, 6.4vw, 26px);font-weight:700;margin-left:10px;white-space:nowrap}
 #banner.good{border-color:var(--good)} #banner.good .big,#banner.good .amt{color:var(--good)}
 #banner.bad{border-style:dashed;border-color:var(--bad)} #banner.bad .big,#banner.bad .amt{color:var(--bad)}
 #banner.pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
@@ -109,7 +115,7 @@ body.still #banner.pop{animation:none}
 #print{width:100%;max-width:380px;text-align:center;margin:2px 0}
 #print svg{width:100%;height:auto;display:block}
 #table.compact #print .line2{display:none}
-#table.compact{gap:2px;padding:4px 0}
+#table.compact{row-gap:4px;padding:4px 0 6px}
 #print .line2{font-family:var(--f-display);color:var(--gold);font-size:16px;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
 
 #hands{width:100%;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 14px}
@@ -209,12 +215,13 @@ body.still .card.flip{animation:none}
   </header>
 
   <main id="table">
-    <div id="shoe" aria-hidden="true"></div>
-    <div id="shoeLabel" class="num"></div>
-    <div id="limits"><span class="lt">Limits</span><span class="num" id="limitsV"></span></div>
     <div id="banner" hidden role="status" aria-live="polite"><span class="big" id="bannerBig"></span><span class="amt num" id="bannerAmt"></span></div>
-    <section class="zone" aria-label="Dealer">
+    <div id="topRow">
+      <div id="limits"><span class="lt">Limits</span><span class="num" id="limitsV"></span></div>
       <div class="zlabel" id="dealerLabel">Dealer</div>
+      <div id="shoeBox"><div id="shoe" aria-hidden="true"></div><div id="shoeLabel" class="num"></div></div>
+    </div>
+    <section class="zone" id="dealerZone" aria-label="Dealer">
       <div class="cards" id="dealerCards"></div>
     </section>
     <div id="print" aria-label="Table rules printed on the felt">
@@ -229,10 +236,10 @@ body.still .card.flip{animation:none}
       <div class="line2" id="printIns">Insurance pays 2 to 1</div>
       <div id="insSpot" hidden><span class="stack" id="insStack"></span><span class="num" id="insAmt"></span></div>
     </div>
-    <section class="zone" aria-label="Your hands">
+    <section class="zone" id="playerZone" aria-label="Your hands">
       <div id="hands"></div>
-    </section>
     <button id="spot" type="button" aria-label="Your bet"><div><div class="stack" id="spotStack"></div><div class="v num" id="spotV">$0</div><div class="h" id="spotH">Bet</div></div></button>
+    </section>
   </main>
 
   <footer id="ctl">
