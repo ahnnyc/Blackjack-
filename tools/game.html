@@ -36,7 +36,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 #ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:#3a6e5d}
 #topgap{flex:1}
-#bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:4px 10px}
+#bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:4px 10px;min-width:0;white-space:nowrap}
 @media (max-width:419px){ #top{gap:6px} #top .topbtn, #countBtn{padding:0 11px} }
 @media (max-width:359px){ #top{gap:4px} #top .topbtn, #countBtn{padding:0 8px;font-size:15px} }
 #plTag{font-size:17px;font-weight:700;white-space:nowrap;color:var(--muted)}
@@ -149,12 +149,14 @@ body.still #banner.pop{animation:none}
 #ctl{border-top:2px solid transparent;padding:10px 0 calc(4px + env(safe-area-inset-bottom, 0px));display:flex;flex-direction:column;gap:8px;position:relative;
   background:var(--rail-felt);box-shadow:0 0 0 100vmax var(--rail-felt), inset 0 10px 14px -12px rgba(0,0,0,.6);clip-path:inset(0 -100vmax -100vmax -100vmax)}
 #msg{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0}
-.row{display:flex;gap:8px}
-.row > button{flex:1;min-width:0;line-height:1.15}
+#actions{display:grid;grid-template-rows:52px 52px;gap:8px}
+.row{display:flex;gap:8px;height:52px}
+.row > button{flex:1;min-width:0;line-height:1.1;height:100%;min-height:0}
 .btn{min-height:46px;border-radius:12px;border:1.5px solid var(--gold);background:rgba(0,0,0,.18);font-size:17px;font-weight:600;padding:0 4px}
 .btn.primary{background:var(--gold);color:#22180c;border-color:var(--gold)}
 .btn:disabled{opacity:.45;border-style:dashed;cursor:default}
-#chips{display:flex;justify-content:space-between;gap:6px}
+.btn.primary:disabled{background:transparent;color:var(--gold)}
+#chips{display:flex;justify-content:space-between;align-items:center;gap:6px;height:52px}
 .chip{
   width:clamp(40px, calc((100vw - 64px) / 5), 44px);height:clamp(40px, calc((100vw - 64px) / 5), 44px);border-radius:50%;flex:none;font-weight:700;font-size:16px;color:#fff;
   border:4px dashed rgba(255,255,255,.85);box-shadow:0 2px 0 rgba(0,0,0,.45), inset 0 0 0 3px rgba(0,0,0,.18);
@@ -1107,28 +1109,33 @@ function renderControls(){
   const msg = $('msg');
   let text = '';
   if (S.round && R){
+    const h = cur() || R.hands[0];
+    const surrOn = rules().lateSurrender || rules().earlySurrender;
+    const playing = R.phase === 'player';
+    // top row: the extra moves, always the same buttons in the same places
+    const top = row(btn('Double', () => action('double'), { disabled: !playing || !canDouble(h) }),
+                    btn('Split', () => action('split'), { disabled: !playing || !canSplit(h) }));
+    if (surrOn) top.append(btn('Surrender', () => action('surrender'), { disabled: !playing || !canSurrender(h) }));
+    a.append(top);
+    // bottom row: the main choice, main button always on the right
     if (R.phase === 'insurance'){
-      const h = R.hands[0], cost = cents(h.bet / 2);
+      const cost = cents(R.hands[0].bet / 2);
       if (R.offerEM){
-        text = 'You have blackjack and the dealer shows an ace. Take even money (' + signed(h.bet) + ' for sure)?';
+        text = 'You have blackjack and the dealer shows an ace. Take even money (' + signed(R.hands[0].bet) + ' for sure)?';
         a.append(row(btn('No thanks', () => insuranceChoice('no')), btn('Even money', () => insuranceChoice('em'), { primary:true })));
       } else {
         text = 'Dealer shows an ace. Insurance costs ' + money(cost) + ' and pays 2 to 1 if the dealer has blackjack.';
         a.append(row(btn('No insurance', () => insuranceChoice('no')), btn('Insure ' + money(cost), () => insuranceChoice('take'), { primary:true, disabled: S.bankroll < cost })));
       }
-    } else if (R.phase === 'player'){
-      const h = cur();
+    } else if (playing){
       const up = R.dealer[0].c;
       text = R.msg || (rules().totals
         ? (R.hands.length > 1 ? 'Hand ' + (R.active + 1) + ' of ' + R.hands.length + ': ' : 'You have ') + totalText(h.cards) + ' against the dealer’s ' + (rk(up) === 0 ? 'ace' : cv(up)) + '.'
         : (R.hands.length > 1 ? 'Hand ' + (R.active + 1) + ' of ' + R.hands.length + '. ' : '') + 'Your move.');
       a.append(row(btn('Hit', () => action('hit'), { disabled: !canHit(h) }), btn('Stand', () => action('stand'), { primary:true })));
-      const r2 = row(btn('Double', () => action('double'), { disabled: !canDouble(h) }), btn('Split', () => action('split'), { disabled: !canSplit(h) }));
-      if (canSurrender(h)) r2.append(btn('Surrender', () => action('surrender')));
-      a.append(r2);
     } else {
       text = R.msg || 'Dealer’s turn…';
-      a.append(row(btn('Hit', () => {}, { disabled:true }), btn('Stand', () => {}, { disabled:true })));
+      a.append(row(btn('Hit', () => {}, { disabled:true }), btn('Stand', () => {}, { disabled:true, primary:true })));
     }
   } else {
     if (R && R.phase === 'done' && R.net !== undefined){
@@ -1139,7 +1146,7 @@ function renderControls(){
     else text = '';
     if (S.bankroll < 5 && !S.bet){
       text = 'You’re out of chips. Buy more, or start a new bankroll.';
-      a.append(row(btn('Buy chips', () => openCashier(), { primary:true }), btn('New bankroll', () => openBank())));
+      a.append(row(), row(btn('New bankroll', () => openBank()), btn('Buy chips', () => openCashier(), { primary:true })));
     } else {
       const chips = document.createElement('div'); chips.id = 'chips';
       CHIPS.forEach(v => {
