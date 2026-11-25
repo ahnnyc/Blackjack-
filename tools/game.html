@@ -38,6 +38,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #topgap{flex:1}
 #bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:4px 10px}
 #openCashier{margin-left:auto;min-height:40px}
+#plTag{font-size:17px;font-weight:700;white-space:nowrap;color:var(--muted)}
+#plTag.up{color:var(--good)} #plTag.down{color:var(--bad)}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 #bank .amt{font-size:24px;font-weight:700;line-height:1.1}
 .topbtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;font-size:16px;font-weight:600;color:var(--gold)}
@@ -250,7 +252,7 @@ body.still .card.flip{animation:none}
   </main>
 
   <footer id="ctl">
-    <div id="bank"><span class="lbl">Bankroll</span><span class="amt num" id="bankAmt">$1,000</span><button class="topbtn" id="openCashier" type="button">Cashier</button></div>
+    <div id="bank"><span class="lbl">Bankroll</span><span class="amt num" id="bankAmt">$1,000</span><span class="pl num" id="plTag"></span><button class="topbtn" id="openCashier" type="button">Cashier</button></div>
     <div id="countBox" hidden><span>Running count <b class="num" id="rcV">0</b></span><span>True count <b class="num" id="tcV">0</b></span><span class="num" id="decksV"></span></div>
     <div id="msg" role="status" aria-live="polite"></div>
     <div id="actions"></div>
@@ -971,6 +973,11 @@ function render(){
   if (S.round && !R) R = S.round;
   $('bankAmt').textContent = money(R && R.countFrom != null ? R.countFrom : S.bankroll);
   renderPrint();
+  // up or down on this bankroll, from hands played (chips bought or cashed in don't count)
+  const pl = cents(history.reduce((a, r) => r.s === S.session ? a + r.n : a, 0)), plTag = $('plTag');
+  plTag.className = 'pl num' + (pl > 0 ? ' up' : pl < 0 ? ' down' : '');
+  plTag.textContent = pl > 0 ? '▲ Up ' + money(pl) : pl < 0 ? '▼ Down ' + money(-pl) : 'Even';
+  plTag.setAttribute('aria-label', pl > 0 ? 'You are up ' + money(pl) + ' on this bankroll' : pl < 0 ? 'You are down ' + money(-pl) + ' on this bankroll' : 'You are even on this bankroll');
   const n = R ? R.hands.length : 1;
   const w = Math.min(innerWidth, 560) - 32;
   const cw = n === 1 ? Math.min(62, w * 0.18) : n === 2 ? Math.min(50, w * 0.15) : Math.min(42, w * 0.12);
