@@ -112,7 +112,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
   width:max-content;max-width:98%;text-align:center;padding:6px 14px;border-radius:16px;
   background:var(--panel);border:3px solid var(--text);box-shadow:0 12px 30px rgba(0,0,0,.55)}
 #banner[hidden]{display:none}
-#banner .big{font-size:clamp(19px, 6.4vw, 26px);font-weight:700;line-height:1.15;white-space:nowrap}
+#banner .big{font-size:clamp(19px, 6.4vw, 26px);font-weight:700;line-height:1.15}
 #banner .amt{font-size:clamp(19px, 6.4vw, 26px);font-weight:700;margin-left:10px;white-space:nowrap}
 #banner.good{border-color:var(--good)} #banner.good .big,#banner.good .amt{color:var(--good)}
 #banner.bad{border-style:dashed;border-color:var(--bad)} #banner.bad .big,#banner.bad .amt{color:var(--bad)}
@@ -180,7 +180,7 @@ body.still #banner.pop{animation:none}
 /* sheets */
 .sheet{position:fixed;inset:0;background:rgba(3,14,10,.72);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .panel{
-  width:100%;max-width:560px;max-height:90%;overflow-y:auto;background:var(--panel);border-radius:18px 18px 0 0;
+  box-sizing:border-box;width:100%;max-width:560px;max-height:calc(100% - env(safe-area-inset-top, 0px) - 56px);overflow-y:auto;background:var(--panel);border-radius:18px 18px 0 0;
   border-top:2px solid var(--gold);
   padding:16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   display:flex;flex-direction:column;gap:14px
@@ -391,6 +391,7 @@ const RULES = [
 ];
 const SUITS = ['♠','♥','♦','♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const SHORT_WORD = { win:'Win', lose:'Lose', bust:'Bust', push:'Push', bj:'Blackjack', sur:'Surrender', charlie:'Charlie', em:'Even money' };
 const RES_WORD = { win:'Win', lose:'Lose', bust:'Bust', push:'Push', bj:'Blackjack', sur:'Surrendered', charlie:'Five-card Charlie', em:'Even money' };
 const LS_STATE = 'bj.state.v1', LS_HIST = 'bj.history.v1';
 const CHUNK = 200;
@@ -1035,7 +1036,7 @@ function render(){
         const res = document.createElement('div');
         const net = cents(h.ret - h.bet);
         res.className = 'res num ' + (net > 0 ? 'good' : net < 0 ? 'bad' : 'even');
-        res.textContent = (net > 0 ? '✓ ' : net < 0 ? '✕ ' : '= ') + RES_WORD[h.r] + ' ' + signed(net);
+        res.textContent = (net > 0 ? '✓ ' : net < 0 ? '✕ ' : '= ') + SHORT_WORD[h.r] + (net ? ' ' + signed(net) : '');
         box.append(res);
       }
       hs.append(box);
@@ -1053,14 +1054,13 @@ function render(){
     const one = R.hands.length === 1 ? R.hands[0] : null, n = R.net;
     let big;
     if (one){
-      big = { win:'You win!', bj:'Blackjack!', charlie:'Five-card Charlie!', em:'Even money', push:'Push', sur:'Surrendered', bust:'Bust', lose:'Dealer wins' }[one.r];
-      if (R.ins && R.insRet > 0) big += ' Insurance paid.';
-    } else big = n > 0 ? 'You come out ahead' : n < 0 ? 'Dealer comes out ahead' : 'You break even';
+      big = SHORT_WORD[one.r];
+    } else big = n > 0 ? 'Up' : n < 0 ? 'Down' : 'Even';
     const wasHidden = ban.hidden || ban.dataset.round !== String(history.length);
     ban.hidden = false; ban.dataset.round = String(history.length);
     ban.className = n > 0 ? 'good' : n < 0 ? 'bad' : '';
     $('bannerBig').textContent = (n > 0 ? '✓ ' : n < 0 ? '✕ ' : '= ') + big;
-    $('bannerAmt').textContent = n === 0 ? 'Your money back' : signed(n);
+    $('bannerAmt').textContent = n === 0 ? '$0' : signed(n);
     if (wasHidden){ void ban.offsetWidth; ban.classList.add('pop'); }
   } else ban.hidden = true;
 
