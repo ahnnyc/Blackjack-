@@ -284,11 +284,11 @@ body.still .card.flip{animation:none}
 <div class="sheet" id="recordSheet" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="recordH">
     <div class="phead"><h2 id="recordH">Your record</h2><button class="topbtn" type="button" data-close>Done</button></div>
-    <div class="gtitle">Current roll, hand by hand</div>
+    <div class="gtitle">Current roll: up or down</div>
     <p class="readout num" id="chartRead1"></p>
     <div class="chart" id="chart1"></div>
     <p class="note" id="chartNote1"></p>
-    <div class="gtitle">Lifetime, hand by hand</div>
+    <div class="gtitle">Lifetime: up or down</div>
     <p class="readout num" id="chartRead2"></p>
     <div class="chart" id="chart2"></div>
     <p class="note" id="chartNote2"></p>
@@ -1271,22 +1271,17 @@ function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(raw))), f =
 function shortMoney(v){ return Math.abs(v) >= 10000 ? (v < 0 ? '−' : '') + '$' + (Math.round(Math.abs(v) / 100) / 10).toLocaleString('en-US') + 'K' : money(v); }
 function drawChart(list, scope, n, cash){
   const box = $('chart' + n); box.replaceChildren();
-  const series = []; let x = 0, cur = null, ser = null, hand = 0;
-  const events = list.map(r => ({ t: r.t, r })).concat((cash || []).map(c => ({ t: c.t, c }))).sort((a, b) => a.t - b.t);
-  for (const ev of events){
-    const sNo = ev.r ? ev.r.s : ev.c.s;
-    if (sNo !== cur){
-      cur = sNo; const st = S.sessions.find(z => z.s === sNo);
-      const startY = st ? st.start : ev.r ? cents(ev.r.b - ev.r.n) : cents(ev.c.b - ev.c.a);
-      ser = { s:sNo, pts:[{ x, y: startY, hand:null, s:sNo }] }; series.push(ser);
-    }
-    if (ev.r){ const r = ev.r; hand++; x++; ser.pts.push({ x, y:r.b, hand, n:r.n, s:r.s }); }
-    else ser.pts.push({ x, y: ev.c.b, hand:null, cash: ev.c.a, s: sNo });
+  // The line is what you've won or lost at the table: up is profit, down is loss.
+  // Chips bought or cashed in don't move it.
+  const series = []; let x = 0, cur = null, ser = null, hand = 0, total = 0;
+  for (const r of list){
+    if (r.s !== cur){ cur = r.s; ser = { s:r.s, pts:[{ x, y: total, hand:null, s:r.s }] }; series.push(ser); }
+    hand++; x++; total = cents(total + r.n); ser.pts.push({ x, y: total, hand, n:r.n, s:r.s });
   }
-  if (!series.length){ const st = S.sessions.find(z => z.s === S.session); series.push({ s:S.session, pts:[{ x:0, y: st ? st.start : S.bankroll, hand:null, s:S.session }] }); }
+  if (!series.length) series.push({ s:S.session, pts:[{ x:0, y:0, hand:null, s:S.session }] });
   const chartPts = series.flatMap(z => z.pts);
   const W = Math.max(260, box.clientWidth || 340), H = 210, padL = 70, padR = 14, padT = 14, padB = 34;
-  let lo = Math.min(...chartPts.map(p => p.y)), hi = Math.max(...chartPts.map(p => p.y));
+  let lo = Math.min(0, ...chartPts.map(p => p.y)), hi = Math.max(0, ...chartPts.map(p => p.y));
   if (hi - lo < 1){ const d = Math.max(5, hi * 0.05); lo -= d; hi += d; }
   const step = niceStep((hi - lo) / 3);
   lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
@@ -1300,15 +1295,15 @@ function drawChart(list, scope, n, cash){
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
   svg.setAttribute('role', 'img');
   const last = chartPts[chartPts.length - 1];
-  svg.setAttribute('aria-label', (scope === 'session' ? 'Current roll' : 'Lifetime') + ' line chart of your bankroll after each hand, from ' + money(chartPts[0].y) + ' to ' + money(last.y) + '.');
+  svg.setAttribute('aria-label', (scope === 'session' ? 'Current roll' : 'Lifetime') + ' line chart of how far up or down you are after each hand, ending ' + (last.y > 0 ? 'up ' + money(last.y) : last.y < 0 ? 'down ' + money(-last.y) : 'even') + '.');
   for (let v = lo; v <= hi + step / 2; v += step){
     el('line', { x1:padL, x2:W - padR, y1:Y(v), y2:Y(v), stroke:'#2c5446', 'stroke-width':1 });
-    const t = el('text', { x:padL - 8, y:Y(v) + 5, 'text-anchor':'end', fill:'#c6d6cd', 'font-size':16, 'font-family':'IBM Plex Sans Condensed, Arial Narrow, sans-serif' }); t.textContent = shortMoney(v);
+    const t = el('text', { x:padL - 8, y:Y(v) + 5, 'text-anchor':'end', fill:'#c6d6cd', 'font-size':16, 'font-family':'IBM Plex Sans Condensed, Arial Narrow, sans-serif' }); t.textContent = v > 0 ? '+' + shortMoney(v) : shortMoney(v);
   }
   const lab = (txt, xx, anchor) => { const t = el('text', { x:xx, y:H - 8, 'text-anchor':anchor, fill:'#c6d6cd', 'font-size':16, 'font-family':'IBM Plex Sans Condensed, Arial Narrow, sans-serif' }); t.textContent = txt; };
   lab('Start', padL, 'start');
   if (x > 0) lab('Hand ' + x.toLocaleString('en-US'), W - padR, 'end');
-  if (scope === 'session') el('line', { x1:padL, x2:W - padR, y1:Y(chartPts[0].y), y2:Y(chartPts[0].y), stroke:'#c6d6cd', 'stroke-width':1.5, 'stroke-dasharray':'6 5' });
+  el('line', { x1:padL, x2:W - padR, y1:Y(0), y2:Y(0), stroke:'#c6d6cd', 'stroke-width':1.5, 'stroke-dasharray':'6 5' });   // even
   series.forEach((z, k) => {
     if (k > 0) el('line', { x1:X(z.pts[0].x), x2:X(z.pts[0].x), y1:padT, y2:H - padB, stroke:'#c6d6cd', 'stroke-width':1.5, 'stroke-dasharray':'2 4' });
     if (z.pts.length > 1) el('path', { d: z.pts.map((p, i) => (i ? 'L' : 'M') + X(p.x).toFixed(1) + ' ' + Y(p.y).toFixed(1)).join(' '), fill:'none', stroke:'#e4c57e', 'stroke-width':2.5, 'stroke-linejoin':'round', 'stroke-linecap':'round' });
@@ -1320,11 +1315,12 @@ function drawChart(list, scope, n, cash){
     dot.setAttribute('cx', X(p.x)); dot.setAttribute('cy', Y(p.y));
     const latest = i === chartPts.length - 1;
     guide.setAttribute('x1', X(p.x)); guide.setAttribute('x2', X(p.x)); guide.setAttribute('visibility', latest ? 'hidden' : 'visible');
-    $('chartRead' + n).textContent = p.cash
-      ? (p.cash > 0 ? 'Bought ' + money(p.cash) + ' in chips' : 'Cashed in ' + money(-p.cash)) + (latest ? ', now ' : ': ') + money(p.y)
-      : p.hand == null
-      ? 'Started bankroll ' + p.s + ' with ' + money(p.y)
-      : (latest ? 'Now ' : 'After hand ' + p.hand.toLocaleString('en-US') + ': ') + money(p.y) + (p.n ? ' (' + (p.n > 0 ? 'won ' + money(p.n) : 'lost ' + money(-p.n)) + (latest ? ' on hand ' + p.hand.toLocaleString('en-US') : '') + ')' : ' (pushed' + (latest ? ' on hand ' + p.hand.toLocaleString('en-US') : '') + ')');
+    const pl = v => v > 0 ? 'up ' + money(v) : v < 0 ? 'down ' + money(-v) : 'even';
+    const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+    const step = p.n > 0 ? ' (won ' + money(p.n) + ')' : p.n < 0 ? ' (lost ' + money(-p.n) + ')' : ' (pushed)';
+    $('chartRead' + n).textContent = p.hand == null
+      ? (scope === 'session' || p.y === 0 ? 'Start of bankroll ' + p.s + ': even' : 'Start of bankroll ' + p.s + ': ' + pl(p.y) + ' overall')
+      : (latest ? 'Now ' + pl(p.y) + step.replace(')', ' on hand ' + p.hand.toLocaleString('en-US') + ')') : 'After hand ' + p.hand.toLocaleString('en-US') + ': ' + pl(p.y) + step)
   };
   const hit = el('rect', { x:padL - 10, y:0, width:W - padL - padR + 20, height:H, fill:'transparent' });
   hit.style.cursor = 'crosshair';
@@ -1340,8 +1336,8 @@ function drawChart(list, scope, n, cash){
   box.append(svg);
   pick(chartPts.length - 1);
   $('chartNote' + n).textContent = chartPts.length === 1
-    ? 'Play a hand and your bankroll will be drawn here.'
-    : 'Touch the chart to see your bankroll after any hand. Upright steps with no hand are chips bought or cashed in.' + (scope === 'session' ? ' The dashed line is the ' + money(chartPts[0].y) + ' you started with.' : series.length > 1 ? ' Dotted upright lines mark where you started a new bankroll.' : '');
+    ? 'Play a hand and how far up or down you are will be drawn here.'
+    : 'Above the dashed line you are up; below it you are down. Touch the chart to see any hand. Chips bought or cashed in don\u2019t count.' + (scope !== 'session' && series.length > 1 ? ' Dotted upright lines mark where you started a new bankroll.' : '');
 }
 
 /* ---------- cashier: buy chips or cash them in, any time ---------- */
