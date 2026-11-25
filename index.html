@@ -41,7 +41,7 @@ body{
 button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 #app{
-  height:100%; max-width:560px; margin:0 auto; display:grid; grid-template-rows:auto 1fr auto;
+  height:100%; max-width:560px; margin:0 auto; display:grid; grid-template-rows:auto 1fr auto; grid-template-columns:minmax(0,1fr);
   padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));
   padding-block:calc(env(safe-area-inset-top, 0px) + 44px) 6px;
 }
@@ -52,7 +52,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:#3a6e5d}
 #topgap{flex:1}
 #bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:4px 10px}
-#openCashier{margin-left:auto;min-height:40px}
+@media (max-width:419px){ #top{gap:6px} #top .topbtn, #countBtn{padding:0 11px} }
+@media (max-width:359px){ #top{gap:4px} #top .topbtn, #countBtn{padding:0 8px;font-size:15px} }
 #plTag{font-size:17px;font-weight:700;white-space:nowrap;color:var(--muted)}
 #plTag.up{color:var(--good)} #plTag.down{color:var(--bad)}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
@@ -234,6 +235,7 @@ body.still .card.flip{animation:none}
 <div id="app">
   <header id="top">
     <button id="countBtn" type="button" aria-expanded="false" aria-controls="countBox">Count</button>
+    <button class="topbtn" id="openCashier" type="button">Cashier</button>
     <div id="topgap"></div>
     <button class="topbtn" id="openRules" type="button">Rules</button>
     <button class="topbtn" id="openRecord" type="button">Record</button>
@@ -268,7 +270,7 @@ body.still .card.flip{animation:none}
   </main>
 
   <footer id="ctl">
-    <div id="bank"><span class="lbl">Bankroll</span><span class="amt num" id="bankAmt">$1,000</span><span class="pl num" id="plTag"></span><button class="topbtn" id="openCashier" type="button">Cashier</button></div>
+    <div id="bank"><span class="lbl">Bankroll</span><span class="amt num" id="bankAmt">$1,000</span><span class="pl num" id="plTag"></span></div>
     <div id="countBox" hidden><span>Running count <b class="num" id="rcV">0</b></span><span>True count <b class="num" id="tcV">0</b></span><span class="num" id="decksV"></span></div>
     <div id="msg" role="status" aria-live="polite"></div>
     <div id="actions"></div>
