@@ -36,7 +36,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 #ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:#3a6e5d}
 #topgap{flex:1}
-#bank{display:flex;align-items:baseline;justify-content:flex-start;gap:10px}
+#bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:4px 10px}
+#openCashier{margin-left:auto;min-height:40px}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 #bank .amt{font-size:24px;font-weight:700;line-height:1.1}
 .topbtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;font-size:16px;font-weight:600;color:var(--gold)}
@@ -249,7 +250,7 @@ body.still .card.flip{animation:none}
   </main>
 
   <footer id="ctl">
-    <div id="bank"><span class="lbl">Bankroll</span><span class="amt num" id="bankAmt">$1,000</span></div>
+    <div id="bank"><span class="lbl">Bankroll</span><span class="amt num" id="bankAmt">$1,000</span><button class="topbtn" id="openCashier" type="button">Cashier</button></div>
     <div id="countBox" hidden><span>Running count <b class="num" id="rcV">0</b></span><span>True count <b class="num" id="tcV">0</b></span><span class="num" id="decksV"></span></div>
     <div id="msg" role="status" aria-live="polite"></div>
     <div id="actions"></div>
@@ -310,6 +311,22 @@ body.still .card.flip{animation:none}
     <p id="warnText"></p>
     <div class="row"><button class="btn" type="button" id="warnGo">Do it anyway</button><button class="btn primary" type="button" id="warnBest"></button></div>
     <p class="note">Turn these warnings off in Rules, under Help.</p>
+  </div>
+</div>
+
+<div class="sheet" id="cashSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="cashH">
+    <div class="phead"><h2 id="cashH">Cashier</h2><button class="topbtn" type="button" data-close>Done</button></div>
+    <p class="note num" id="cashNow"></p>
+    <div class="gtitle">Buy chips</div>
+    <div class="seg" id="buyPresets"></div>
+    <label class="amt-in" for="buyInput"><span>$</span><input id="buyInput" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="500" aria-label="Dollars of chips to buy"></label>
+    <button class="btn primary" type="button" id="buyBtn">Buy chips</button>
+    <div class="gtitle">Cash in chips</div>
+    <div class="seg" id="cashPresets"></div>
+    <label class="amt-in" for="cashInput"><span>$</span><input id="cashInput" type="number" inputmode="decimal" min="0" step="0.01" value="100" aria-label="Dollars of chips to cash in"></label>
+    <button class="btn" type="button" id="cashBtn">Cash in</button>
+    <p class="err" id="cashErr" hidden></p>
   </div>
 </div>
 
@@ -1112,8 +1129,8 @@ function renderControls(){
     } else if (R && R.msg) text = R.msg;
     else text = '';
     if (S.bankroll < 5 && !S.bet){
-      text = 'You’re out of chips. Start a new bankroll to keep playing.';
-      a.append(row(btn('Start a new bankroll', () => openBank(), { primary:true })));
+      text = 'You’re out of chips. Buy more, or start a new bankroll.';
+      a.append(row(btn('Buy chips', () => openCashier(), { primary:true }), btn('New bankroll', () => openBank())));
     } else {
       const chips = document.createElement('div'); chips.id = 'chips';
       CHIPS.forEach(v => {
@@ -1195,25 +1212,36 @@ function renderRecord(){
   document.querySelectorAll('#scopeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scope === scope)));
   const list = scope === 'session' ? history.filter(r => r.s === S.session) : history;
   const sess = S.sessions.find(x => x.s === S.session);
+  const cs = scope === 'session' ? cashList().filter(c => c.s === S.session) : cashList();
+  const bought = cents(cs.filter(c => c.a > 0).reduce((a, c) => a + c.a, 0)), cashed = cents(-cs.filter(c => c.a < 0).reduce((a, c) => a + c.a, 0));
   $('sessionNote').textContent = scope === 'session'
-    ? 'Bankroll ' + S.session + ', started ' + new Date(sess ? sess.at : Date.now()).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) + ' with ' + money(sess ? sess.start : S.bankroll) + '. Now ' + money(S.bankroll) + '.'
+    ? 'Bankroll ' + S.session + ', started ' + new Date(sess ? sess.at : Date.now()).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) + ' with ' + money(sess ? sess.start : S.bankroll) + '.' + (bought ? ' Bought ' + money(bought) + ' more.' : '') + (cashed ? ' Cashed in ' + money(cashed) + '.' : '') + ' Now ' + money(S.bankroll) + '.'
     : S.sessions.length + (S.sessions.length === 1 ? ' bankroll' : ' bankrolls') + ' so far, ' + history.length + ' hands in all.';
-  drawChart(history.filter(r => r.s === S.session), 'session', '1');
-  drawChart(history, 'all', '2');
+  drawChart(history.filter(r => r.s === S.session), 'session', '1', cashList().filter(c => c.s === S.session));
+  drawChart(history, 'all', '2', cashList());
   const s = stats(list);
   const box = $('stats'); box.replaceChildren();
   const add = (k, v) => { const d = document.createElement('div'); d.className = 'stat'; const a = document.createElement('div'); a.className = 'k'; a.textContent = k; const b = document.createElement('div'); b.className = 'v num'; b.textContent = v; d.append(a, b); box.append(d); };
   add('Net result', signed(s.n)); add('Total bet', money(s.w)); add('Hands', String(s.rounds));
   add('Won', String(s.won)); add('Lost', String(s.lost)); add('Pushed', String(s.push));
   add('Blackjacks', String(s.bj)); add('Biggest win', s.best > 0 ? signed(s.best) : '—'); add('Biggest loss', s.worst < 0 ? signed(s.worst) : '—');
+  add('Chips bought', money(bought)); add('Cashed in', money(cashed)); add('Chips now', money(S.bankroll));
   const log = $('log'); log.replaceChildren();
-  if (!list.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No hands yet. Every bet you place will be listed here.'; log.append(e); }
-  const show = list.slice(-logShown).reverse();
-  const base = list.length;
-  show.forEach((r, i) => {
+  const items = list.map((r, i) => ({ t: r.t, r, num: i + 1 })).concat(cs.map(c => ({ t: c.t, c }))).sort((a, b) => b.t - a.t);
+  if (!items.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No hands yet. Every bet you place will be listed here.'; log.append(e); }
+  const stamp = t => new Date(t).toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  items.slice(0, logShown).forEach(it => {
     const e = document.createElement('div'); e.className = 'entry';
     const when = document.createElement('div'); when.className = 'when';
-    when.textContent = 'Hand ' + (base - i) + ' · ' + new Date(r.t).toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    if (it.c){
+      const c = it.c;
+      when.textContent = (c.a > 0 ? 'Chips bought' : 'Chips cashed in') + ' · ' + stamp(c.t);
+      const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = (c.a > 0 ? '+' : '−') + money(Math.abs(c.a));
+      const what = document.createElement('div'); what.className = 'what num'; what.textContent = (c.a > 0 ? 'Added to your bankroll' : 'Taken off the table') + ' · Bankroll ' + money(c.b);
+      e.append(when, amt, what); log.append(e); return;
+    }
+    const r = it.r;
+    when.textContent = 'Hand ' + it.num + ' · ' + stamp(r.t);
     const net = document.createElement('div'); net.className = 'net num'; net.style.color = r.n > 0 ? 'var(--good)' : r.n < 0 ? 'var(--bad)' : 'var(--text)';
     net.textContent = (r.n > 0 ? '✓ ' : r.n < 0 ? '✕ ' : '= ') + signed(r.n);
     const what = document.createElement('div'); what.className = 'what num';
@@ -1223,7 +1251,7 @@ function renderRecord(){
     cl.textContent = r.h.map((h, j) => (r.h.length > 1 ? 'Hand ' + (j + 1) : 'You') + ': ' + h.c.map(cardText).join(' ') + ' (' + val(h.c).t + ')').join(' · ') + ' · Dealer: ' + r.d.map(cardText).join(' ') + ' (' + val(r.d).t + ')';
     e.append(when, net, what, cl); log.append(e);
   });
-  $('moreLog').hidden = list.length <= logShown;
+  $('moreLog').hidden = items.length <= logShown;
   $('newBankBtn').disabled = !!S.round;
   $('syncNote').textContent = sync === 'cloud' ? 'Saved to your Claude account, so your bankroll and record follow you to any device you sign in on.'
     : sync === 'error' ? 'Your account could not be reached just now. Everything is saved on this device and will sync when it can.'
@@ -1234,15 +1262,19 @@ function renderRecord(){
 /* ---------- bankroll chart ---------- */
 function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
 function shortMoney(v){ return Math.abs(v) >= 10000 ? (v < 0 ? '−' : '') + '$' + (Math.round(Math.abs(v) / 100) / 10).toLocaleString('en-US') + 'K' : money(v); }
-function drawChart(list, scope, n){
+function drawChart(list, scope, n, cash){
   const box = $('chart' + n); box.replaceChildren();
   const series = []; let x = 0, cur = null, ser = null, hand = 0;
-  for (const r of list){
-    if (r.s !== cur){
-      cur = r.s; const st = S.sessions.find(z => z.s === r.s);
-      ser = { s:r.s, pts:[{ x, y: st ? st.start : cents(r.b - r.n), hand:null, s:r.s }] }; series.push(ser);
+  const events = list.map(r => ({ t: r.t, r })).concat((cash || []).map(c => ({ t: c.t, c }))).sort((a, b) => a.t - b.t);
+  for (const ev of events){
+    const sNo = ev.r ? ev.r.s : ev.c.s;
+    if (sNo !== cur){
+      cur = sNo; const st = S.sessions.find(z => z.s === sNo);
+      const startY = st ? st.start : ev.r ? cents(ev.r.b - ev.r.n) : cents(ev.c.b - ev.c.a);
+      ser = { s:sNo, pts:[{ x, y: startY, hand:null, s:sNo }] }; series.push(ser);
     }
-    hand++; x++; ser.pts.push({ x, y:r.b, hand, n:r.n, s:r.s });
+    if (ev.r){ const r = ev.r; hand++; x++; ser.pts.push({ x, y:r.b, hand, n:r.n, s:r.s }); }
+    else ser.pts.push({ x, y: ev.c.b, hand:null, cash: ev.c.a, s: sNo });
   }
   if (!series.length){ const st = S.sessions.find(z => z.s === S.session); series.push({ s:S.session, pts:[{ x:0, y: st ? st.start : S.bankroll, hand:null, s:S.session }] }); }
   const chartPts = series.flatMap(z => z.pts);
@@ -1281,7 +1313,9 @@ function drawChart(list, scope, n){
     dot.setAttribute('cx', X(p.x)); dot.setAttribute('cy', Y(p.y));
     const latest = i === chartPts.length - 1;
     guide.setAttribute('x1', X(p.x)); guide.setAttribute('x2', X(p.x)); guide.setAttribute('visibility', latest ? 'hidden' : 'visible');
-    $('chartRead' + n).textContent = p.hand == null
+    $('chartRead' + n).textContent = p.cash
+      ? (p.cash > 0 ? 'Bought ' + money(p.cash) + ' in chips' : 'Cashed in ' + money(-p.cash)) + (latest ? ', now ' : ': ') + money(p.y)
+      : p.hand == null
       ? 'Started bankroll ' + p.s + ' with ' + money(p.y)
       : (latest ? 'Now ' : 'After hand ' + p.hand.toLocaleString('en-US') + ': ') + money(p.y) + (p.n ? ' (' + (p.n > 0 ? 'won ' + money(p.n) : 'lost ' + money(-p.n)) + (latest ? ' on hand ' + p.hand.toLocaleString('en-US') : '') + ')' : ' (pushed' + (latest ? ' on hand ' + p.hand.toLocaleString('en-US') : '') + ')');
   };
@@ -1300,7 +1334,60 @@ function drawChart(list, scope, n){
   pick(chartPts.length - 1);
   $('chartNote' + n).textContent = chartPts.length === 1
     ? 'Play a hand and your bankroll will be drawn here.'
-    : 'Touch the chart to see your bankroll after any hand.' + (scope === 'session' ? ' The dashed line is the ' + money(chartPts[0].y) + ' you started with.' : series.length > 1 ? ' Dotted upright lines mark where you started a new bankroll.' : '');
+    : 'Touch the chart to see your bankroll after any hand. Upright steps with no hand are chips bought or cashed in.' + (scope === 'session' ? ' The dashed line is the ' + money(chartPts[0].y) + ' you started with.' : series.length > 1 ? ' Dotted upright lines mark where you started a new bankroll.' : '');
+}
+
+/* ---------- cashier: buy chips or cash them in, any time ---------- */
+const cashList = () => S.cash || (S.cash = []);
+function inPlay(){ return S.round && R ? cents(R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0)) : 0; }
+function openCashier(){
+  hideSheets();
+  $('cashErr').hidden = true;
+  const fill = (id, list, input, onPick) => {
+    const seg = $(id); seg.replaceChildren();
+    list.forEach(([label, v]) => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+      b.addEventListener('click', () => { $(input).value = v(); onPick(); });
+      seg.append(b);
+    });
+  };
+  fill('buyPresets', [['$100', () => 100], ['$500', () => 500], ['$1,000', () => 1000], ['$5,000', () => 5000]], 'buyInput', cashierLabels);
+  fill('cashPresets', [['$100', () => Math.min(100, S.bankroll)], ['$500', () => Math.min(500, S.bankroll)], ['$1,000', () => Math.min(1000, S.bankroll)], ['All', () => S.bankroll]], 'cashInput', cashierLabels);
+  $('cashInput').value = Math.min(100, S.bankroll);
+  cashierLabels();
+  $('cashSheet').hidden = false;
+}
+function cashierLabels(){
+  const ip = inPlay();
+  $('cashNow').textContent = 'Your chips: ' + money(S.bankroll) + (ip ? ', plus ' + money(ip) + ' in play on this hand' : '') + '.';
+  const b = Math.floor(Number($('buyInput').value) || 0), c = cents(Number($('cashInput').value) || 0);
+  $('buyBtn').textContent = b > 0 ? 'Buy ' + money(b) + ' in chips' : 'Buy chips';
+  $('cashBtn').textContent = c > 0 ? 'Cash in ' + money(c) : 'Cash in';
+  $('cashBtn').disabled = S.bankroll <= 0;
+  document.querySelectorAll('#buyPresets button').forEach(x => x.setAttribute('aria-pressed', String(x.textContent === money(b))));
+  document.querySelectorAll('#cashPresets button').forEach(x => x.setAttribute('aria-pressed', String(x.textContent === 'All' ? (c > 0 && c === S.bankroll) : x.textContent === money(c))));
+}
+function cashierMove(amount){
+  const before = S.bankroll;
+  S.bankroll = cents(S.bankroll + amount);
+  cashList().push({ t: Date.now(), s: S.session, a: cents(amount), b: S.bankroll });
+  if (S.bet > S.bankroll) S.bet = 0;          // a bet not yet dealt can't be bigger than the chips left
+  touch(); saveLocal(); saveCloudState();
+  hideSheets(); render();
+  const btn = $('openCashier'), bank = $('bankAmt');
+  if (amount > 0) flyChips(btn, bank, amount); else flyChips(bank, btn, -amount, { fade: true });
+  if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+}
+function buyChips(){
+  const v = Math.floor(Number($('buyInput').value) || 0);
+  if (v < 1 || v > 1000000){ $('cashErr').textContent = 'Choose an amount from $1 to $1,000,000 to buy.'; $('cashErr').hidden = false; return; }
+  cashierMove(v);
+}
+function cashInChips(){
+  const v = cents(Number($('cashInput').value) || 0);
+  if (v <= 0){ $('cashErr').textContent = 'Choose an amount to cash in.'; $('cashErr').hidden = false; return; }
+  if (v > S.bankroll){ $('cashErr').textContent = 'You can cash in up to ' + money(S.bankroll) + '. Chips in play on a hand stay on the table.'; $('cashErr').hidden = false; return; }
+  cashierMove(-v);
 }
 
 /* ---------- bankroll sheet ---------- */
@@ -1492,6 +1579,11 @@ $('resetRules').addEventListener('click', () => { S.settings.rules = { ...DEFAUL
 $('scopeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scope = b.dataset.scope; logShown = 50; renderRecord(); });
 $('moreLog').addEventListener('click', () => { logShown += 50; renderRecord(); });
 $('newBankBtn').addEventListener('click', () => openBank(false));
+$('openCashier').addEventListener('click', openCashier);
+$('buyInput').addEventListener('input', cashierLabels);
+$('cashInput').addEventListener('input', cashierLabels);
+$('buyBtn').addEventListener('click', buyChips);
+$('cashBtn').addEventListener('click', cashInChips);
 $('bankInput').addEventListener('input', bankInputChanged);
 $('bankStart').addEventListener('click', startBank);
 addEventListener('resize', () => { render(); if (!$('recordSheet').hidden) renderRecord(); });
