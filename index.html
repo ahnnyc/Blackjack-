@@ -43,7 +43,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #app{
   height:100%; max-width:560px; margin:0 auto; display:grid; grid-template-rows:auto 1fr auto;
   padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));
-  padding-block:calc(env(safe-area-inset-top, 0px) + 22px) 6px;
+  padding-block:calc(env(safe-area-inset-top, 0px) + 44px) 6px;
 }
 .num{font-variant-numeric:tabular-nums}
 
@@ -78,9 +78,9 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
   font-family:var(--f-display);
 }
 .card + .card{margin-left:calc(var(--cw)*-.40)}
-.card .ix.ten{letter-spacing:-.11em}
+.card .ix.ten{letter-spacing:-.09em}
 .card.red{color:var(--card-red)}
-.card .ix{position:absolute;top:3px;left:4px;display:flex;flex-direction:column;align-items:center;line-height:.95;font-family:var(--f-ui);font-weight:700;letter-spacing:-.05em;font-size:max(21px, calc(var(--cw)*.46))}
+.card .ix{position:absolute;top:3px;left:4px;display:flex;flex-direction:column;align-items:center;line-height:.95;font-family:-apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', Roboto, Arial, sans-serif;font-weight:700;letter-spacing:-.03em;font-size:max(21px, calc(var(--cw)*.46))}
 .card .ix i{font-style:normal;letter-spacing:0;margin-top:1px;font-size:max(19px, calc(var(--cw)*.36))}
 .card .pip{position:absolute;right:5px;bottom:3px;font-size:calc(var(--cw)*.62);line-height:1}
 .card.back{background:repeating-linear-gradient(45deg,#7a1f24 0 6px,#8e2a2f 6px 12px);border:3px solid var(--card)}

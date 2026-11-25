@@ -15,7 +15,7 @@ head_part, body_part = src[:split], src[split:]
 
 # The Claude viewer pads the page for the iPhone notch; a home-screen app must do it itself.
 fixes = [
-    ("  padding-block:8px 6px;", "  padding-block:calc(env(safe-area-inset-top, 0px) + 22px) 6px;"),   # well clear of the clock bar and the fade iOS draws under it
+    ("  padding-block:8px 6px;", "  padding-block:calc(env(safe-area-inset-top, 0px) + 44px) 6px;"),   # well clear of the clock bar and the fade iOS draws under it
     ("#ctl{border-top:2px solid transparent;padding:10px 0 calc(4px + env(safe-area-inset-bottom, 0px));",
      "#ctl{border-top:2px solid transparent;padding:10px 0 calc(4px + var(--home-bar, env(safe-area-inset-bottom, 0px)));"),
     ("  -webkit-tap-highlight-color:transparent; overflow:hidden;",
