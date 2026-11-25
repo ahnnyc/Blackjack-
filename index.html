@@ -29,7 +29,8 @@
   color-scheme:dark;
 }
 html,body{height:100%;overflow:hidden;box-sizing:border-box}
-html{background:var(--rail-felt)}   /* anything below the game (an iPhone's cut-off strip) continues the bottom rail */
+html{background:var(--rail-felt);touch-action:manipulation}
+*{touch-action:manipulation}   /* every part of the game: two quick taps never zoom (iPhone checks the spot tapped) */   /* anything below the game (an iPhone's cut-off strip) continues the bottom rail */
 #app,#app *{box-sizing:border-box}
 .card,.card *{box-sizing:content-box}
 body{
@@ -228,6 +229,8 @@ body.still #banner.pop{animation:none}
 .amt-in span{font-size:24px;color:var(--gold)}
 .amt-in input{flex:1;min-width:0;background:none;border:0;color:var(--text);font:inherit;font-size:24px;font-weight:700;outline:none}
 .err{color:var(--bad);font-size:16px;margin:0}
+.amt-in .clr{flex:none;min-height:40px;padding:0 14px;border-radius:20px;border:1.5px solid var(--line);background:none;font-size:16px;color:var(--text)}
+.amt-in .clr:disabled,.seg button:disabled{opacity:.45;border-style:dashed;cursor:default}
 .empty{color:var(--muted);font-size:16px;padding:10px 0}
 body.still .card.flip{animation:none}
 @media (prefers-reduced-motion: reduce){.sw .trk::after{transition:none}}
@@ -341,12 +344,13 @@ body.still .card.flip{animation:none}
     <div class="phead"><h2 id="cashH">Cashier</h2><button class="topbtn" type="button" data-close>Done</button></div>
     <p class="note num" id="cashNow"></p>
     <div class="gtitle">Buy chips</div>
+    <p class="note">Tap amounts to add them up.</p>
     <div class="seg" id="buyPresets"></div>
-    <label class="amt-in" for="buyInput"><span>$</span><input id="buyInput" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="500" aria-label="Dollars of chips to buy"></label>
+    <div class="amt-in"><span>$</span><input id="buyInput" type="number" inputmode="numeric" min="0" max="1000000" step="1" value="0" aria-label="Dollars of chips to buy"><button class="clr" type="button" id="buyClear">Clear</button></div>
     <button class="btn primary" type="button" id="buyBtn">Buy chips</button>
     <div class="gtitle">Cash in chips</div>
     <div class="seg" id="cashPresets"></div>
-    <label class="amt-in" for="cashInput"><span>$</span><input id="cashInput" type="number" inputmode="decimal" min="0" step="0.01" value="100" aria-label="Dollars of chips to cash in"></label>
+    <div class="amt-in"><span>$</span><input id="cashInput" type="number" inputmode="decimal" min="0" step="0.01" value="0" aria-label="Dollars of chips to cash in"><button class="clr" type="button" id="cashClear">Clear</button></div>
     <button class="btn" type="button" id="cashBtn">Cash in</button>
     <p class="err" id="cashErr" hidden></p>
   </div>
@@ -1375,13 +1379,15 @@ function openCashier(){
     const seg = $(id); seg.replaceChildren();
     list.forEach(([label, v]) => {
       const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
-      b.addEventListener('click', () => { $(input).value = v(); onPick(); });
+      b.addEventListener('click', () => { $(input).value = v(Number($(input).value) || 0); onPick(); });
       seg.append(b);
     });
   };
-  fill('buyPresets', [['$100', () => 100], ['$500', () => 500], ['$1,000', () => 1000], ['$5,000', () => 5000]], 'buyInput', cashierLabels);
-  fill('cashPresets', [['$100', () => Math.min(100, S.bankroll)], ['$500', () => Math.min(500, S.bankroll)], ['$1,000', () => Math.min(1000, S.bankroll)], ['All', () => S.bankroll]], 'cashInput', cashierLabels);
-  $('cashInput').value = Math.min(100, S.bankroll);
+  const addBuy = n => cur => Math.min(1000000, Math.floor(cur) + n);       // each tap adds
+  const addCash = n => cur => Math.min(S.bankroll, cents(cur + n));         // never more than the chips you have
+  fill('buyPresets', [['+$100', addBuy(100)], ['+$500', addBuy(500)], ['+$1,000', addBuy(1000)], ['+$5,000', addBuy(5000)]], 'buyInput', cashierLabels);
+  fill('cashPresets', [['+$100', addCash(100)], ['+$500', addCash(500)], ['+$1,000', addCash(1000)], ['All', () => S.bankroll]], 'cashInput', cashierLabels);
+  $('buyInput').value = 0; $('cashInput').value = 0;
   cashierLabels();
   $('cashSheet').hidden = false;
 }
@@ -1391,9 +1397,10 @@ function cashierLabels(){
   const b = Math.floor(Number($('buyInput').value) || 0), c = cents(Number($('cashInput').value) || 0);
   $('buyBtn').textContent = b > 0 ? 'Buy ' + money(b) + ' in chips' : 'Buy chips';
   $('cashBtn').textContent = c > 0 ? 'Cash in ' + money(c) : 'Cash in';
-  $('cashBtn').disabled = S.bankroll <= 0;
-  document.querySelectorAll('#buyPresets button').forEach(x => x.setAttribute('aria-pressed', String(x.textContent === money(b))));
-  document.querySelectorAll('#cashPresets button').forEach(x => x.setAttribute('aria-pressed', String(x.textContent === 'All' ? (c > 0 && c === S.bankroll) : x.textContent === money(c))));
+  $('buyBtn').disabled = b <= 0;
+  $('cashBtn').disabled = S.bankroll <= 0 || c <= 0;
+  $('buyClear').disabled = b <= 0; $('cashClear').disabled = c <= 0;
+  document.querySelectorAll('#cashPresets button').forEach(x => { x.disabled = S.bankroll <= 0 || c >= S.bankroll; });
 }
 function cashierMove(amount){
   const before = S.bankroll;
@@ -1609,6 +1616,8 @@ $('moreLog').addEventListener('click', () => { logShown += 50; renderRecord(); }
 $('newBankBtn').addEventListener('click', () => openBank(false));
 $('openCashier').addEventListener('click', openCashier);
 $('buyInput').addEventListener('input', cashierLabels);
+$('buyClear').addEventListener('click', () => { $('buyInput').value = 0; $('cashErr').hidden = true; cashierLabels(); });
+$('cashClear').addEventListener('click', () => { $('cashInput').value = 0; $('cashErr').hidden = true; cashierLabels(); });
 $('cashInput').addEventListener('input', cashierLabels);
 $('buyBtn').addEventListener('click', buyChips);
 $('cashBtn').addEventListener('click', cashInChips);
