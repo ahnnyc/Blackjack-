@@ -1618,7 +1618,7 @@ const GOODS = [
   ['a private jet', '🛩️', 5000000, 30000000], ['a private island', '🏝️', 20000000, 80000000],
 ].sort((a, b) => a[2] - b[2]);   // cheapest first
 const PITCH = ['Fell off a truck.', 'Don’t ask.', 'Straight off the docks.', 'Still warm.', 'Cash only, no receipts.', 'You didn’t get this from me.'];
-const SEIZE_CHANCE = 1 / 40, BUYBACK_OVER = 10000, BUYBACK_CHANCE = 1 / 10;
+const SEIZE_CHANCE = 1 / 40, BUYBACK_OVER = 10000, BUYBACK_CHANCE = 1 / 4, BUYBACK_GAP = 2;
 const stashList = () => S.stash || (S.stash = []);
 const guy = () => S.guy || (S.guy = { lvl: 0, no: 0 });
 const pickOne = a => a[Math.floor(Math.random() * a.length)];
@@ -1639,7 +1639,7 @@ function fenceAfterHand(){
   S.fenceSeen = n;
   if (stashList().length && n - (S.fenceLast || 0) >= 2 && Math.random() < SEIZE_CHANCE){ S.fenceLast = n; return later(fenceSeize); }
   const big = stashList().filter(x => x.paid > BUYBACK_OVER);
-  if (big.length && n - (S.fenceLast || 0) >= 3 && Math.random() < BUYBACK_CHANCE){ S.fenceLast = n; const x = pickOne(big); return later(() => fenceBuyback(x)); }
+  if (big.length && n - (S.fenceLast || 0) >= BUYBACK_GAP && Math.random() < BUYBACK_CHANCE){ S.fenceLast = n; const x = pickOne(big); return later(() => fenceBuyback(x)); }
   const o = guyOdds();
   if (n - (S.fenceLast || 0) >= o.gap && S.bankroll >= 25 && Math.random() < o.chance){ S.fenceLast = n; return later(fenceOffer); }
   function later(fn){ clearTimeout(fenceTimer); fenceTimer = setTimeout(() => { if (fenceFree()) fn(); }, D * 2 + 600); }
