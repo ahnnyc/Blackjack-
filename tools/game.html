@@ -14,6 +14,14 @@
   --cw:76px;
   color-scheme:dark;
 }
+:root{--rail-line:#3a6e5d}
+/* each table has its own felt, from drab to luxurious */
+:root.t0{--felt:#4f5d55;--felt-deep:#323c36;--rail-felt:#242b27;--panel:#2c3530;--line:#66746c;--muted:#dde4df;--gold:#ece0bd;--rail-line:#5d6a63}
+:root.t1{--felt:#0f4c3d;--felt-deep:#09362b;--rail-felt:#052219;--panel:#122a22;--line:#3d6b5d;--muted:#c6d6cd;--gold:#e4c57e;--rail-line:#3a6e5d}
+:root.t2{--felt:#174483;--felt-deep:#0b2654;--rail-felt:#061634;--panel:#0e2447;--line:#3f619a;--muted:#cfdaf0;--gold:#ecc979;--rail-line:#4a6fae}
+:root.t3{--felt:#2b1a34;--felt-deep:#0e0a12;--rail-felt:#09070b;--panel:#1b1322;--line:#7a6230;--muted:#e2d8c6;--gold:#f4d070;--rail-line:#c9a347}
+:root.t3 #ctl{border-top-color:var(--gold)}
+:root.t3 #limits{border-width:2px;box-shadow:0 0 0 1px rgba(244,208,112,.35), 0 0 14px rgba(244,208,112,.25)}
 html,body{height:100%;overflow:hidden;box-sizing:border-box}
 html{background:var(--rail-felt);touch-action:manipulation}
 *{touch-action:manipulation}   /* every part of the game: two quick taps never zoom (iPhone checks the spot tapped) */   /* anything below the game (an iPhone's cut-off strip) continues the bottom rail */
@@ -35,7 +43,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 
 /* top bar */
 #top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-#ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:#3a6e5d}
+#ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:var(--rail-line)}
 #topgap{flex:1}
 #bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:4px 10px;min-width:0;white-space:nowrap}
 @media (max-width:599px){ #top{gap:4px} #top .topbtn, #top #countBtn{padding:0 7px;font-size:15px} }
@@ -432,9 +440,9 @@ body.still .card.flip{animation:none}
 // (after debts) or by betting enough at the table below; once open it stays open for that game.
 const TABLES = [
   { d: 6, min: 5,   max: 1000,   chips: [5, 25, 100, 500, 1000] },
-  { d: 4, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000],      chipsNeed: 25000,  betNeed: 50000 },
-  { d: 2, min: 100, max: 25000,  chips: [100, 500, 1000, 5000, 25000],   chipsNeed: 100000, betNeed: 250000 },
-  { d: 1, min: 500, max: 100000, chips: [500, 1000, 5000, 25000, 100000], chipsNeed: 500000, betNeed: 1000000 },
+  { d: 4, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000],      chipsNeed: 12500,   betNeed: 1500 },      // quick, so you learn tables exist
+  { d: 2, min: 100, max: 25000,  chips: [100, 500, 1000, 5000, 25000],   chipsNeed: 75000,   betNeed: 50000 },
+  { d: 1, min: 500, max: 100000, chips: [500, 1000, 5000, 25000, 100000], chipsNeed: 1000000, betNeed: 2000000 },  // the hard one
 ];
 const DENOMS = [100000, 25000, 5000, 1000, 500, 100, 25, 5];
 const chipLabel = v => v >= 1000 ? (v / 1000) + 'K' : String(v);
@@ -1088,6 +1096,7 @@ function stackEl(amount, max){
 }
 function render(){
   applyMotion();
+  const root = document.documentElement; for (let i = 0; i < 4; i++) root.classList.toggle('t' + i, i === tableNo());
   if (S.round && !R) R = S.round;
   $('bankAmt').textContent = money(R && R.countFrom != null ? R.countFrom : S.bankroll);
   renderPrint();
@@ -1685,8 +1694,10 @@ function tablesAfterHand(){
   if (opened < 0) return false;
   touch(); saveLocal(); saveCloudState();
   const t = TABLES[opened];
-  later(() => { guyOffer = false; fenceSheet('New table open', '🃏', 'The <b>' + deckTable(t.d) + '</b> is open to you: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks means better odds.',
-    [btn('Stay here', () => hideSheets()), btn('Move up', () => { moveTo(opened); hideSheets(); render(); }, { primary:true, disabled: !canSit(opened) })]); });
+  const game = opened === 3 ? 'our most exclusive game, the <b>1-deck high-roller table</b>' : 'a more exclusive game, the <b>' + deckTable(t.d) + '</b>';
+  later(() => { guyOffer = false; fenceSheet('An invitation', '🥂',
+    'A casino host in a dark suit leans over your shoulder. “We’ve noticed your play. The house would like to invite you to ' + game + '. Bets run ' + money(t.min) + ' to ' + money(t.max) + ', and with fewer decks the odds are better for you.”',
+    [btn('Not yet', () => hideSheets()), btn('Accept', () => { moveTo(opened); hideSheets(); render(); }, { primary:true, disabled: !canSit(opened) })]); });
   return true;
   function later(fn){ setTimeout(() => { if (!busy && !S.round && !sheetOpen()) fn(); }, D * 2 + 500); }
 }

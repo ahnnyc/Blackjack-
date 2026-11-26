@@ -32,7 +32,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await playHand();
   out.shoeAt4 = await p.evaluate(() => ({ shoeDecks: __bj.S.shoeDecks, cards: __bj.S.shoe.length }));
   // 2) open 2 decks by betting
-  await p.evaluate(() => { __bj.S.bankroll = 30000; __bj.S.betAt[1] = 260000; __bj.render(); });
+  await p.evaluate(() => { __bj.S.bankroll = 30000; __bj.S.betAt[1] = 60000; __bj.render(); });
   await playHand();
   out.openedByBetting = await p.isVisible('#fenceSheet') ? await p.textContent('#fenceText') : null;
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(200);
