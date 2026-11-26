@@ -623,11 +623,11 @@ const Sound = (() => {
     // chips: a hard plastic clack, chip on chip — a sharp mid-high snap with almost no ring, a dull knock
     // under it for body, then a smaller second clack a moment later as the chip settles on the stack
     chip(c, d, t){ const v = 0.94 + Math.random() * 0.12, t2 = t + 0.016 + Math.random() * 0.012;
-      burst(c, d, t, 0.016, 4600 * v, 2.2, 0.45);                 // the clack
-      burst(c, d, t, 0.02, 1800 * v, 1.4, 0.18);                  // the knock under it
-      knock(c, d, t, 3600 * v, 0.028, 0.12); knock(c, d, t, 5600 * v, 0.018, 0.07);
-      burst(c, d, t2, 0.012, 5200 * v, 2.4, 0.21);                // settling
-      knock(c, d, t2, 4000 * v, 0.016, 0.05); },
+      burst(c, d, t, 0.016, 5500 * v, 2.2, 0.45);                 // the clack
+      burst(c, d, t, 0.02, 2200 * v, 1.4, 0.18);                  // the knock under it
+      knock(c, d, t, 4300 * v, 0.028, 0.12); knock(c, d, t, 6700 * v, 0.018, 0.07);
+      burst(c, d, t2, 0.012, 6200 * v, 2.4, 0.21);                // settling
+      knock(c, d, t2, 4800 * v, 0.016, 0.05); },
     // a thin card skimming off the shoe, then a light paper tick as it lands
     deal(c, d, t){ burst(c, d, t, 0.07, 3500, 0.7, 0.14, 'highpass', 7500); burst(c, d, t + 0.065, 0.012, 7800, 1.2, 0.22, 'highpass'); },
     // a card turned over: a quick papery flick
