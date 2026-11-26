@@ -10,7 +10,7 @@ Time passes in hands: every 150 hands is a day, about an hour of play. You stop 
 
 ## Start over at any time
 
-Press and hold the Bankroll at the bottom for 3 seconds. A warning asks before anything happens; if a hand is in play it says that hand is lost. Start over gives a new game with $1,000 and keeps the record. (The ordinary Start over button is at the bottom of the Record screen.)
+Press and hold the Bankroll at the bottom for 3 seconds. A warning asks before anything happens; if a hand is in play it says that hand is lost. Start over takes the game back to the beginning, as on a first visit: the opening message, $1,000 at the 6-deck table, no debts or stuff, only the first table open. The record of past hands and the Rules switches are kept. (The ordinary Start over button is at the bottom of the Record screen.)
 
 ## Messages
 
