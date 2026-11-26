@@ -8,6 +8,10 @@ There are four tables: 6 decks ($5 to $1,000), 4 decks ($25 to $5,000), 2 decks 
 
 Time passes in hands: every 150 hands is a day, about an hour of play. You stop for breakfast (after hand 25), lunch (75) and dinner (125), and pay for your room at the end of the day (150). Prices go with your table: the diner and a budget motel at 6 decks ($5 / $8 / $12, room $49), the coffee shop and a hotel room at 4 decks ($25 / $40 / $85, room $249), the steakhouse and a tower suite at 2 decks ($40 / $75 / $180, room $799), and everything comped at the 1-deck high-roller table. When your own chips (after debts) are under $1,000, the bill is comped. It can be switched off in Rules, under Extras.
 
+## Prestige
+
+Prestige is what you paid for your stuff, plus the people with you. It counts with your chips toward opening tables (for example $900 in chips and a $500 watch opens the 4-deck table), and it earns comps: meals at $1,000 of prestige, meals and a nicer room at $10,000. Between hands the casino host offers eye candy, a companion at your side (you pick a man or a woman; $300 a day, $5,000 in prestige), and from the 2-deck table up an entourage ($2,500 a day, $25,000 in prestige). Their fees are charged at the end of each day; if you can't pay, they leave, and you can send them home after paying. Your prestige shows on the Stuff screen. Switch in Rules > Extras.
+
 ## Messages
 
 Starting over (from the Record screen, the out-of-chips message or game over) goes back to the opening message, as on a first visit.
