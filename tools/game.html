@@ -1633,11 +1633,12 @@ let fenceTimer = null, guyOffer = false;
 const gameUp = () => Math.max(0, cents(history.reduce((a, r) => r.s === S.session ? a + r.n : a, 0)));
 function guyOdds(){
   const l = guy().lvl;
-  const o = l >= 0 ? { gap: Math.max(2, 6 - l), chance: (1 / 15) * (1 + l) }      // at his keenest: every 2+ hands, 1 in 3
-                   : { gap: 6 + 2 * -l, chance: (1 / 15) / (1 - 0.5 * l) };    // at his sorest: every 14+ hands, 1 in 45
+  // neutral: about every 5 hands; keen: every 2-3 hands; sore: every 15-20 hands
+  const o = l >= 0 ? { gap: Math.max(2, 3 - Math.floor(l / 2)), chance: Math.min(0.6, (1 / 3) * (1 + 0.25 * l)) }
+                   : { gap: 3 + 2 * -l, chance: (1 / 3) / (1 - 0.5 * l) };
   // and the more you're up this game, the more he comes round: twice as often at $20,000 up, three times at $40,000
   const steps = Math.min(2, gameUp() / 20000);
-  return { gap: Math.max(2, o.gap - Math.floor(steps)), chance: Math.min(0.6, o.chance * (1 + steps)) };
+  return { gap: Math.max(2, o.gap - Math.floor(steps)), chance: Math.min(0.8, o.chance * (1 + steps)) };
 }
 function sheetOpen(){ return [...document.querySelectorAll('.sheet')].some(x => !x.hidden); }
 function fenceFree(){ return !busy && !S.round && !S.bet && !S.dead && !sheetOpen() && !firstVisit; }
