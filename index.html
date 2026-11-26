@@ -529,27 +529,33 @@ const Sound = (() => {
     o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
   }
   const make = {
-    // clay chips knocking together: a sharp clack with a little ring
-    chip(c, d, t){ const v = 0.85 + Math.random() * 0.3;
-      burst(c, d, t, 0.03, 3600 * v, 2.2, 0.55); ping(c, d, t, 2300 * v, 0.045, 0.08); burst(c, d, t + 0.016, 0.025, 5200 * v, 3, 0.3); },
-    // a card skimming off the shoe and landing with a snap
-    deal(c, d, t){ burst(c, d, t, 0.11, 1800, 0.7, 0.16, 'bandpass', 5200); burst(c, d, t + 0.1, 0.025, 6200, 1.4, 0.42); burst(c, d, t + 0.11, 0.05, 1500, 1, 0.12); },
-    // a card turned over
-    flip(c, d, t){ burst(c, d, t, 0.03, 4200, 1.3, 0.38); burst(c, d, t + 0.02, 0.06, 1700, 0.9, 0.16); },
-    // two riffles and a bridge
+    // chips: a light tap and a bright, glassy ring that dies away fast
+    chip(c, d, t){ const v = 0.92 + Math.random() * 0.16;
+      burst(c, d, t, 0.012, 7000 * v, 1.5, 0.25, 'highpass');
+      ping(c, d, t, 4200 * v, 0.12, 0.16); ping(c, d, t, 6300 * v, 0.08, 0.09); ping(c, d, t + 0.004, 8900 * v, 0.05, 0.05); },
+    // a thin card skimming off the shoe, then a light paper tick as it lands
+    deal(c, d, t){ burst(c, d, t, 0.07, 3500, 0.7, 0.14, 'highpass', 7500); burst(c, d, t + 0.065, 0.012, 7800, 1.2, 0.22, 'highpass'); },
+    // a card turned over: a quick papery flick
+    flip(c, d, t){ burst(c, d, t, 0.018, 5200, 1, 0.28, 'highpass'); burst(c, d, t + 0.016, 0.03, 8200, 0.8, 0.1, 'highpass'); },
+    // two riffles of thin cards and a soft bridge
     shuffle(c, d, t){
       for (const start of [t, t + 0.85]){
-        const n = 34;
-        for (let i = 0; i < n; i++){ const tt = start + 0.62 * Math.pow(i / n, 0.85); burst(c, d, tt, 0.016, 2600 + Math.random() * 2600, 2, 0.1 + Math.random() * 0.08); }
-        burst(c, d, start + 0.64, 0.18, 2200, 0.7, 0.12, 'bandpass', 900);
+        const n = 38;
+        for (let i = 0; i < n; i++){ const tt = start + 0.62 * Math.pow(i / n, 0.85); burst(c, d, tt, 0.01, 5000 + Math.random() * 3500, 1.4, 0.08 + Math.random() * 0.06, 'highpass'); }
+        burst(c, d, start + 0.64, 0.16, 4200, 0.7, 0.09, 'highpass', 2600);
       }
     },
-    // cards swept together off the felt
-    collect(c, d, t){ burst(c, d, t, 0.32, 1400, 0.6, 0.14, 'bandpass', 3800); for (let i = 0; i < 4; i++) burst(c, d, t + 0.05 + i * 0.06, 0.02, 4800, 1.5, 0.12); },
+    // cards slid together off the felt: a soft papery whisper with a few light ticks
+    collect(c, d, t){ burst(c, d, t, 0.26, 3200, 0.6, 0.1, 'highpass', 6500); for (let i = 0; i < 4; i++) burst(c, d, t + 0.05 + i * 0.055, 0.01, 7500, 1.2, 0.1, 'highpass'); },
   };
   // how loud each one is, so they sit at about the same level
-  const LEVEL = { chip: 2.4, deal: 1.9, flip: 2.7, shuffle: 6.5, collect: 6 };
-  function sound(c, dest, name, t){ const g = c.createGain(); g.gain.value = LEVEL[name]; g.connect(dest); make[name](c, g, t); }
+  const LEVEL = { chip: 1.25, deal: 2.65, flip: 1.85, shuffle: 2.0, collect: 4.3 };
+  // each sound goes through a limiter, so random parts piling up can never distort it
+  function sound(c, dest, name, t){
+    const g = c.createGain(); g.gain.value = LEVEL[name];
+    const lim = c.createDynamicsCompressor(); lim.threshold.value = -9; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.06;
+    g.connect(lim); lim.connect(dest); make[name](c, g, t);
+  }
   return {
     count, make, sound,
     play(name, delayMs = 0, n = 1, gapMs = 0){
