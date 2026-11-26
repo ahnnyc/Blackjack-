@@ -228,6 +228,7 @@ body.still #banner.pop{animation:none}
 .scard .nm{font-size:21px;font-weight:700;line-height:1.2}
 .scard .pd{font-size:18px;font-weight:600}
 .scard .wh{font-size:16px;color:#4a4a52}
+.scard .sd{font-size:16px;font-weight:600;color:#3d3d45}
 .scard.empty{border-style:dashed;background:rgba(0,0,0,.15);color:var(--text)}
 .scard.fly{position:fixed;z-index:60;pointer-events:none;width:150px}
 .scard.fly .art{font-size:58px} .scard.fly .nm{font-size:16px} .scard.fly .pd{font-size:15px}
@@ -1650,7 +1651,16 @@ function fenceSheet(title, art, html, buttons){
   $('fenceSheet').hidden = false;
 }
 const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
-const niceRound = v => { const st = v < 10000 ? 50 : v < 100000 ? 500 : v < 1e6 ? 5000 : 50000; return Math.floor(v / st) * st; };
+const niceRound = v => { const st = v < 1000 ? 10 : v < 10000 ? 50 : v < 100000 ? 500 : v < 1e6 ? 5000 : 50000; return Math.floor(v / st) * st; };
+// What it's really worth (hidden), and what Guy says it's worth: right about half the time,
+// usually overselling otherwise, now and then underselling. Selling it back shows the truth.
+function appraise(price){
+  const worth = Math.max(10, niceRound(price * (0.6 + Math.random() * 2.4)));
+  const r = Math.random();
+  const said = r < 0.65 ? worth : r < 0.9 ? niceRound(worth * (1.5 + Math.random() * 1.5)) : niceRound(worth * (0.5 + Math.random() * 0.3));
+  return { worth, said: Math.max(said, niceRound(price * 1.2)) };   // he never says it's worth less than he's asking
+}
+let lastOffer = null;
 function fenceOffer(){
   const l = guy().lvl;
   // sore at you: junk and the cheapest things; keen: the best you can afford
@@ -1664,10 +1674,12 @@ function fenceOffer(){
   const top = Math.min(hi, S.bankroll);
   const r = l < 0 ? Math.random() * 0.4 : l > 0 ? 0.4 + Math.random() * 0.6 : Math.random();
   const price = Math.min(S.bankroll, Math.max(lo, niceRound(lo + r * (top - lo))));
+  const { worth, said } = appraise(price);
+  lastOffer = { item, price, worth, said };
   guyOffer = true;
   fenceSheet('Guy', art,
-    (l < 0 ? 'Guy shuffles over, not looking too happy with you. “Psst. Got <b>' : 'Guy sidles up, trench coat buttoned to the chin. “Psst. Got <b>') + esc(item) + '</b> here. ' + esc(pickOne(PITCH)) + ' <b>' + money(price) + '</b>, no questions asked.”',
-    [btn('No thanks', () => guyDecline()), btn('Buy for ' + money(price), () => fenceBuy(item, art, price), { primary:true })]);
+    (l < 0 ? 'Guy shuffles over, not looking too happy with you. “Psst. Got <b>' : 'Guy sidles up, trench coat buttoned to the chin. “Psst. Got <b>') + esc(item) + '</b> here. Worth <b>' + money(said) + '</b>, easy. ' + esc(pickOne(PITCH)) + ' Yours for <b>' + money(price) + '</b>, no questions asked.”',
+    [btn('No thanks', () => guyDecline()), btn('Buy for ' + money(price), () => fenceBuy(item, art, price, worth, said), { primary:true })]);
 }
 function guyDecline(){
   guyOffer = false;
@@ -1677,16 +1689,16 @@ function guyDecline(){
 // Guy comes back for something big you bought: he has a buyer and pays more than you did
 function fenceBuyback(x){
   if (stashList().indexOf(x) < 0) return;
-  const offer = niceRound(x.paid * (1.2 + Math.random() * 1.3));
+  const offer = Math.max(niceRound(x.paid * 1.2), niceRound((x.worth || x.paid) * (0.9 + Math.random() * 0.8)));
   guyOffer = false;
   fenceSheet('Guy', x.art, 'Guy’s back. “That ' + esc(x.item.replace(/^(a|an) /, '')) + ' I sold you? I got a buyer who wants it bad. I’ll give you <b>' + money(offer) + '</b> for it.” You paid ' + money(x.paid) + ', so that’s ' + money(offer - x.paid) + ' more.',
     [btn('Keep it', () => hideSheets()), btn('Sell for ' + money(offer), () => { x.offer = offer; fenceSell(x); }, { primary:true })]);
 }
-function fenceBuy(item, art, price){
+function fenceBuy(item, art, price, worth, said){
   guyOffer = false;
   if (price > S.bankroll || S.round) { hideSheets(); return; }
   const g = guy(); g.lvl = Math.min(4, g.lvl + 1); g.no = 0;
-  const x = { id: Date.now() + '' + Math.floor(Math.random() * 1000), item, art, paid: price, t: Date.now(), game: S.session, hand: handsThisGame() };
+  const x = { id: Date.now() + '' + Math.floor(Math.random() * 1000), item, art, paid: price, worth: worth || price, said: said || price, t: Date.now(), game: S.session, hand: handsThisGame() };
   const before = moneyMove(-price, 'buy', { item });
   stashList().push(x);
   touch(); saveLocal(); saveCloudState();
@@ -1698,7 +1710,7 @@ function fenceBuy(item, art, price){
 }
 function fenceSellOffer(x){
   // his offer changes only after you play another hand, so asking again won't get a better price
-  if (x.offerAt !== history.length){ x.offer = Math.max(10, niceRound(x.paid * (0.4 + Math.random() * 1.35)) || 10); x.offerAt = history.length; saveLocal(); }
+  if (x.offerAt !== history.length){ x.offer = Math.max(10, niceRound((x.worth || x.paid) * (0.4 + Math.random() * 0.8)) || 10); x.offerAt = history.length; saveLocal(); }
   const up = x.offer - x.paid;
   guyOffer = false;
   fenceSheet('Sell to Guy?', x.art,
@@ -1742,6 +1754,7 @@ function fillCard(el, x){
   mk('art', x.art).setAttribute('aria-hidden', 'true');
   mk('nm', itemName(x));
   mk('pd num', 'Paid ' + money(x.paid));
+  if (x.said) mk('sd num', 'Guy said it’s worth ' + money(x.said));
   mk('wh', 'Bought ' + new Date(x.t).toLocaleDateString(undefined, { month:'short', day:'numeric' }) + (x.hand ? ', hand ' + x.hand : ''));
 }
 function openStuff(x){

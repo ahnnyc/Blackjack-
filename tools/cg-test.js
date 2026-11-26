@@ -1,7 +1,7 @@
 // Compulsive Gambler: the $10,000 start, the credit card, the loan shark (cut, warning, death), starting over,
 // Guy (buying, turning him down, the card that flies to Stuff), the Stuff cards, and the books adding up.
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
-const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, fenceOffer, fenceBuyback, guyDecline, fenceAfterHand, debtsAfterHand, stashList, guy, guyOdds, applyMotion, render, saveLocal };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, fenceOffer, fenceBuyback, guyDecline, appraise, get lastOffer(){ return lastOffer; }, fenceAfterHand, debtsAfterHand, stashList, guy, guyOdds, applyMotion, render, saveLocal };\n";
 fs.writeFileSync(dir + '/cg-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true };', 'fence:false };').replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 const isChip = l => /^(5|25|100|500|1K)$/.test(l);
