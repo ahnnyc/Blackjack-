@@ -1,6 +1,6 @@
 // Draws the home-screen icon at the three sizes iPhone and browsers ask for:
 // Las Vegas neon: a hot-pink neon whale's back over an electric-blue neon waterline on a midnight sky,
-// with a fountain of little gold coins shooting out of its spout.
+// with a fountain of big gold coins, some tumbling, shooting out of its spout.
 const { chromium } = require('playwright');
 const path = require('path');
 const root = path.resolve(__dirname, '..');
@@ -23,63 +23,47 @@ const svg = `<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://w
   <path d="M 92 336 C 104 184, 292 184, 420 336" fill="none" stroke="#ff2fa0" stroke-width="57.2" stroke-linecap="round" opacity=".55" filter="url(#bigglow)"/>
   <path d="M 92 336 C 104 184, 292 184, 420 336" fill="none" stroke="#ff2fa0" stroke-width="22" stroke-linecap="round" filter="url(#glow)"/>
   <path d="M 92 336 C 104 184, 292 184, 420 336" fill="none" stroke="#fff4fb" stroke-width="7.48" stroke-linecap="round"/>
-<g transform="translate(210.0 192.0)">
-  <circle r="12" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="10" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="6.6" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-3.0" cy="-3.5" rx="3.2" ry="1.6" fill="#fff6c8" opacity=".85" transform="rotate(-30 -3.0 -3.5)"/></g><g transform="translate(210.0 164.0)">
-  <circle r="14" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="12" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="7.9" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-3.6" cy="-4.2" rx="3.8" ry="1.9" fill="#fff6c8" opacity=".85" transform="rotate(-30 -3.6 -4.2)"/></g><g transform="translate(210.0 134.0)">
-  <circle r="15" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="13" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="8.6" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-3.9" cy="-4.5" rx="4.2" ry="2.1" fill="#fff6c8" opacity=".85" transform="rotate(-30 -3.9 -4.5)"/></g><g transform="translate(178.9 90.8)">
-  <circle r="16" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="14" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="9.2" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-4.2" cy="-4.9" rx="4.5" ry="2.2" fill="#fff6c8" opacity=".85" transform="rotate(-30 -4.2 -4.9)"/></g><g transform="translate(241.1 90.8)">
-  <circle r="16" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="14" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="9.2" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-4.2" cy="-4.9" rx="4.5" ry="2.2" fill="#fff6c8" opacity=".85" transform="rotate(-30 -4.2 -4.9)"/></g><g transform="translate(145.9 91.7)">
-  <circle r="16" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="14" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="9.2" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-4.2" cy="-4.9" rx="4.5" ry="2.2" fill="#fff6c8" opacity=".85" transform="rotate(-30 -4.2 -4.9)"/></g><g transform="translate(274.1 91.7)">
-  <circle r="16" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="14" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="9.2" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-4.2" cy="-4.9" rx="4.5" ry="2.2" fill="#fff6c8" opacity=".85" transform="rotate(-30 -4.2 -4.9)"/></g><g transform="translate(116.4 106.6)">
-  <circle r="15" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="13" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="8.6" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-3.9" cy="-4.5" rx="4.2" ry="2.1" fill="#fff6c8" opacity=".85" transform="rotate(-30 -3.9 -4.5)"/></g><g transform="translate(303.6 106.6)">
-  <circle r="15" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="13" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="8.6" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-3.9" cy="-4.5" rx="4.2" ry="2.1" fill="#fff6c8" opacity=".85" transform="rotate(-30 -3.9 -4.5)"/></g><g transform="translate(93.2 130.2)">
-  <circle r="14" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="12" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="7.9" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-3.6" cy="-4.2" rx="3.8" ry="1.9" fill="#fff6c8" opacity=".85" transform="rotate(-30 -3.6 -4.2)"/></g><g transform="translate(326.8 130.2)">
-  <circle r="14" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="12" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="7.9" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-3.6" cy="-4.2" rx="3.8" ry="1.9" fill="#fff6c8" opacity=".85" transform="rotate(-30 -3.6 -4.2)"/></g><g transform="translate(75.0 158.0)">
-  <circle r="13" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="11" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="7.3" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-3.3" cy="-3.8" rx="3.5" ry="1.8" fill="#fff6c8" opacity=".85" transform="rotate(-30 -3.3 -3.8)"/></g><g transform="translate(345.0 158.0)">
-  <circle r="13" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="11" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="7.3" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-3.3" cy="-3.8" rx="3.5" ry="1.8" fill="#fff6c8" opacity=".85" transform="rotate(-30 -3.3 -3.8)"/></g><g transform="translate(210.0 102.0)">
-  <circle r="16" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
-  <circle r="14" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
-  <circle r="9.2" fill="none" stroke="#b07a12" stroke-width="1.6"/>
-  <ellipse cx="-4.2" cy="-4.9" rx="4.5" ry="2.2" fill="#fff6c8" opacity=".85" transform="rotate(-30 -4.2 -4.9)"/></g>
+<g transform="translate(213.0 186.0) rotate(-30) scale(1 1.0)">
+  <circle r="22" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="20" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="13.6" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-6.0" cy="-7.0" rx="6.4" ry="3.2" fill="#fff6c8" opacity=".85" transform="rotate(-30 -6.0 -7.0)"/></g><g transform="translate(206.0 128.0) rotate(7) scale(1 0.6)">
+  <circle r="28" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="26" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="17.7" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-7.8" cy="-9.1" rx="8.3" ry="4.2" fill="#fff6c8" opacity=".85" transform="rotate(-30 -7.8 -9.1)"/></g><g transform="translate(168.0 94.0) rotate(-16) scale(1 1.0)">
+  <circle r="30" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="28" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="19.0" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-8.4" cy="-9.8" rx="9.0" ry="4.5" fill="#fff6c8" opacity=".85" transform="rotate(-30 -8.4 -9.8)"/></g><g transform="translate(118.0 92.0) rotate(21) scale(1 0.55)">
+  <circle r="29" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="27" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="18.4" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-8.1" cy="-9.4" rx="8.6" ry="4.3" fill="#fff6c8" opacity=".85" transform="rotate(-30 -8.1 -9.4)"/></g><g transform="translate(80.0 128.0) rotate(-2) scale(1 1.0)">
+  <circle r="28" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="26" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="17.7" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-7.8" cy="-9.1" rx="8.3" ry="4.2" fill="#fff6c8" opacity=".85" transform="rotate(-30 -7.8 -9.1)"/></g><g transform="translate(252.0 98.0) rotate(-25) scale(1 0.7)">
+  <circle r="30" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="28" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="19.0" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-8.4" cy="-9.8" rx="9.0" ry="4.5" fill="#fff6c8" opacity=".85" transform="rotate(-30 -8.4 -9.8)"/></g><g transform="translate(302.0 88.0) rotate(12) scale(1 1.0)">
+  <circle r="29" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="27" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="18.4" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-8.1" cy="-9.4" rx="8.6" ry="4.3" fill="#fff6c8" opacity=".85" transform="rotate(-30 -8.1 -9.4)"/></g><g transform="translate(346.0 118.0) rotate(-11) scale(1 0.5)">
+  <circle r="28" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="26" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="17.7" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-7.8" cy="-9.1" rx="8.3" ry="4.2" fill="#fff6c8" opacity=".85" transform="rotate(-30 -7.8 -9.1)"/></g><g transform="translate(370.0 160.0) rotate(26) scale(1 1.0)">
+  <circle r="24" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="22" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="15.0" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-6.6" cy="-7.7" rx="7.0" ry="3.5" fill="#fff6c8" opacity=".85" transform="rotate(-30 -6.6 -7.7)"/></g><g transform="translate(66.0 170.0) rotate(3) scale(1 0.7)">
+  <circle r="24" fill="#ffc83a" opacity=".85" filter="url(#glow)"/>
+  <circle r="22" fill="url(#gold)" stroke="#8a5a06" stroke-width="2"/>
+  <circle r="15.0" fill="none" stroke="#b07a12" stroke-width="1.6"/>
+  <ellipse cx="-6.6" cy="-7.7" rx="7.0" ry="3.5" fill="#fff6c8" opacity=".85" transform="rotate(-30 -6.6 -7.7)"/></g>
   
 </svg>`;
 (async () => {
