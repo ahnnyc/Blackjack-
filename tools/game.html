@@ -49,6 +49,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 @media (max-width:599px){ #top{gap:4px} #top .topbtn, #top #countBtn{padding:0 7px;font-size:15px} }
 @media (max-width:359px){ #top{gap:3px} #top .topbtn, #top #countBtn{padding:0 5px;font-size:14px} }
 #levelBtn{flex:none;min-height:36px;padding:0 10px;border-radius:18px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;font-weight:700;white-space:nowrap}
+/* each prestige level has its own badge color, getting richer as you climb (the name always says the level) */
+#levelBtn.lv0{background:#3a3f3c;color:#eeeeee;border-color:#8a8f8c}
+#levelBtn.lv1{background:#a9c0d2;color:#0e1d29;border-color:#d8e6f0}
+#levelBtn.lv2{background:#1f7346;color:#ffffff;border-color:#5fd08f}
+#levelBtn.lv3{background:#1d58a3;color:#ffffff;border-color:#7fb1f0}
+#levelBtn.lv4{background:#5e2f94;color:#ffffff;border-color:#c49af0}
+#levelBtn.lv5{background:#e4c57e;color:#22180c;border-color:#fff1c9;box-shadow:0 0 10px rgba(228,197,126,.45)}
+#levelBtn.lv6{background:linear-gradient(135deg,#fff1c9,#e4c57e 45%,#c9a347);color:#22180c;border:2px solid #fff6dc;box-shadow:0 0 14px rgba(255,220,140,.75), 0 0 2px #fff;letter-spacing:.03em}
+#levelBtn.lv6{animation:swGlow 2.4s ease-in-out infinite}
+@keyframes swGlow{50%{box-shadow:0 0 24px rgba(255,220,140,1), 0 0 3px #fff}}
+body.still #levelBtn.lv6{animation:none}
 #plTag{font-size:17px;font-weight:700;white-space:nowrap;color:var(--muted)}
 #plTag.up{color:var(--good)} #plTag.down{color:var(--bad)}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
@@ -475,11 +486,11 @@ const PEOPLE = {
 const HOST_CHANCE = 1 / 25, HOST_GAP = 10;
 // Prestige levels, named so the player knows where they stand.
 const LEVELS = [
-  { name:'Bait',        at:0 },
-  { name:'Minnow',      at:1000 },      // meals comped
-  { name:'Guppy',       at:5000 },
-  { name:'Tuna',        at:10000 },     // meals and the room comped
-  { name:'Dolphin',     at:25000 },
+  { name:'Bait',        at:0 },          // smallest to biggest
+  { name:'Minnow',      at:1000 },       // meals comped
+  { name:'Barracuda',   at:5000 },
+  { name:'Swordfish',   at:10000 },      // meals and the room comped
+  { name:'Marlin',      at:25000 },
   { name:'Whale',       at:100000 },
   { name:'Super Whale', at:1000000 },
 ];
@@ -1257,7 +1268,7 @@ function checkLevel(){
 }
 function render(){
   applyMotion();
-  $('levelBtn').textContent = LEVELS[levelOf(prestige())].name;
+  { const li = levelOf(prestige()); $('levelBtn').textContent = LEVELS[li].name; $('levelBtn').className = 'lv' + li; }
   checkLevel();
   const root = document.documentElement; for (let i = 0; i < 4; i++) root.classList.toggle('t' + i, i === tableNo());
   if (S.round && !R) R = S.round;
