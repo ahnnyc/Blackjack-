@@ -2,7 +2,7 @@
 // the bottom rail and every button sit each time. Everything must stay put.
 const { chromium } = require('playwright'); const fs = require('fs');
 const dir = __dirname;
-fs.writeFileSync(dir + '/page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' + fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true };', 'fence:false };') + '</body></html>');
+fs.writeFileSync(dir + '/page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' + fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true, sound:true };', 'fence:false, sound:true };') + '</body></html>');
 const isChip = l => /^(5|25|100|500|1K)$/.test(l);
 (async () => {
   const b = await chromium.launch(); const out = {};

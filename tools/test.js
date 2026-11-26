@@ -1,7 +1,7 @@
 const { chromium, devices } = require('playwright');
 const fs = require('fs');
 const dir = __dirname;
-const body = fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true };', 'fence:false };');
+const body = fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true, sound:true };', 'fence:false, sound:true };');
 fs.writeFileSync(dir + '/page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' + body + '</body></html>');
 (async () => {
   const b = await chromium.launch();

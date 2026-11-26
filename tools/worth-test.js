@@ -7,7 +7,7 @@ const { chromium } = require('playwright'); const dir = __dirname;
     for (let i = 0; i < N; i++) { const price = [50, 450, 3200, 65000, 2400000][i % 5]; const a = __bj.appraise(price);
       if (a.said === a.worth) right++; else if (a.said > a.worth) over++; else under++; if (a.said < price) belowPrice++; }
     return { right: right / N, over: over / N, under: under / N, saidBelowHisPrice: belowPrice }; });
-  await p.evaluate(() => { __bj.S.settings.rules.motion = false; __bj.applyMotion(); __bj.S.bankroll = 20000; __bj.render(); __bj.fenceOffer(); });
+  await p.evaluate(() => { __bj.S.settings.rules.motion = false; __bj.applyMotion(); __bj.S.bankroll = 20000; __bj.render(); (__bj.S.settings.rules.fence = true, __bj.fenceOffer(), __bj.S.settings.rules.fence = false); });
   out.pitch = await p.textContent('#fenceText'); out.offer = await p.evaluate(() => __bj.lastOffer);
   await p.screenshot({ path: dir + '/w-pitch.png' });
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
