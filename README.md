@@ -15,3 +15,7 @@ There are four tables: 6 decks ($5 to $1,000), 4 decks ($25 to $5,000), 2 decks 
 - `tools/cg-test.js` — the money side: the $10,000 start, the card, the loan shark's cut, the warning, death, starting over, Guy and the Stuff cards.
 
 The record lives in the phone's own storage for this site. It is not synced anywhere.
+
+## Sounds
+
+The card sounds (dealing, flipping, shuffling, collecting) are real recordings from Kenney's Casino Audio pack (kenney.nl), released under CC0, built into the page so they work offline. The chip sounds are made in code.
