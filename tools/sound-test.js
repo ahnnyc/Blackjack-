@@ -7,6 +7,8 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await p.route(/fonts/, r => r.abort()); await p.goto('file://' + dir + '/snd-page.html'); await p.waitForTimeout(1600); await p.click('#bankStart');
   const counts = () => p.evaluate(() => ({ ...__bj.Sound.count }));
   const steps = {};
+  await p.waitForTimeout(800);
+  const loaded = await p.evaluate(() => Object.fromEntries(Object.entries(__bj.Sound.buffers).map(([k, v]) => [k, v.length])));
   await p.click('.chip.c25'); await p.waitForTimeout(1000); steps.afterChipTap = await counts();
   await p.click('#actions button:has-text("Deal")'); await p.waitForTimeout(4500); steps.afterDeal = await counts();
   for (let i = 0; i < 300; i++) { const labels = await p.$$eval('#actions button:not([disabled])', bs => bs.map(x => x.textContent));
@@ -27,9 +29,9 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
       let s = ''; const u = new Uint8Array(ab); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
       return { b64: btoa(s), peak: +peak.toFixed(3) }; };
     const out = {};
-    const plan = { chips: [['chip', 0], ['chip', 0.12], ['chip', 0.24], ['chip', 0.36]], deal: [['deal', 0.05], ['deal', 0.5], ['deal', 0.95], ['deal', 1.4]], flip: [['flip', 0.05]], shuffle: [['shuffle', 0.05]], collect: [['collect', 0.05]] };
+    const plan = { chips: [['chip', 0], ['chip', 0.12], ['chip', 0.24], ['chip', 0.36]], deal: [['deal', 0.05], ['deal', 0.5], ['deal', 0.95], ['deal', 1.4]], flip: [['flip', 0.05], ['flip', 0.75]], shuffle: [['shuffle', 0.05]], collect: [['collect', 0.05], ['collect', 1.05]] };
     for (const [name, list] of Object.entries(plan)) {
-      const len = name === 'shuffle' ? 2.0 : name === 'deal' ? 1.8 : 0.8;
+      const len = name === 'shuffle' ? 2.6 : name === 'deal' ? 2.0 : name === 'collect' ? 2.1 : name === 'flip' ? 1.5 : 0.8;
       const c = new OfflineAudioContext(1, Math.round(44100 * len), 44100), g = c.createGain(); g.gain.value = 0.8; g.connect(c.destination);
       list.forEach(([k, t]) => __bj.Sound.sound(c, g, k, t));
       out[name] = enc(await c.startRendering());
@@ -37,4 +39,4 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
     return out; });
   const peaks = {};
   for (const [k, v] of Object.entries(wavs)) { fs.writeFileSync(`${dir}/sounds/${k}.wav`, Buffer.from(v.b64, 'base64')); peaks[k] = v.peak; }
-  console.log(JSON.stringify({ steps, audio, peaksOfRecordings: peaks, errors: errs }, null, 1)); await b.close(); })();
+  console.log(JSON.stringify({ loaded, steps, audio, peaksOfRecordings: peaks, errors: errs }, null, 1)); await b.close(); })();
