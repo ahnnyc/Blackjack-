@@ -413,8 +413,9 @@ body.still .card.flip{animation:none}
 const CHIPS = [5, 25, 100, 500, 1000];
 // Money: you walk in with $10,000. Then a credit card, then the loan shark.
 const START = 10000;
-const CARD_LIMIT = 50000, CARD_RATE = 0.20, YEAR_HANDS = 100, CARD_EVERY = 8;   // 20% a year; a "year" is 100 hands, charged every 8
-const SHARK_RATE = 0.10, SHARK_EVERY = 5, SHARK_MAX = 250000;                   // 10% of what you owe, every 5 hands
+const CARD_LIMIT = 50000, CARD_RATE = 0.20, CARD_EVERY = 10;    // 20% interest added every 10 hands
+const SHARK_RATE = 0.20, SHARK_EVERY = 5, SHARK_MAX = 250000;     // he takes 20% of what you owe every 5 hands
+const pct = r => Math.round(r * 100) + '%';
 const LIMITS = [100, 500, 1000, 5000, 10000, 0];
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
   resplit:true, resplitAces:false, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
@@ -439,7 +440,7 @@ const RULES = [
   { g:'Help', k:'warn', label:'Warn me about mistakes', desc:'Asks “Are you sure?” when a move or insurance goes against basic strategy for these rules.' },
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
-  { g:'Extras', k:'fence', label:'Guy', desc:'Guy, in a trench coat, turns up between hands selling hot goods, from a pinky ring to a private jet. Buy from him and he comes round more often. Turn him down five times in a row and he stops coming. Casino security sometimes takes things.' },
+  { g:'Extras', k:'fence', label:'Guy', desc:'Guy, in a trench coat, turns up between hands selling hot goods, from a pinky ring to a private jet. Buy from him and he comes more often with nicer things; turn him down and he comes less often with junk. If you own something big, he may come back with a buyer. Casino security sometimes takes things.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -466,7 +467,7 @@ let cloud = null;      // { col }
 function freshState(amount = START){
   return { v:2, settings:{ decks:6, max:5000, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
-    card:0, shark:0, sharkNext:0, debtSeen:0, stash:[], guy:{ lvl:0, no:0, gone:false }, dead:null, cash:[] };
+    card:0, shark:0, sharkNext:0, debtSeen:0, stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
 const rules = () => S.settings.rules;
 
@@ -1439,7 +1440,7 @@ const cardLeft = () => Math.max(0, cents(CARD_LIMIT - S.card));
 const cardMaxed = () => cardLeft() < 1;
 const sharkLeft = () => Math.max(0, cents(SHARK_MAX - S.shark));
 const sharkCut = () => cents(S.shark * SHARK_RATE);
-const cardInterest = () => cents(S.card * CARD_RATE * CARD_EVERY / YEAR_HANDS);
+const cardInterest = () => cents(S.card * CARD_RATE);
 function canBorrow(){ return !S.dead && (cardLeft() >= 1 || (cardMaxed() && sharkLeft() >= 1)); }
 // Every move of money that isn't a bet goes in the record. k says what kind:
 // card / cardpay / cardint, shark / sharkpay / vig, buy / sell / seized.
@@ -1484,8 +1485,8 @@ function cashierLabels(){
   const nextInt = (Math.floor(n / CARD_EVERY) + 1) * CARD_EVERY;
   $('cardNote').textContent = (S.card > 0
       ? 'You owe ' + money(S.card) + '. ' + (cardMaxed() ? 'The card is maxed out.' : money(cardLeft()) + ' left to borrow.') +
-        ' At 20% a year, about ' + money(cardInterest()) + ' interest is added after hand ' + nextInt + '.'
-      : 'You owe nothing. The limit is ' + money(CARD_LIMIT) + ', at 20% a year.');
+        ' Every ' + CARD_EVERY + ' hands ' + pct(CARD_RATE) + ' is added: ' + money(cardInterest()) + ' after hand ' + nextInt + '.'
+      : 'You owe nothing. The limit is ' + money(CARD_LIMIT) + '. Every ' + CARD_EVERY + ' hands ' + pct(CARD_RATE) + ' of what you owe is added.');
   const cb = Math.min(cv, cardLeft()), cp = Math.min(cv, S.card, S.bankroll);
   $('cardBorrow').textContent = cb > 0 ? 'Borrow ' + money(cb) : 'Borrow';
   $('cardPay').textContent = cp > 0 ? 'Pay back ' + money(cp) : 'Pay back';
@@ -1496,9 +1497,9 @@ function cashierLabels(){
   if (!open) $('sharkNote').textContent = 'He only lends once your credit card is maxed out.';
   else if (S.shark > 0){
     const left = Math.max(0, S.sharkNext - n);
-    $('sharkNote').textContent = 'You owe him ' + money(S.shark) + '. Every 5 hands he takes 10% of it from your chips: ' + money(sharkCut()) +
+    $('sharkNote').textContent = 'You owe him ' + money(S.shark) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(SHARK_RATE) + ' of it from your chips: ' + money(sharkCut()) +
       ', due after hand ' + S.sharkNext + ' (' + (left === 1 ? 'next hand' : left + ' hands from now') + '). If you can’t pay, he kills you.';
-  } else $('sharkNote').textContent = 'Your card is maxed. He lends up to ' + money(SHARK_MAX) + '. Every 5 hands he takes 10% of what you owe from your chips. If you can’t pay, he kills you.';
+  } else $('sharkNote').textContent = 'Your card is maxed. He lends up to ' + money(SHARK_MAX) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(SHARK_RATE) + ' of what you owe from your chips. If you can’t pay, he kills you.';
   const sv = Math.floor(Number($('sharkInput').value) || 0);
   const sb = Math.min(sv, sharkLeft()), sp = Math.min(sv, S.shark, S.bankroll);
   $('sharkBorrow').textContent = sb > 0 ? 'Borrow ' + money(sb) : 'Borrow';
@@ -1602,25 +1603,31 @@ function openBank(first){
 }
 
 /* ---------- Guy: hot goods between hands ---------- */
+// [name, picture, lowest price, highest price, junk?]  Junk only comes out when Guy is sore at you.
 const GOODS = [
-  ['a pinky ring', '💍', 150, 600], ['a Swiss watch', '⌚', 200, 900], ['a gold chain', '📿', 250, 800], ['a case of champagne', '🍾', 200, 600],
-  ['alligator shoes', '👞', 200, 700], ['a nice suit', '👔', 300, 1200], ['a designer handbag', '👜', 400, 1500], ['a laptop, still in the box', '💻', 300, 900],
-  ['a diamond necklace', '💎', 800, 4000], ['a mink coat', '🧥', 1500, 5000], ['a vintage guitar', '🎸', 1000, 4000], ['an oil painting', '🖼️', 2000, 8000],
-  ['a motorcycle', '🏍️', 3000, 8000], ['a grand piano', '🎹', 8000, 30000], ['a classic convertible', '🚗', 20000, 80000], ['a sports car', '🏎️', 40000, 150000],
-  ['a speedboat', '🚤', 50000, 250000], ['a racehorse', '🐎', 100000, 600000], ['a penthouse', '🏙️', 500000, 2500000], ['a yacht', '🛥️', 1000000, 6000000],
-  ['a mansion', '🏰', 2000000, 12000000], ['a private jet', '🛩️', 5000000, 30000000], ['a private island', '🏝️', 20000000, 80000000],
-];
+  ['a knockoff watch', '⌚', 40, 120, 1], ['a bottle of “French” perfume', '🧴', 30, 90, 1], ['a phone with a cracked screen', '📱', 50, 150, 1],
+  ['a car stereo, wires still hanging out', '📻', 60, 180, 1], ['“designer” sunglasses', '🕶️', 25, 80, 1], ['a fake fur stole', '🦊', 40, 140, 1],
+  ['a pinky ring', '💍', 150, 600], ['a silk scarf', '🧣', 150, 500], ['a bottle of fine perfume', '🧴', 150, 400], ['pearl earrings', '🦪', 200, 800],
+  ['a Swiss watch', '⌚', 200, 900], ['designer sunglasses', '🕶️', 200, 600], ['a case of champagne', '🍾', 200, 600], ['a gold chain', '📿', 250, 800],
+  ['designer heels', '👠', 300, 1200], ['a nice suit', '👔', 300, 1200], ['a laptop, still in the box', '💻', 300, 900], ['a designer handbag', '👜', 400, 1500],
+  ['a diamond necklace', '💎', 800, 4000], ['a vintage guitar', '🎸', 1000, 4000], ['a diamond tennis bracelet', '💎', 1000, 5000], ['a mink coat', '🧥', 1500, 5000],
+  ['a designer gown', '👗', 2000, 9000], ['an oil painting', '🖼️', 2000, 8000], ['a motorcycle', '🏍️', 3000, 8000], ['a grand piano', '🎹', 8000, 30000],
+  ['a classic convertible', '🚗', 20000, 80000], ['a sports car', '🏎️', 40000, 150000], ['a speedboat', '🚤', 50000, 250000], ['a racehorse', '🐎', 100000, 600000],
+  ['a penthouse', '🏙️', 500000, 2500000], ['a vineyard', '🍇', 800000, 4000000], ['a yacht', '🛥️', 1000000, 6000000], ['a mansion', '🏰', 2000000, 12000000],
+  ['a private jet', '🛩️', 5000000, 30000000], ['a private island', '🏝️', 20000000, 80000000],
+].sort((a, b) => a[2] - b[2]);   // cheapest first
 const PITCH = ['Fell off a truck.', 'Don’t ask.', 'Straight off the docks.', 'Still warm.', 'Cash only, no receipts.', 'You didn’t get this from me.'];
-const SEIZE_CHANCE = 1 / 40, GUY_QUIT = 5;
+const SEIZE_CHANCE = 1 / 40, BUYBACK_OVER = 10000, BUYBACK_CHANCE = 1 / 10;
 const stashList = () => S.stash || (S.stash = []);
-const guy = () => S.guy || (S.guy = { lvl: 0, no: 0, gone: false });
+const guy = () => S.guy || (S.guy = { lvl: 0, no: 0 });
 const pickOne = a => a[Math.floor(Math.random() * a.length)];
 let fenceTimer = null, guyOffer = false;
-// Buying from Guy brings him round more often; turning him down sends him away.
+// Guy never stops coming. Buy from him and he comes more often with nicer things;
+// turn him down and he comes less often with cheaper junk.
 function guyOdds(){
   const l = guy().lvl;
   return l >= 0 ? { gap: Math.max(2, 6 - l), chance: (1 / 15) * (1 + l) }      // at his keenest: every 2+ hands, 1 in 3
-               : { gap: 6 + 3 * -l, chance: (1 / 15) / (1 - l) };
+               : { gap: 6 + 2 * -l, chance: (1 / 15) / (1 - 0.5 * l) };    // at his sorest: every 14+ hands, 1 in 45
 }
 function sheetOpen(){ return [...document.querySelectorAll('.sheet')].some(x => !x.hidden); }
 function fenceFree(){ return !busy && !S.round && !S.bet && !S.dead && !sheetOpen() && !firstVisit; }
@@ -1630,8 +1637,10 @@ function fenceAfterHand(){
   if (n === S.fenceSeen) return;
   S.fenceSeen = n;
   if (stashList().length && n - (S.fenceLast || 0) >= 2 && Math.random() < SEIZE_CHANCE){ S.fenceLast = n; return later(fenceSeize); }
+  const big = stashList().filter(x => x.paid > BUYBACK_OVER);
+  if (big.length && n - (S.fenceLast || 0) >= 3 && Math.random() < BUYBACK_CHANCE){ S.fenceLast = n; const x = pickOne(big); return later(() => fenceBuyback(x)); }
   const o = guyOdds();
-  if (!guy().gone && n - (S.fenceLast || 0) >= o.gap && S.bankroll >= 150 && Math.random() < o.chance){ S.fenceLast = n; return later(fenceOffer); }
+  if (n - (S.fenceLast || 0) >= o.gap && S.bankroll >= 25 && Math.random() < o.chance){ S.fenceLast = n; return later(fenceOffer); }
   function later(fn){ clearTimeout(fenceTimer); fenceTimer = setTimeout(() => { if (fenceFree()) fn(); }, D * 2 + 600); }
 }
 function fenceSheet(title, art, html, buttons){
@@ -1643,26 +1652,35 @@ function fenceSheet(title, art, html, buttons){
 const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
 const niceRound = v => { const st = v < 10000 ? 50 : v < 100000 ? 500 : v < 1e6 ? 5000 : 50000; return Math.floor(v / st) * st; };
 function fenceOffer(){
-  const can = GOODS.filter(g => g[2] <= S.bankroll);
+  const l = guy().lvl;
+  // sore at you: junk and the cheapest things; keen: the best you can afford
+  let can = GOODS.filter(g => g[2] <= S.bankroll && (l < 0 ? true : !g[4]));
   if (!can.length) return;
-  // half the time something near the top of what you can afford, half the time anything
-  const [item, art, lo, hi] = Math.random() < 0.5 ? pickOne(can.slice(-4)) : pickOne(can);
+  if (l <= -2) can = can.filter(g => g[4]).length ? can.filter(g => g[4]) : can.slice(0, 3);
+  else if (l === -1) can = can.slice(0, Math.max(3, Math.ceil(can.length / 3)));
+  else if (l >= 3) can = can.slice(-3);
+  else if (l >= 1) can = can.slice(-Math.max(3, Math.ceil(can.length / 2)));
+  const [item, art, lo, hi] = l === 0 && Math.random() < 0.5 ? pickOne(can.slice(-4)) : pickOne(can);
   const top = Math.min(hi, S.bankroll);
-  const price = Math.max(lo, niceRound(lo + Math.random() * (top - lo)));
+  const r = l < 0 ? Math.random() * 0.4 : l > 0 ? 0.4 + Math.random() * 0.6 : Math.random();
+  const price = Math.min(S.bankroll, Math.max(lo, niceRound(lo + r * (top - lo))));
   guyOffer = true;
   fenceSheet('Guy', art,
-    'Guy sidles up, trench coat buttoned to the chin. “Psst. Got <b>' + esc(item) + '</b> here. ' + esc(pickOne(PITCH)) + ' <b>' + money(price) + '</b>, no questions asked.”',
+    (l < 0 ? 'Guy shuffles over, not looking too happy with you. “Psst. Got <b>' : 'Guy sidles up, trench coat buttoned to the chin. “Psst. Got <b>') + esc(item) + '</b> here. ' + esc(pickOne(PITCH)) + ' <b>' + money(price) + '</b>, no questions asked.”',
     [btn('No thanks', () => guyDecline()), btn('Buy for ' + money(price), () => fenceBuy(item, art, price), { primary:true })]);
 }
 function guyDecline(){
   guyOffer = false;
-  const g = guy(); g.lvl = Math.max(-4, g.lvl - 1); g.no++;
-  if (g.no >= GUY_QUIT){
-    g.gone = true; touch(); saveLocal(); saveCloudState();
-    fenceSheet('Guy', '🧥', 'Guy shrugs. “Your loss. I got other customers.” He won’t be back this game.', [btn('Fine', () => hideSheets(), { primary:true })]);
-    return;
-  }
+  const g = guy(); g.lvl = Math.max(-4, g.lvl - 1); g.no = (g.no || 0) + 1;
   touch(); saveLocal(); saveCloudState(); hideSheets();
+}
+// Guy comes back for something big you bought: he has a buyer and pays more than you did
+function fenceBuyback(x){
+  if (stashList().indexOf(x) < 0) return;
+  const offer = niceRound(x.paid * (1.2 + Math.random() * 1.3));
+  guyOffer = false;
+  fenceSheet('Guy', x.art, 'Guy’s back. “That ' + esc(x.item.replace(/^(a|an) /, '')) + ' I sold you? I got a buyer who wants it bad. I’ll give you <b>' + money(offer) + '</b> for it.” You paid ' + money(x.paid) + ', so that’s ' + money(offer - x.paid) + ' more.',
+    [btn('Keep it', () => hideSheets()), btn('Sell for ' + money(offer), () => { x.offer = offer; fenceSell(x); }, { primary:true })]);
 }
 function fenceBuy(item, art, price){
   guyOffer = false;
@@ -1716,7 +1734,7 @@ function fillCard(el, x){
   el.classList.toggle('empty', !x);
   if (!x){
     const p = document.createElement('div'); p.className = 'wh';
-    p.textContent = rules().fence ? (guy().gone ? 'Nothing. Guy has stopped coming round this game.' : 'Nothing yet. Guy turns up between hands with things to sell.') : 'Nothing. Guy is switched off in Rules.';
+    p.textContent = rules().fence ? 'Nothing yet. Guy turns up between hands with things to sell.' : 'Nothing. Guy is switched off in Rules.';
     p.style.color = 'var(--text)'; el.append(p); return;
   }
   const mk = (c, t) => { const d = document.createElement('div'); d.className = c; d.textContent = t; el.append(d); return d; };

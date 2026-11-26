@@ -2,7 +2,7 @@
 
 Casino blackjack for the phone, installable to the iPhone home screen and playable with no internet connection.
 
-You walk in with $10,000. When it's gone there's a credit card ($50,000 limit, 20% a year, where a year is 100 hands). Once the card is maxed, the loan shark lends; every 5 hands he takes 10% of what you owe from your chips, and if you can't pay, he kills you and the game is over. Between hands Guy, in a trench coat, sells hot goods from a pinky ring to a private jet; everything you buy is kept as a card under Stuff, and you can sell it back. Buy from him and he comes round more; turn him down five times in a row and he stops coming.
+You walk in with $10,000. When it's gone there's a credit card ($50,000 limit; 20% of what you owe is added every 10 hands). Once the card is maxed, the loan shark lends; every 5 hands he takes 20% of what you owe from your chips, and if you can't pay, he kills you and the game is over. Between hands Guy, in a trench coat, sells hot goods for men and women, from a pinky ring or a silk scarf to a private jet; everything you buy is kept as a card under Stuff, and you can sell it back. He never stops coming: buy from him and he comes more often with nicer things, turn him down and he comes less often with junk. If you own something that cost over $10,000, he sometimes comes back with a buyer who'll pay more.
 
 Every casino rule is an on/off switch, the shoe holds 1 to 8 decks, chips run from $5 to $1,000, and every bet, win, loss and money move is recorded, with charts of how far up or down you are this game and over all games.
 

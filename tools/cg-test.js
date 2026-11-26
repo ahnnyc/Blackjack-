@@ -1,7 +1,7 @@
 // Compulsive Gambler: the $10,000 start, the credit card, the loan shark (cut, warning, death), starting over,
 // Guy (buying, turning him down, the card that flies to Stuff), the Stuff cards, and the books adding up.
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
-const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, fenceOffer, guyDecline, fenceAfterHand, debtsAfterHand, stashList, guy, guyOdds, applyMotion, render, saveLocal };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, fenceOffer, fenceBuyback, guyDecline, fenceAfterHand, debtsAfterHand, stashList, guy, guyOdds, applyMotion, render, saveLocal };\n";
 fs.writeFileSync(dir + '/cg-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true };', 'fence:false };').replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 const isChip = l => /^(5|25|100|500|1K)$/.test(l);
@@ -59,13 +59,13 @@ const isChip = l => /^(5|25|100|500|1K)$/.test(l);
   await p.click('#cashSheet [data-close]');
   // 4) hands: the shark's cut after 5, card interest after 8
   const before = await st();
-  for (let h = 0; h < 8; h++) await playHand();
-  out.after8Hands = { before, after: await st() };
+  for (let h = 0; h < 10; h++) await playHand();
+  out.after10Hands = { before, after: await st() };
   out.logKinds = await p.evaluate(() => __bj.S.cash.map(c => c.k));
   out.booksAfterDebts = await books();
   // 5) Guy: buy three things, see them as cards
   for (const r of [0.99, 0.5, 0.1]) {
-    await p.evaluate(r => { const m = Math.random; Math.random = () => r; __bj.fenceOffer(); Math.random = m; }, r);
+    await p.evaluate(r => { if (__bj.S.bankroll < 5000) { __bj.S.bankroll = 20000; __bj.render(); } const m = Math.random; Math.random = () => r; __bj.fenceOffer(); Math.random = m; }, r);
     if (r === 0.99) { out.guyOffer = await p.textContent('#fenceText'); await shot('guy-offer'); }
     if (r === 0.1) { await p.evaluate(() => { __bj.S.settings.rules.motion = true; __bj.applyMotion(); }); }
     await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(r === 0.1 ? 600 : 300);
@@ -82,16 +82,25 @@ const isChip = l => /^(5|25|100|500|1K)$/.test(l);
   out.stuffAfterSwipeLeft = await p.textContent('#stuffPos');
   await p.click('#stuffSheet [data-close]');
   await p.evaluate(() => { __bj.S.settings.rules.motion = false; __bj.applyMotion(); });
+  // 5b) Guy comes back for the big one with a buyer
+  out.buyback = await p.evaluate(async () => { const big = __bj.stashList().find(x => x.paid > 10000); if (!big) return 'no big item';
+    const b0 = __bj.S.bankroll; __bj.fenceBuyback(big); const text = document.getElementById('fenceText').textContent;
+    const offer = Number(document.querySelector('#fenceBtns button:last-child').textContent.replace(/[^0-9]/g, ''));
+    document.querySelector('#fenceBtns button:last-child').click(); await new Promise(r => setTimeout(r, 300));
+    return { text, paid: big.paid, offer, moreThanPaid: offer > big.paid, chipsUpBy: __bj.S.bankroll - b0, stillOwned: __bj.stashList().includes(big) }; });
   // 6) turn Guy down five times
   out.bankBeforeDeclines = await bank();
   await p.evaluate(() => { __bj.S.bankroll = 5000; __bj.render(); });
   for (let k = 0; k < 5; k++) { await p.evaluate(() => __bj.fenceOffer()); await p.click('#fenceBtns button:first-child'); await p.waitForTimeout(150); }
-  out.guyGoneText = await p.isVisible('#fenceSheet') ? await p.textContent('#fenceText') : null;
-  if (await p.isVisible('#fenceSheet')) await p.click('#fenceBtns button');
-  out.guyGone = await p.evaluate(() => __bj.guy().gone);
-  await p.evaluate(() => { __bj.S.settings.rules.fence = true; const m = Math.random; Math.random = () => 0.2; __bj.S.fenceSeen = -1; __bj.S.fenceLast = -99; __bj.fenceAfterHand(); Math.random = m; });
-  await p.waitForTimeout(1200); out.noOfferWhenGone = !(await p.isVisible('#fenceSheet'));
-  await p.evaluate(() => { __bj.S.settings.rules.fence = false; });
+  out.guyAfterFiveNos = await p.evaluate(() => ({ ...__bj.guy(), odds: __bj.guyOdds() }));
+  out.soreOffers = [];
+  for (let k = 0; k < 4; k++) { await p.evaluate(() => __bj.fenceOffer()); out.soreOffers.push(await p.textContent('#fenceText')); if (k === 0) await shot('guy-sore'); await p.click('#fenceBtns button:first-child'); }
+  await p.evaluate(() => { __bj.S.settings.rules.fence = true; __bj.guy().lvl = -4; __bj.stashList().length = 0; const m = Math.random; Math.random = () => 0.001; __bj.S.fenceSeen = -1; __bj.S.fenceLast = -99; __bj.fenceAfterHand(); Math.random = m; });
+  await p.waitForTimeout(1500); out.stillComesWhenSore = await p.isVisible('#fenceSheet') ? await p.textContent('#fenceH') : 'did not come';
+  if (await p.isVisible('#fenceSheet')) await p.click('#fenceBtns button:first-child');
+  await p.evaluate(() => { __bj.S.settings.rules.fence = false; __bj.guy().lvl = 4; __bj.S.bankroll = 3000000; __bj.render(); });
+  out.keenOffers = [];
+  for (let k = 0; k < 4; k++) { await p.evaluate(() => __bj.fenceOffer()); out.keenOffers.push(await p.textContent('#fenceBtns button:last-child')); await p.click('#fenceBtns button:first-child'); }
   // 7) the warning, then death
   await p.evaluate(() => { const S = __bj.S; const n = __bj.history.filter(r => r.s === S.session).length; S.bankroll = 300; S.shark = 100000; S.sharkNext = n + 2; __bj.saveLocal(); __bj.render(); });
   await playHand(); await p.waitForTimeout(1600);
