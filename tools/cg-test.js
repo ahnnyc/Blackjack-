@@ -42,18 +42,18 @@ const isChip = l => /^(5|25|100|500|1K)$/.test(l);
   await p.click('#openCashier'); await p.waitForTimeout(200);
   out.sharkLockedNote = await p.textContent('#sharkNote');
   out.sharkCtlHidden = await p.isHidden('#sharkCtl');
-  await p.click('#cardPresets button:text-is("+$5,000")'); await p.click('#cardBorrow'); await p.waitForTimeout(500);
+  await p.click('#cardPresets button:text-is("+$5,000")'); await p.click('#cardBorrow'); await p.waitForTimeout(500); if (await p.isVisible('#fenceSheet')) { await p.click('#fenceBtns button:first-child'); await p.waitForTimeout(200); }
   out.afterBorrow5000 = { ...(await st()), owe: await p.textContent('#oweV') };
   await p.click('#openCashier'); await p.click('#cardPresets button:text-is("+$1,000")'); await p.click('#cardPresets button:text-is("+$1,000")');
   out.payLabel = await p.textContent('#cardPay'); await p.click('#cardPay'); await p.waitForTimeout(500);
   out.afterPay2000 = await st();
   await p.click('#openCashier'); for (let k = 0; k < 2; k++) await p.click('#cardPresets button:text-is("+$25,000")');
-  out.borrowLabelCapped = await p.textContent('#cardBorrow'); await p.click('#cardBorrow'); await p.waitForTimeout(500);
+  out.borrowLabelCapped = await p.textContent('#cardBorrow'); await p.click('#cardBorrow'); await p.waitForTimeout(500); if (await p.isVisible('#fenceSheet')) { await p.click('#fenceBtns button:first-child'); await p.waitForTimeout(200); }
   out.cardMaxed = await st();
   // 3) loan shark
   await p.click('#openCashier'); await p.waitForTimeout(200);
   out.sharkOpenNote = await p.textContent('#sharkNote');
-  await p.click('#sharkPresets button:text-is("+$10,000")'); await p.click('#sharkBorrow'); await p.waitForTimeout(500);
+  await p.click('#sharkPresets button:text-is("+$10,000")'); await p.click('#sharkBorrow'); await p.waitForTimeout(500); if (await p.isVisible('#fenceSheet')) { await p.click('#fenceBtns button:first-child'); await p.waitForTimeout(200); }
   out.afterShark = { ...(await st()), owe: await p.textContent('#oweV') };
   await p.click('#openCashier'); await p.waitForTimeout(200);
   await p.$eval('#cashSheet .panel', e => e.scrollTop = 1e5); await shot('cashier');
