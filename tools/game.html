@@ -455,7 +455,7 @@ const SHARK_RATE = 0.20, SHARK_EVERY = 5, SHARK_MAX = 250000;     // he takes 20
 const pct = r => Math.round(r * 100) + '%';
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
   resplit:true, resplitAces:true, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
-  charlie:false, push22:false, csm:false, totals:false, motion:true, warn:true, fence:true };
+  charlie:false, push22:false, csm:false, totals:false, motion:true, warn:true, fence:true, sound:true };
 const RULES = [
   { g:'Dealer', k:'h17', label:'Dealer hits soft 17', desc:'Off: the dealer stands on every 17.' },
   { g:'Dealer', k:'peek', label:'Dealer checks for blackjack', desc:'Off: no peek. If the dealer has blackjack, you lose doubles and splits too.' },
@@ -474,6 +474,7 @@ const RULES = [
   { g:'Surrender', k:'earlySurrender', label:'Early surrender', desc:'Give up half before the dealer checks, even against a blackjack.' },
   { g:'Shoe', k:'csm', label:'Shuffle after every hand', desc:'Like a continuous shuffling machine.' },
   { g:'Help', k:'warn', label:'Warn me about mistakes', desc:'Asks “Are you sure?” when a move or insurance goes against basic strategy for these rules.' },
+  { g:'Display', k:'sound', label:'Sounds', desc:'Chips click, cards snap as they’re dealt and flipped, the shoe riffles, and cards swish as they’re collected. Your iPhone’s silent switch mutes them.' },
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
   { g:'Extras', k:'fence', label:'Guy', desc:'Guy, in a trench coat, turns up between hands selling hot goods, from a pinky ring to a private jet. Buy from him and he comes more often with nicer things; turn him down and he comes less often with junk. If you own something big, he may come back with a buyer. Casino security sometimes takes things.' },
@@ -485,6 +486,65 @@ const RES_WORD = { win:'Win', lose:'Lose', bust:'Bust', push:'Push', bj:'Blackja
 const LS_STATE = 'cg.state.v2', LS_HIST = 'cg.history.v2';
 const CHUNK = 200;
 let reduced = false, D = 640;   // set from the Animations switch on every draw
+/* ---------- sounds: made on the spot (no sound files), so they work offline ---------- */
+const Sound = (() => {
+  let ctx = null, out = null, noise = null;
+  const count = {};
+  function ac(){
+    if (!ctx){ const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; ctx = new C(); out = ctx.createGain(); out.gain.value = 0.8; out.connect(ctx.destination); }
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    return ctx;
+  }
+  // Phones only allow sound after a touch, so the first touch anywhere switches it on.
+  const unlock = () => { const c = ac(); if (!c) return; const b = c.createBuffer(1, 1, c.sampleRate), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); };
+  ['pointerdown', 'touchend', 'keydown'].forEach(e => addEventListener(e, unlock, { passive: true }));
+  function noiseBuf(c){ if (!noise || noise.sampleRate !== c.sampleRate){ const n = c.sampleRate; noise = c.createBuffer(1, n, n); const d = noise.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; } return noise; }
+  // a short burst of filtered noise: the basis of every click, snap and swish
+  function burst(c, dest, t, dur, freq, q, gain, type, freqTo){
+    const src = c.createBufferSource(); src.buffer = noiseBuf(c);
+    const f = c.createBiquadFilter(); f.type = type || 'bandpass'; f.frequency.setValueAtTime(freq, t); f.Q.value = q;
+    if (freqTo) f.frequency.exponentialRampToValueAtTime(freqTo, t + dur);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(dest); src.start(t, Math.random() * 0.8); src.stop(t + dur + 0.02);
+  }
+  function ping(c, dest, t, freq, dur, gain){
+    const o = c.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(freq, t); o.frequency.exponentialRampToValueAtTime(freq * 0.92, t + dur);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
+  }
+  const make = {
+    // clay chips knocking together: a sharp clack with a little ring
+    chip(c, d, t){ const v = 0.85 + Math.random() * 0.3;
+      burst(c, d, t, 0.03, 3600 * v, 2.2, 0.55); ping(c, d, t, 2300 * v, 0.045, 0.08); burst(c, d, t + 0.016, 0.025, 5200 * v, 3, 0.3); },
+    // a card skimming off the shoe and landing with a snap
+    deal(c, d, t){ burst(c, d, t, 0.11, 1800, 0.7, 0.16, 'bandpass', 5200); burst(c, d, t + 0.1, 0.025, 6200, 1.4, 0.42); burst(c, d, t + 0.11, 0.05, 1500, 1, 0.12); },
+    // a card turned over
+    flip(c, d, t){ burst(c, d, t, 0.03, 4200, 1.3, 0.38); burst(c, d, t + 0.02, 0.06, 1700, 0.9, 0.16); },
+    // two riffles and a bridge
+    shuffle(c, d, t){
+      for (const start of [t, t + 0.85]){
+        const n = 34;
+        for (let i = 0; i < n; i++){ const tt = start + 0.62 * Math.pow(i / n, 0.85); burst(c, d, tt, 0.016, 2600 + Math.random() * 2600, 2, 0.1 + Math.random() * 0.08); }
+        burst(c, d, start + 0.64, 0.18, 2200, 0.7, 0.12, 'bandpass', 900);
+      }
+    },
+    // cards swept together off the felt
+    collect(c, d, t){ burst(c, d, t, 0.32, 1400, 0.6, 0.14, 'bandpass', 3800); for (let i = 0; i < 4; i++) burst(c, d, t + 0.05 + i * 0.06, 0.02, 4800, 1.5, 0.12); },
+  };
+  // how loud each one is, so they sit at about the same level
+  const LEVEL = { chip: 2.4, deal: 1.9, flip: 2.7, shuffle: 6.5, collect: 6 };
+  function sound(c, dest, name, t){ const g = c.createGain(); g.gain.value = LEVEL[name]; g.connect(dest); make[name](c, g, t); }
+  return {
+    count, make, sound,
+    play(name, delayMs = 0, n = 1, gapMs = 0){
+      count[name] = (count[name] || 0) + 1;
+      if (!rules().sound) return;
+      const c = ac(); if (!c || c.state !== 'running') return;
+      const t0 = c.currentTime + delayMs / 1000;
+      for (let i = 0; i < n; i++) sound(c, out, name, t0 + i * gapMs / 1000);
+    },
+  };
+})();
 function applyMotion(){ reduced = !rules().motion; D = reduced ? 140 : 640; document.body.classList.toggle('still', reduced); }
 
 /* ---------- state ---------- */
@@ -926,8 +986,10 @@ const center = x => { const r = x instanceof Element ? x.getBoundingClientRect()
 let lastRects = new Map();
 function flyNewCards(){
   const from = center($('shoe'));
+  let dealt = 0;
   document.querySelectorAll('#table .card[data-id]').forEach(el => {
     const isNew = el.classList.contains('new');
+    if (isNew) Sound.play('deal', dealt++ * 90);
     el.classList.remove('new');
     if (reduced || !el.animate) return;
     const base = 'none', turn = '';
@@ -951,6 +1013,7 @@ function flyNewCards(){
 // The dealer sweeps the finished hand's cards off to the discard pile.
 function sweepCards(){
   const cards = [...document.querySelectorAll('#table .card')];
+  if (cards.length) Sound.play('collect');
   if (reduced || !cards.length || !document.body.animate) return;
   const t = $('table').getBoundingClientRect(), fx = $('fx');
   const dest = { x: t.left + 8, y: t.top + 24 };
@@ -971,6 +1034,7 @@ function sweepCards(){
 }
 // The shoe is riffled when it is reshuffled.
 function shuffleAnim(){
+  Sound.play('shuffle');
   if (reduced || !document.body.animate) return wait(D * 2);
   const o = center($('shoe')), fx = $('fx'), list = [];
   for (let k = 0; k < 10; k++){
@@ -995,7 +1059,9 @@ async function takeHand(i){
   h.taken = true; render();
 }
 function flyChips(fromX, toX, amount, opts = {}){
-  if (reduced || !document.body.animate || !fromX || !toX) return Promise.resolve();
+  const n = Math.max(1, Math.min(5, chipsFor(amount).length));
+  if (reduced || !document.body.animate || !fromX || !toX){ Sound.play('chip', opts.delay || 0, n, 60); return Promise.resolve(); }
+  Sound.play('chip', (opts.delay || 0) + 760, n, 120);
   const a = center(fromX), b = center(toX), list = chipsFor(amount).slice(0, 5), fx = $('fx');
   return Promise.all(list.map((v, k) => new Promise(res => {
     const c = document.createElement('div'); c.className = 'fly-chip c' + v; fx.append(c);
@@ -1066,7 +1132,7 @@ function cardEl(card, hidden){
   if (card.side) el.classList.add('side');
   const key = card.id + (hidden ? 'b' : 'f');
   if (!seen.has(card.id)){ el.classList.add('new'); seen.add(card.id); seen.add(key); }
-  else if (!seen.has(key)){ el.classList.add('flip'); seen.add(key); }
+  else if (!seen.has(key)){ el.classList.add('flip'); seen.add(key); Sound.play('flip'); }
   return el;
 }
 
@@ -1777,6 +1843,7 @@ function appraise(price){
 }
 let lastOffer = null;
 function fenceOffer(){
+  if (!rules().fence) return pumpSheets(0);   // switched off while he was waiting
   const l = guy().lvl;
   // sore at you: junk and the cheapest things; keen: the best you can afford
   let can = GOODS.filter(g => g[2] <= S.bankroll && (l < 0 ? true : !g[4]));
@@ -1803,6 +1870,7 @@ function guyDecline(){
 }
 // Guy comes back for something big you bought: he has a buyer and pays more than you did
 function fenceBuyback(x){
+  if (!rules().fence) return pumpSheets(0);
   if (stashList().indexOf(x) < 0) return;
   const offer = Math.max(niceRound(x.paid * 1.2), niceRound((x.worth || x.paid) * (0.9 + Math.random() * 0.8)));
   guyOffer = false;
@@ -1843,6 +1911,7 @@ function fenceSell(x){
   say('Sold ' + x.item + ' for ' + money(x.offer) + '.');
 }
 function fenceSeize(){
+  if (!rules().fence) return pumpSheets(0);
   const list = stashList(); if (!list.length) return;
   const i = Math.floor(Math.random() * list.length), x = list[i];
   list.splice(i, 1);
