@@ -419,7 +419,7 @@ const SHARK_RATE = 0.20, SHARK_EVERY = 5, SHARK_MAX = 250000;     // he takes 20
 const pct = r => Math.round(r * 100) + '%';
 const LIMITS = [100, 500, 1000, 5000, 10000, 0];
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
-  resplit:true, resplitAces:false, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
+  resplit:true, resplitAces:true, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
   charlie:false, push22:false, csm:false, totals:false, motion:true, warn:true, fence:true };
 const RULES = [
   { g:'Dealer', k:'h17', label:'Dealer hits soft 17', desc:'Off: the dealer stands on every 17.' },
@@ -432,7 +432,7 @@ const RULES = [
   { g:'Doubling', k:'doubleAny', label:'Double on any two cards', desc:'Off: double only on 9, 10 or 11.' },
   { g:'Doubling', k:'das', label:'Double after splitting', desc:'' },
   { g:'Splitting', k:'resplit', label:'Resplit pairs', desc:'Split again, up to four hands.' },
-  { g:'Splitting', k:'resplitAces', label:'Resplit aces', desc:'' },
+  { g:'Splitting', k:'resplitAces', label:'Resplit aces', desc:'If a split ace gets another ace, split again, up to four hands.' },
   { g:'Splitting', k:'hitSplitAces', label:'Hit split aces', desc:'Off: each split ace gets one card only.' },
   { g:'Splitting', k:'splitTens', label:'Split any two ten-value cards', desc:'Off: only matching ranks, such as K and K.' },
   { g:'Surrender', k:'lateSurrender', label:'Late surrender', desc:'Give up half your bet after the dealer checks for blackjack.' },
@@ -465,8 +465,13 @@ let scope = 'session', logShown = 50;
 let sync = 'local';    // local | cloud | error
 let cloud = null;      // { col }
 
+// Settings changes that should reach games saved before them, applied once each.
+function migrate(){
+  const st = S.settings; if (!st) return;
+  if (!(st.fix >= 1)){ st.rules.resplitAces = true; st.fix = 1; }
+}
 function freshState(amount = START){
-  return { v:2, settings:{ decks:6, max:5000, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
+  return { v:2, settings:{ decks:6, max:5000, fix:1, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
     card:0, shark:0, sharkNext:0, debtSeen:0, stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
@@ -1625,10 +1630,14 @@ const pickOne = a => a[Math.floor(Math.random() * a.length)];
 let fenceTimer = null, guyOffer = false;
 // Guy never stops coming. Buy from him and he comes more often with nicer things;
 // turn him down and he comes less often with cheaper junk.
+const gameUp = () => Math.max(0, cents(history.reduce((a, r) => r.s === S.session ? a + r.n : a, 0)));
 function guyOdds(){
   const l = guy().lvl;
-  return l >= 0 ? { gap: Math.max(2, 6 - l), chance: (1 / 15) * (1 + l) }      // at his keenest: every 2+ hands, 1 in 3
-               : { gap: 6 + 2 * -l, chance: (1 / 15) / (1 - 0.5 * l) };    // at his sorest: every 14+ hands, 1 in 45
+  const o = l >= 0 ? { gap: Math.max(2, 6 - l), chance: (1 / 15) * (1 + l) }      // at his keenest: every 2+ hands, 1 in 3
+                   : { gap: 6 + 2 * -l, chance: (1 / 15) / (1 - 0.5 * l) };    // at his sorest: every 14+ hands, 1 in 45
+  // and the more you're up this game, the more he comes round: twice as often at $20,000 up, three times at $40,000
+  const steps = Math.min(2, gameUp() / 20000);
+  return { gap: Math.max(2, o.gap - Math.floor(steps)), chance: Math.min(0.6, o.chance * (1 + steps)) };
 }
 function sheetOpen(){ return [...document.querySelectorAll('.sheet')].some(x => !x.hidden); }
 function fenceFree(){ return !busy && !S.round && !S.bet && !S.dead && !sheetOpen() && !firstVisit; }
@@ -1909,6 +1918,7 @@ async function initCloud(){
       const { histCount, ...rest } = cs;
       S = { ...freshState(), ...rest };
       S.settings.rules = { ...DEFAULT_RULES, ...(S.settings.rules || {}) };
+      migrate();
       history = hist;
       firstVisit = false;
       if (!$('bankSheet').hidden && $('bankCancel').hidden) hideSheets();
@@ -1986,9 +1996,11 @@ addEventListener('visibilitychange', () => { if (document.visibilityState === 'h
 addEventListener('pagehide', () => { if (S.updatedAt){ saveLocal(); saveHistLocal(); } });
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch (e) {}
 loadLocal();
+migrate();
 if (!S.round) render();
 (async () => {
   await Promise.race([idbReconcile(), wait(1500)]);
+  migrate();
   resumeRound();
   render();
   if (firstVisit) openBank(true);
