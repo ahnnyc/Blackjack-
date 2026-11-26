@@ -514,16 +514,32 @@ const Sound = (() => {
     if (loading) return; loading = true;
     Object.entries(SAMPLE_DATA).forEach(([name, list]) => { buffers[name] = []; list.forEach(b64 => {
       const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
-      try { const p = c.decodeAudioData(u.buffer, buf => buffers[name].push(buf), () => {}); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+      try { const p = c.decodeAudioData(u.buffer, buf => { mark(buf); buffers[name].push(buf); }, () => {}); if (p && p.catch) p.catch(() => {}); } catch (e) {}
     }); });
+  }
+  // where in a recording the sound starts and where it is loudest, so it can be lined up with the animation
+  function mark(buf){
+    const d = buf.getChannelData(0); let pk = 0, pi = 0;
+    for (let i = 0; i < d.length; i++){ const v = Math.abs(d[i]); if (v > pk){ pk = v; pi = i; } }
+    let on = 0; for (let i = 0; i < d.length; i++) if (Math.abs(d[i]) > pk * 0.2){ on = i; break; }
+    buf._peak = pi / buf.sampleRate; buf._onset = on / buf.sampleRate;
   }
   // play one of the recordings for this sound, picked at random and very slightly varied; false if none ready
   const SLEVEL = { deal: 1.6, flip: 1.6, shuffle: 1.15, collect: 1.4 };
   function sample(c, dest, name, t){
     const list = buffers[name]; if (!list || !list.length) return false;
-    const src = c.createBufferSource(); src.buffer = list[Math.floor(Math.random() * list.length)]; src.playbackRate.value = 0.97 + Math.random() * 0.06;
-    const g = c.createGain(); g.gain.value = SLEVEL[name]; src.connect(g); g.connect(dest); src.start(t); return true;
+    const buf = list[Math.floor(Math.random() * list.length)], rate = 0.97 + Math.random() * 0.06;
+    const src = c.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
+    const g = c.createGain(); g.gain.value = SLEVEL[name]; src.connect(g); g.connect(dest);
+    // line up the recording's key moment with t: its first sound for the shuffle, its loudest moment for the rest
+    const key = (ALIGN[name] === 'onset' ? buf._onset : buf._peak) || 0;
+    let start = t - key / rate, offset = 0;
+    if (start < c.currentTime){ offset = (c.currentTime - start) * rate; start = c.currentTime; }
+    src.start(start, offset);
+    if (window.__soundLog) window.__soundLog.push({ name, at: performance.now() + (t - c.currentTime) * 1000 });
+    return true;
   }
+  const ALIGN = { shuffle: 'onset' };
   const count = {};
   function ac(){
     if (!ctx){ const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; ctx = new C(); out = ctx.createGain(); out.gain.value = 0.8; out.connect(ctx.destination); loadSamples(ctx); }
@@ -575,6 +591,7 @@ const Sound = (() => {
     lim.connect(dest);
     if (sample(c, lim, name, t)) return;   // a real recording when there is one
     const g = c.createGain(); g.gain.value = LEVEL[name]; g.connect(lim); make[name](c, g, t);
+    if (window.__soundLog && c === ctx) window.__soundLog.push({ name, at: performance.now() + (t - c.currentTime) * 1000 });
   }
   return {
     count, make, sound, buffers, SLEVEL,
@@ -1031,7 +1048,7 @@ function flyNewCards(){
   let dealt = 0;
   document.querySelectorAll('#table .card[data-id]').forEach(el => {
     const isNew = el.classList.contains('new');
-    if (isNew) Sound.play('deal', dealt++ * 90);
+    if (isNew) Sound.play('deal', (reduced ? 0 : 645) + dealt++ * 40);   // as the card lands (82% of its 780ms flight)
     el.classList.remove('new');
     if (reduced || !el.animate) return;
     const base = 'none', turn = '';
@@ -1055,7 +1072,7 @@ function flyNewCards(){
 // The dealer sweeps the finished hand's cards off to the discard pile.
 function sweepCards(){
   const cards = [...document.querySelectorAll('#table .card')];
-  if (cards.length) Sound.play('collect');
+  if (cards.length) Sound.play('collect', reduced ? 0 : 165);   // as the cards start sliding away
   if (reduced || !cards.length || !document.body.animate) return;
   const t = $('table').getBoundingClientRect(), fx = $('fx');
   const dest = { x: t.left + 8, y: t.top + 24 };
@@ -1076,7 +1093,7 @@ function sweepCards(){
 }
 // The shoe is riffled when it is reshuffled.
 function shuffleAnim(){
-  Sound.play('shuffle');
+  Sound.play('shuffle', reduced ? 0 : 515);   // the riffle starts as the cards begin to split
   if (reduced || !document.body.animate) return wait(D * 2);
   const o = center($('shoe')), fx = $('fx'), list = [];
   for (let k = 0; k < 10; k++){
@@ -1103,7 +1120,7 @@ async function takeHand(i){
 function flyChips(fromX, toX, amount, opts = {}){
   const n = Math.max(1, Math.min(5, chipsFor(amount).length));
   if (reduced || !document.body.animate || !fromX || !toX){ Sound.play('chip', opts.delay || 0, n, 60); return Promise.resolve(); }
-  Sound.play('chip', (opts.delay || 0) + 760, n, 120);
+  Sound.play('chip', (opts.delay || 0) + 845, n, 120);   // as each chip lands (840ms flight, 120ms apart)
   const a = center(fromX), b = center(toX), list = chipsFor(amount).slice(0, 5), fx = $('fx');
   return Promise.all(list.map((v, k) => new Promise(res => {
     const c = document.createElement('div'); c.className = 'fly-chip c' + v; fx.append(c);
@@ -1174,7 +1191,7 @@ function cardEl(card, hidden){
   if (card.side) el.classList.add('side');
   const key = card.id + (hidden ? 'b' : 'f');
   if (!seen.has(card.id)){ el.classList.add('new'); seen.add(card.id); seen.add(key); }
-  else if (!seen.has(key)){ el.classList.add('flip'); seen.add(key); Sound.play('flip'); }
+  else if (!seen.has(key)){ el.classList.add('flip'); seen.add(key); Sound.play('flip', reduced ? 0 : 400); }   // as the card turns flat
   return el;
 }
 
