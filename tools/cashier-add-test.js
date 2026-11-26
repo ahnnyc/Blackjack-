@@ -1,7 +1,7 @@
 // Cashier: tapping amounts adds them up (buy and cash in), Clear resets, cash-in never exceeds your chips,
 // and the page refuses double-tap zoom.
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
-fs.writeFileSync(dir + '/page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' + fs.readFileSync(dir + '/blackjack.html', 'utf8') + '</body></html>');
+fs.writeFileSync(dir + '/page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' + fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true };', 'fence:false };') + '</body></html>');
 (async () => {
   const b = await chromium.launch(); const out = {};
   for (const [w, h] of [[390, 797], [320, 568]]) {
