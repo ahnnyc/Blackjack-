@@ -10,6 +10,8 @@ Time passes in hands: every 150 hands is a day, about an hour of play. You stop 
 
 ## Messages
 
+Starting over (from the Record screen, the out-of-chips message or game over) goes back to the opening message, as on a first visit.
+
 Every message in the game is short and plain: what happened and the numbers, no jokes. The welcome screen says only the $1,000 start and the next table. The credit card and the loan shark are explained when the chips run out. Each new-table message states the next goal in full. A free bill is always called comped.
 
 ## Files

@@ -1391,7 +1391,7 @@ function renderControls(){
     else text = '';
     if (S.dead){
       text = 'Game over. The loan shark got you.';
-      a.append(row(), row(btn('Start over', () => newGame(), { primary:true })));
+      a.append(row(), row(btn('Start over', () => newGame(true), { primary:true })));
     } else if (S.bankroll < 5 && !S.bet){
       text = 'You’re out of chips. Borrow, or start over.';
       a.append(row(), row(btn('Start over', () => openBank(false)), btn('Borrow', () => openCashier(), { primary:true, disabled: !canBorrow() })));
@@ -1746,7 +1746,7 @@ function showDead(){
     'You lasted ' + d.hands + (d.hands === 1 ? ' hand' : ' hands') + ', owed ' + money(d.owed) + ', and left ' + d.stuff + (d.stuff === 1 ? ' thing' : ' things') + ' behind.';
   $('deadSheet').hidden = false;
 }
-function newGame(){
+function newGame(welcome){
   if (S.round && !S.dead) return;
   const settings = S.settings, cash = S.cash || [];
   if (firstVisit && !history.length){ S = freshState(); S.settings = settings; S.settings.decks = TABLES[0].d; }
@@ -1756,8 +1756,15 @@ function newGame(){
     S = { ...freshState(), settings, session: next, sessions: S.sessions.concat({ s: next, start: START, at: Date.now() }), cash, fenceSeen: history.length, fenceLast: history.length };
   }
   firstVisit = false; R = null; seen = new Set(); msgOverride = '';
+  sheetQueue.length = 0;   // nothing from the old game pops up in the new one
   touch(); saveLocal(); saveCloudState();
   hideSheets(); render();
+  if (welcome === true){ freshWelcome = true; firstVisit = true; openBank(true); }   // starting over goes back to the opening message
+}
+let freshWelcome = false;
+function sitDown(){
+  if (freshWelcome){ freshWelcome = false; firstVisit = false; hideSheets(); render(); return; }   // the opening message after starting over
+  newGame($('bankCancel').hidden ? false : true);   // first visit: sit straight down; start over: then the opening message
 }
 
 /* ---------- tables: 6 decks up to 1 deck ---------- */
@@ -1825,7 +1832,6 @@ function tablesAfterHand(){
 }
 
 // The next table to open, and what opens it, in one line.
-function goalAfterRestart(){ const t = TABLES[1]; return 'Next goal: the ' + deckTable(t.d) + '. Have ' + money(t.chipsNeed) + ' in chips of your own, or bet ' + money(t.betNeed) + ' in all at the ' + deckTable(TABLES[0].d) + '.'; }
 function nextGoal(){
   const i = openList().findIndex((o, k) => k > 0 && !o);
   if (i < 0) return 'All four tables are open.';
@@ -1838,7 +1844,7 @@ function openBank(first){
   $('bankH').textContent = first ? 'Vegas Whale' : 'Start over?';
   $('bankNote').innerHTML = first
     ? 'You start with $1,000.<br><br>Next goal: the ' + deckTable(TABLES[1].d) + '.'
-    : 'You start again with $1,000 at the 6-deck table. Debts and stuff are cleared. Your record is kept.<br><br>' + goalAfterRestart();
+    : 'You start again from the beginning with $1,000. Debts and stuff are cleared. Your record is kept.';
   $('bankStart').textContent = first ? 'Sit down with $1,000' : 'Start over with $1,000';
   $('bankCancel').hidden = !!first;
   hideSheets(); $('bankSheet').hidden = false;
@@ -2278,8 +2284,8 @@ $('scopeSeg').addEventListener('click', e => { const b = e.target.closest('butto
 $('moreLog').addEventListener('click', () => { logShown += 50; renderRecord(); });
 $('newBankBtn').addEventListener('click', () => openBank(false));
 $('openCashier').addEventListener('click', openCashier);
-$('bankStart').addEventListener('click', newGame);
-$('deadStart').addEventListener('click', newGame);
+$('bankStart').addEventListener('click', sitDown);
+$('deadStart').addEventListener('click', () => newGame(true));
 ['card', 'shark'].forEach(w => {
   $(w + 'Input').addEventListener('input', () => { $('cashErr').hidden = true; cashierLabels(); });
   $(w + 'Clear').addEventListener('click', () => { $(w + 'Input').value = 0; $('cashErr').hidden = true; cashierLabels(); });
