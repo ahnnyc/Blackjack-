@@ -1459,11 +1459,11 @@ function renderControls(){
     } else if (R && R.msg) text = R.msg;
     else text = '';
     if (S.dead){
-      text = 'Game over. The loan shark got you.';
+      text = 'Game over. You ended up in a shallow grave in the desert.';
       a.append(row(), row(btn('Start over', () => newGame(true), { primary:true })));
     } else if (S.bankroll < 5 && !S.bet){
-      text = 'You’re out of chips. Borrow, or start over.';
-      a.append(row(), row(btn('Start over', () => openBank(false)), btn('Borrow', () => openCashier(), { primary:true, disabled: !canBorrow() })));
+      text = 'You’re out of chips. Borrow, or leave town.';
+      a.append(row(), row(btn('Leave town', () => openBank(false, true)), btn('Borrow', () => openCashier(), { primary:true, disabled: !canBorrow() })));
     } else {
       const chips = document.createElement('div'); chips.id = 'chips';
       tbl().chips.forEach(v => {
@@ -1567,7 +1567,7 @@ function renderRecord(){
       const c = it.c;
       const title = { buy:'Bought ' + c.item + ' from Guy', sell:'Sold ' + c.item + ' to Guy', seized:'Security took ' + c.item,
         card:'Borrowed on the credit card', cardpay:'Paid the credit card', cardint:'Credit card interest',
-        shark:'Borrowed from the loan shark', sharkpay:'Paid the loan shark', vig:'The loan shark’s cut', dead:'Killed by the loan shark', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left' }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
+        shark:'Borrowed from the loan shark', sharkpay:'Paid the loan shark', vig:'The loan shark’s cut', dead:'Killed by the loan shark', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left', sharktook:'The loan shark took ' + (c.item || 'something') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
       when.textContent = title + ' · ' + stamp(c.t);
       const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
       const what = document.createElement('div'); what.className = 'what num';
@@ -1672,10 +1672,14 @@ function drawChart(list, scope, n, cash){
 const cashList = () => S.cash || (S.cash = []);
 function inPlay(){ return S.round && R ? cents(R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0)) : 0; }
 const handsThisGame = () => history.reduce((a, r) => a + (r.s === S.session ? 1 : 0), 0);
-const cardLeft = () => Math.max(0, cents(CARD_LIMIT - S.card));
+// Prestige buys influence: a bigger credit line, a looser loan shark, and less attention from security.
+const cardLimit = () => cents(CARD_LIMIT + prestige() / 2);
+const sharkMax = () => cents(SHARK_MAX + prestige());
+const sharkRate = () => prestige() >= 100000 ? 0.10 : prestige() >= 25000 ? 0.15 : SHARK_RATE;
+const cardLeft = () => Math.max(0, cents(cardLimit() - S.card));
 const cardMaxed = () => cardLeft() < 1;
-const sharkLeft = () => Math.max(0, cents(SHARK_MAX - S.shark));
-const sharkCut = () => cents(S.shark * SHARK_RATE);
+const sharkLeft = () => Math.max(0, cents(sharkMax() - S.shark));
+const sharkCut = () => cents(S.shark * sharkRate());
 const cardInterest = () => cents(S.card * CARD_RATE);
 function canBorrow(){ return !S.dead && (cardLeft() >= 1 || (cardMaxed() && sharkLeft() >= 1)); }
 // Every move of money that isn't a bet goes in the record. k says what kind:
@@ -1722,7 +1726,7 @@ function cashierLabels(){
   $('cardNote').textContent = (S.card > 0
       ? 'You owe ' + money(S.card) + '. ' + (cardMaxed() ? 'The card is maxed out.' : money(cardLeft()) + ' left to borrow.') +
         ' Every ' + CARD_EVERY + ' hands ' + pct(CARD_RATE) + ' is added: ' + money(cardInterest()) + ' after hand ' + nextInt + '.'
-      : 'You owe nothing. The limit is ' + money(CARD_LIMIT) + '. Every ' + CARD_EVERY + ' hands ' + pct(CARD_RATE) + ' of what you owe is added.');
+      : 'You owe nothing. The limit is ' + money(cardLimit()) + (prestige() > 0 ? ' (' + money(CARD_LIMIT) + ' plus half your prestige)' : '') + '. Every ' + CARD_EVERY + ' hands ' + pct(CARD_RATE) + ' of what you owe is added.');
   const cb = Math.min(cv, cardLeft()), cp = Math.min(cv, S.card, S.bankroll);
   $('cardBorrow').textContent = cb > 0 ? 'Borrow ' + money(cb) : 'Borrow';
   $('cardPay').textContent = cp > 0 ? 'Pay back ' + money(cp) : 'Pay back';
@@ -1733,9 +1737,9 @@ function cashierLabels(){
   if (!open) $('sharkNote').textContent = 'He only lends once your credit card is maxed out.';
   else if (S.shark > 0){
     const left = Math.max(0, S.sharkNext - n);
-    $('sharkNote').textContent = 'You owe him ' + money(S.shark) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(SHARK_RATE) + ' of it from your chips: ' + money(sharkCut()) +
-      ', due after hand ' + S.sharkNext + ' (' + (left === 1 ? 'next hand' : left + ' hands from now') + '). If you can’t pay, he kills you.';
-  } else $('sharkNote').textContent = 'Your card is maxed. He lends up to ' + money(SHARK_MAX) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(SHARK_RATE) + ' of what you owe from your chips. If you can’t pay, he kills you.';
+    $('sharkNote').textContent = 'You owe him ' + money(S.shark) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of it from your chips: ' + money(sharkCut()) +
+      ', due after hand ' + S.sharkNext + ' (' + (left === 1 ? 'next hand' : left + ' hands from now') + '). If you can’t pay, he takes your stuff; with nothing to take, the game is over.';
+  } else $('sharkNote').textContent = 'Your card is maxed. He lends up to ' + money(sharkMax()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of what you owe from your chips. If you can’t pay, he takes your stuff; with nothing to take, the game is over.';
   const sv = Math.floor(Number($('sharkInput').value) || 0);
   const sb = Math.min(sv, sharkLeft()), sp = Math.min(sv, S.shark, S.bankroll);
   $('sharkBorrow').textContent = sb > 0 ? 'Borrow ' + money(sb) : 'Borrow';
@@ -1788,6 +1792,16 @@ function debtsAfterHand(){
       S.sharkNext = n + SHARK_EVERY;
       render(); showMove(before, $('bankAmt'), $('openCashier'));
       say('The loan shark took his cut: ' + money(cut) + '.');
+    } else if (stashList().reduce((a, x) => a + (x.paid || 0), 0) >= cut){
+      // he takes stuff instead, the most valuable first, until it covers his cut (he keeps any extra)
+      const list = stashList().slice().sort((a, b) => (b.paid || 0) - (a.paid || 0)), took = [];
+      let got = 0;
+      for (const x of list){ if (got >= cut) break; took.push(x); got += x.paid || 0; }
+      S.stash = stashList().filter(x => !took.includes(x));
+      took.forEach(x => cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'sharktook', item: x.item, paid: x.paid }));
+      S.sharkNext = n + SHARK_EVERY;
+      touch(); saveLocal(); saveCloudState(); render();
+      queueSheet(() => { guyOffer = false; fenceSheet('The loan shark', '🦈', 'You couldn’t pay his <b>' + money(cut) + '</b> cut, so he took ' + took.map(x => '<b>' + esc(x.item) + '</b>').join(', ').replace(/, ([^,]*)$/, ' and $1') + ' instead (worth ' + money(got) + '). Prestige: ' + money(prestige()) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
     } else {
       S.dead = { t: Date.now(), cut, chips: S.bankroll, owed: cents(S.shark + S.card), hands: n, stuff: stashList().length, game: S.session };
       cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'dead', amt: cut });
@@ -1801,7 +1815,7 @@ function debtsAfterHand(){
     queueSheet(() => {
       if (!(S.shark > 0 && S.sharkNext - handsThisGame() === 1 && S.bankroll < sharkCut())) return pumpSheets(0);   // no longer true
       guyOffer = false;
-      fenceSheet('The loan shark', '🦈', 'After your next hand the loan shark takes <b>' + money(sharkCut()) + '</b>. You have ' + money(S.bankroll) + '. If you can’t pay, the game is over.',
+      fenceSheet('The loan shark', '🦈', 'After your next hand the loan shark takes <b>' + money(sharkCut()) + '</b>. You have ' + money(S.bankroll) + '. If you can’t pay, he takes your stuff. With nothing to take, the game is over.',
         [btn('Sell stuff', () => openStuff()), btn('OK', () => hideSheets(), { primary:true })]);
     });
     return true;
@@ -1812,8 +1826,8 @@ function showDead(){
   if (!S.dead) return;
   const d = S.dead;
   hideSheets();
-  $('deadText').innerHTML = 'The loan shark was owed <b>' + money(d.cut) + '</b>. You had ' + money(d.chips) + '.<br><br>' +
-    'You lasted ' + d.hands + (d.hands === 1 ? ' hand' : ' hands') + ', owed ' + money(d.owed) + ', and left ' + d.stuff + (d.stuff === 1 ? ' thing' : ' things') + ' behind.';
+  $('deadText').innerHTML = 'You couldn’t pay the loan shark his <b>' + money(d.cut) + '</b> cut, and your stuff wasn’t worth enough to cover it. You end up in a shallow grave in the desert.<br><br>' +
+    'You lasted ' + d.hands + (d.hands === 1 ? ' hand' : ' hands') + ' and owed ' + money(d.owed) + '.';
   $('deadSheet').hidden = false;
 }
 function newGame(welcome){
@@ -1931,12 +1945,13 @@ addEventListener('visibilitychange', () => {
 });
 
 /* ---------- welcome / start over ---------- */
-function openBank(first){
-  $('bankH').textContent = first ? 'Vegas Whale' : 'Start over?';
+function openBank(first, leave){
+  $('bankH').textContent = first ? 'Vegas Whale' : leave ? 'Leave town?' : 'Start over?';
   $('bankNote').innerHTML = first
     ? 'You start with $1,000.<br><br>Next goal: the ' + deckTable(TABLES[1].d) + '.'
-    : 'You start again from the beginning with $1,000. Debts and stuff are cleared. Your record is kept.';
-  $('bankStart').textContent = first ? 'Sit down with $1,000' : 'Start over with $1,000';
+    : leave ? 'Everything is wiped: chips, debts, stuff, people and prestige. You start again from the beginning with $1,000. Your record is kept.'
+    : 'You start again from the beginning with $1,000. Debts, stuff, people and prestige are cleared. Your record is kept.';
+  $('bankStart').textContent = first ? 'Sit down with $1,000' : leave ? 'Leave town' : 'Start over with $1,000';
   $('bankCancel').hidden = !!first;
   hideSheets(); $('bankSheet').hidden = false;
 }
@@ -1982,10 +1997,10 @@ function brokeAfterHand(){
     if (S.dead || S.round || S.bankroll >= 5) return pumpSheets(0);
     guyOffer = false;
     let text;
-    if (!cardMaxed()) text = 'You can borrow up to ' + money(cardLeft()) + ' on a credit card. Every ' + CARD_EVERY + ' hands, ' + pct(CARD_RATE) + ' of what you owe is added.';
-    else if (sharkLeft() >= 1) text = 'Your credit card is maxed out. A loan shark will lend up to ' + money(sharkLeft()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(SHARK_RATE) + ' of what you owe from your chips. If you can’t pay, the game is over.';
-    else text = 'You can’t borrow any more. Sell your stuff or start over.';
-    fenceSheet('Out of chips', '💸', text, [btn('Start over', () => openBank(false)), btn('Borrow', () => { hideSheets(); openCashier(); }, { primary:true, disabled: !canBorrow() })]);
+    if (!cardMaxed()) text = 'Borrow, or leave town and start over from the beginning. You can borrow up to ' + money(cardLeft()) + ' on a credit card. Every ' + CARD_EVERY + ' hands, ' + pct(CARD_RATE) + ' of what you owe is added.';
+    else if (sharkLeft() >= 1) text = 'Your credit card is maxed out. A loan shark will lend up to ' + money(sharkLeft()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of what you owe from your chips. If you can’t pay, he takes your stuff; with nothing to take, the game is over.';
+    else text = 'You can’t borrow any more. Sell your stuff, or leave town and start over from the beginning.';
+    fenceSheet('Out of chips', '💸', text, [btn('Leave town', () => openBank(false, true)), btn('Borrow', () => { hideSheets(); openCashier(); }, { primary:true, disabled: !canBorrow() })]);
   });
 }
 
@@ -2088,7 +2103,7 @@ function fenceAfterHand(){
   const n = history.length;
   if (n === S.fenceSeen) return;
   S.fenceSeen = n;
-  if (stashList().length && n - (S.fenceLast || 0) >= 2 && Math.random() < SEIZE_CHANCE){ S.fenceLast = n; return later(fenceSeize); }
+  if (stashList().length && n - (S.fenceLast || 0) >= 2 && Math.random() < SEIZE_CHANCE / (1 + prestige() / 25000)){ S.fenceLast = n; return later(fenceSeize); }
   const big = stashList().filter(x => x.paid > BUYBACK_OVER);
   if (big.length && n - (S.fenceLast || 0) >= BUYBACK_GAP && Math.random() < BUYBACK_CHANCE){ S.fenceLast = n; const x = pickOne(big); return later(() => fenceBuyback(x)); }
   const o = guyOdds();
