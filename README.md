@@ -36,4 +36,4 @@ The record lives in the phone's own storage for this site. It is not synced anyw
 
 ## Sounds
 
-The card sounds (dealing, flipping, shuffling, collecting) are real recordings from Kenney's Casino Audio pack (kenney.nl), released under CC0, built into the page so they work offline. The chip sounds are made in code.
+The card sounds (dealing, flipping, shuffling, collecting) are real recordings from Kenney's Casino Audio pack (kenney.nl), released under CC0, built into the page so they work offline. The chip sound is made in code: a short, dead plastic clack with a smaller second clack as the chip settles, at about the same loudness as the card recordings.

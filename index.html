@@ -613,11 +613,21 @@ const Sound = (() => {
     const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
   }
+  // a short, dead tone: plastic does not ring the way glass or metal does
+  function knock(c, dest, t, freq, dur, gain){
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(freq, t); o.frequency.exponentialRampToValueAtTime(freq * 0.85, t + dur);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.001); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
+  }
   const make = {
-    // chips: a light tap and a bright, glassy ring that dies away fast
-    chip(c, d, t){ const v = 0.92 + Math.random() * 0.16;
-      burst(c, d, t, 0.012, 7000 * v, 1.5, 0.25, 'highpass');
-      ping(c, d, t, 4200 * v, 0.12, 0.16); ping(c, d, t, 6300 * v, 0.08, 0.09); ping(c, d, t + 0.004, 8900 * v, 0.05, 0.05); },
+    // chips: a hard plastic clack, chip on chip — a sharp mid-high snap with almost no ring, a dull knock
+    // under it for body, then a smaller second clack a moment later as the chip settles on the stack
+    chip(c, d, t){ const v = 0.94 + Math.random() * 0.12, t2 = t + 0.016 + Math.random() * 0.012;
+      burst(c, d, t, 0.016, 3000 * v, 2.2, 0.55);                 // the clack
+      burst(c, d, t, 0.022, 1100 * v, 1.4, 0.22);                 // the knock under it
+      knock(c, d, t, 2350 * v, 0.03, 0.12); knock(c, d, t, 3700 * v, 0.02, 0.07);
+      burst(c, d, t2, 0.012, 3400 * v, 2.4, 0.26);                // settling
+      knock(c, d, t2, 2600 * v, 0.018, 0.05); },
     // a thin card skimming off the shoe, then a light paper tick as it lands
     deal(c, d, t){ burst(c, d, t, 0.07, 3500, 0.7, 0.14, 'highpass', 7500); burst(c, d, t + 0.065, 0.012, 7800, 1.2, 0.22, 'highpass'); },
     // a card turned over: a quick papery flick
