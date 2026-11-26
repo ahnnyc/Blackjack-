@@ -1,4 +1,4 @@
-# Blackjack Whale
+# Vegas Whale
 
 Casino blackjack for the phone, installable to the iPhone home screen and playable with no internet connection.
 
