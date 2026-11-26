@@ -766,7 +766,7 @@ function run(fn){
   Promise.resolve().then(fn)
     .then(async () => { if (R && R.phase === 'done' && !R.paid){ render(); await payoutAnim(); } })
     .catch(e => { console.error(e); if (R) { R.countFrom = null; R.paid = true; } })
-    .finally(() => { busy = false; saveLocal(); render(); const stop = debtsAfterHand(); if (!S.dead) stayAfterHand(); if (!stop && !tablesAfterHand()) fenceAfterHand(); pumpSheets(150); });
+    .finally(() => { busy = false; saveLocal(); render(); const stop = debtsAfterHand(); if (!S.dead) stayAfterHand(); if (!S.dead) brokeAfterHand(); if (!stop && !tablesAfterHand()) fenceAfterHand(); pumpSheets(150); });
 }
 
 async function deal(){
@@ -1837,7 +1837,7 @@ function nextGoal(){
 function openBank(first){
   $('bankH').textContent = first ? 'Vegas Whale' : 'Start over?';
   $('bankNote').innerHTML = first
-    ? 'You start with $1,000. When it runs out, you can borrow up to $50,000 on a credit card, then from a loan shark.<br><br>' + nextGoal()
+    ? 'You start with $1,000.<br><br>Next goal: the ' + deckTable(TABLES[1].d) + '.'
     : 'You start again with $1,000 at the 6-deck table. Debts and stuff are cleared. Your record is kept.<br><br>' + goalAfterRestart();
   $('bankStart').textContent = first ? 'Sit down with $1,000' : 'Start over with $1,000';
   $('bankCancel').hidden = !!first;
@@ -1877,6 +1877,21 @@ function guyOdds(){
 }
 function sheetOpen(){ return [...document.querySelectorAll('.sheet')].some(x => !x.hidden); }
 function fenceFree(){ return !busy && !S.round && !S.dead && !firstVisit; }
+/* ---------- out of chips: what you can borrow ---------- */
+// Shown each time the chips run out, so the credit card and the loan shark come up when they're needed.
+function brokeAfterHand(){
+  if (S.dead || S.round || S.bet || S.bankroll >= 5) return;
+  queueSheet(() => {
+    if (S.dead || S.round || S.bankroll >= 5) return pumpSheets(0);
+    guyOffer = false;
+    let text;
+    if (!cardMaxed()) text = 'You can borrow up to ' + money(cardLeft()) + ' on a credit card. Every ' + CARD_EVERY + ' hands, ' + pct(CARD_RATE) + ' of what you owe is added.';
+    else if (sharkLeft() >= 1) text = 'Your credit card is maxed out. A loan shark will lend up to ' + money(sharkLeft()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(SHARK_RATE) + ' of what you owe from your chips. If you can’t pay, the game is over.';
+    else text = 'You can’t borrow any more. Sell your stuff or start over.';
+    fenceSheet('Out of chips', '💸', text, [btn('Start over', () => openBank(false)), btn('Borrow', () => { hideSheets(); openCashier(); }, { primary:true, disabled: !canBorrow() })]);
+  });
+}
+
 /* ---------- the stay: meals and the room ---------- */
 function stayAfterHand(){
   if (S.dead || S.round) return;

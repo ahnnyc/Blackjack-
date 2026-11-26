@@ -10,7 +10,7 @@ Time passes in hands: every 150 hands is a day, about an hour of play. You stop 
 
 ## Messages
 
-Every message in the game is short and plain: what happened and the numbers, no jokes. The welcome screen and each new-table message state the next goal. A free bill is always called comped.
+Every message in the game is short and plain: what happened and the numbers, no jokes. The welcome screen says only the $1,000 start and the next table. The credit card and the loan shark are explained when the chips run out. Each new-table message states the next goal in full. A free bill is always called comped.
 
 ## Files
 
