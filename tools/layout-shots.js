@@ -10,7 +10,7 @@ const dir = __dirname;
     const p = await ctx.newPage();
     const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.goto('file://' + dir + '/page.html');
-    await p.fill('#bankInput', '500'); await p.click('#bankStart');
+    await p.click('#bankStart');
     await p.click('.chip.c25'); await p.waitForTimeout(1200);
     await p.screenshot({ path: `${dir}/L-${w}-bet.png` });
     await p.click('#actions button:has-text("Deal")');

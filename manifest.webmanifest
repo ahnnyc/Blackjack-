@@ -1,7 +1,7 @@
 {
-  "name": "Blackjack",
-  "short_name": "Blackjack",
-  "description": "Casino blackjack with every house rule as a switch, your own bankroll, and a record of every bet.",
+  "name": "Compulsive Gambler",
+  "short_name": "Gambler",
+  "description": "Casino blackjack for compulsive gamblers: $10,000 to start, a credit card, a loan shark, and Guy selling hot goods.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -9,8 +9,21 @@
   "background_color": "#09362b",
   "theme_color": "#09362b",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }

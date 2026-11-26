@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Blackjack">
+<meta name="apple-mobile-web-app-title" content="Compulsive Gambler">
 <meta name="theme-color" content="#09362b">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <style>[hidden]{display:none!important}</style>
-<title>Blackjack Table</title>
+<title>Compulsive Gambler</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap">
@@ -53,8 +53,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:#3a6e5d}
 #topgap{flex:1}
 #bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:4px 10px;min-width:0;white-space:nowrap}
-@media (max-width:419px){ #top{gap:6px} #top .topbtn, #countBtn{padding:0 11px} }
-@media (max-width:359px){ #top{gap:4px} #top .topbtn, #countBtn{padding:0 8px;font-size:15px} }
+@media (max-width:599px){ #top{gap:4px} #top .topbtn, #top #countBtn{padding:0 7px;font-size:15px} }
+@media (max-width:359px){ #top{gap:3px} #top .topbtn, #top #countBtn{padding:0 5px;font-size:14px} }
 #plTag{font-size:17px;font-weight:700;white-space:nowrap;color:var(--muted)}
 #plTag.up{color:var(--good)} #plTag.down{color:var(--bad)}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
@@ -109,6 +109,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #limits{justify-self:start;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:16px;line-height:1.2;background:rgba(0,0,0,.15)}
 #limits .lt{letter-spacing:.08em;text-transform:uppercase}
 #limits #limitsV{font-weight:700;white-space:nowrap}
+#limits #oweV{font-weight:700;white-space:nowrap;border-top:1px dashed var(--gold);margin-top:2px;padding-top:1px}
 #shoeLabel{white-space:nowrap;text-align:center;font-size:16px;font-weight:600;color:var(--gold);line-height:1.1}
 #banner{position:absolute;left:50%;top:50%;z-index:4;transform:translate(-50%,-50%);pointer-events:none;
   width:max-content;max-width:98%;text-align:center;padding:6px 14px;border-radius:16px;
@@ -189,6 +190,7 @@ body.still #banner.pop{animation:none}
   padding:16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   display:flex;flex-direction:column;gap:14px
 }
+.panel > *, #sharkCtl > *{flex-shrink:0}   /* a long sheet scrolls; nothing in it gets squashed */
 .phead{display:flex;align-items:center;gap:10px}
 .phead h2{flex:1;margin:0;font-family:var(--f-display);font-size:26px;font-weight:700;color:var(--gold);text-wrap:balance}
 .note{color:var(--muted);font-size:16px;margin:0}
@@ -229,9 +231,22 @@ body.still #banner.pop{animation:none}
 .amt-in span{font-size:24px;color:var(--gold)}
 .amt-in input{flex:1;min-width:0;background:none;border:0;color:var(--text);font:inherit;font-size:24px;font-weight:700;outline:none}
 .err{color:var(--bad);font-size:16px;margin:0}
+#sharkCtl{display:flex;flex-direction:column;gap:14px}
 .amt-in .clr{flex:none;min-height:40px;padding:0 14px;border-radius:20px;border:1.5px solid var(--line);background:none;font-size:16px;color:var(--text)}
 .amt-in .clr:disabled,.seg button:disabled{opacity:.45;border-style:dashed;cursor:default}
 .empty{color:var(--muted);font-size:16px;padding:10px 0}
+#stuffStage{display:flex;justify-content:center;perspective:900px}
+.scard{width:min(236px, 60vw, calc(40dvh * 5 / 7));aspect-ratio:5/7;border-radius:18px;background:#fbfaf5;color:#1d1d23;box-shadow:0 10px 26px rgba(0,0,0,.5);
+  border:3px solid var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px;text-align:center;position:relative;touch-action:pan-y;box-sizing:border-box}
+.scard .tag{position:absolute;top:10px;left:12px;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7a1a14;border:1.5px dashed #7a1a14;border-radius:6px;padding:1px 6px}
+.scard .art{font-size:clamp(64px, 20vw, 92px);line-height:1.1}
+.scard .nm{font-size:21px;font-weight:700;line-height:1.2}
+.scard .pd{font-size:18px;font-weight:600}
+.scard .wh{font-size:16px;color:#4a4a52}
+.scard.empty{border-style:dashed;background:rgba(0,0,0,.15);color:var(--text)}
+.scard.fly{position:fixed;z-index:60;pointer-events:none;width:150px}
+.scard.fly .art{font-size:58px} .scard.fly .nm{font-size:16px} .scard.fly .pd{font-size:15px}
+#stuffNav span{flex:none;min-width:70px;text-align:center;align-self:center;font-size:17px;font-weight:600}
 .fence-art{font-size:64px;line-height:1;text-align:center;margin:4px 0}
 .fence-say{font-size:19px;line-height:1.4;margin:0}
 .fence-say b{color:var(--gold)}
@@ -251,6 +266,7 @@ body.still .card.flip{animation:none}
   <header id="top">
     <button id="countBtn" type="button" aria-expanded="false" aria-controls="countBox">Count</button>
     <button class="topbtn" id="openCashier" type="button">Cashier</button>
+    <button class="topbtn" id="openStuff" type="button">Stuff</button>
     <div id="topgap"></div>
     <button class="topbtn" id="openRules" type="button">Rules</button>
     <button class="topbtn" id="openRecord" type="button">Record</button>
@@ -259,7 +275,7 @@ body.still .card.flip{animation:none}
   <main id="table">
     <div id="banner" hidden role="status" aria-live="polite"><span class="big" id="bannerBig"></span><span class="amt num" id="bannerAmt"></span></div>
     <div id="topRow">
-      <div id="limits"><span class="lt">Limits</span><span class="num" id="limitsV"></span></div>
+      <div id="limits"><span class="lt">Limits</span><span class="num" id="limitsV"></span><span class="num" id="oweV" hidden></span></div>
       <div class="zlabel" id="dealerLabel">Dealer</div>
       <div id="shoeBox"><div id="shoe" aria-hidden="true"></div><div id="shoeLabel" class="num"></div></div>
     </div>
@@ -325,8 +341,6 @@ body.still .card.flip{animation:none}
     <p class="readout num" id="chartRead2"></p>
     <div class="chart" id="chart2"></div>
     <p class="note" id="chartNote2"></p>
-    <div class="gtitle">Your stash</div>
-    <div class="stash" id="stash"></div>
     <div class="gtitle">Totals and every hand</div>
     <div class="seg" id="scopeSeg">
       <button type="button" data-scope="session" aria-pressed="true">Current roll</button>
@@ -337,7 +351,7 @@ body.still .card.flip{animation:none}
     <div class="gtitle">Every hand, newest first</div>
     <div class="log" id="log"></div>
     <button class="btn" type="button" id="moreLog" hidden>Show 50 more</button>
-    <button class="btn" type="button" id="newBankBtn">Start a new bankroll</button>
+    <button class="btn" type="button" id="newBankBtn">Start over</button>
     <p class="note" id="syncNote"></p>
   </div>
 </div>
@@ -355,15 +369,19 @@ body.still .card.flip{animation:none}
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="cashH">
     <div class="phead"><h2 id="cashH">Cashier</h2><button class="topbtn" type="button" data-close>Done</button></div>
     <p class="note num" id="cashNow"></p>
-    <div class="gtitle">Buy chips</div>
     <p class="note">Tap amounts to add them up.</p>
-    <div class="seg" id="buyPresets"></div>
-    <div class="amt-in"><span>$</span><input id="buyInput" type="number" inputmode="numeric" min="0" max="1000000" step="1" value="0" aria-label="Dollars of chips to buy"><button class="clr" type="button" id="buyClear">Clear</button></div>
-    <button class="btn primary" type="button" id="buyBtn">Buy chips</button>
-    <div class="gtitle">Cash in chips</div>
-    <div class="seg" id="cashPresets"></div>
-    <div class="amt-in"><span>$</span><input id="cashInput" type="number" inputmode="decimal" min="0" step="0.01" value="0" aria-label="Dollars of chips to cash in"><button class="clr" type="button" id="cashClear">Clear</button></div>
-    <button class="btn" type="button" id="cashBtn">Cash in</button>
+    <div class="gtitle">Credit card</div>
+    <p class="note num" id="cardNote"></p>
+    <div class="seg" id="cardPresets"></div>
+    <div class="amt-in"><span>$</span><input id="cardInput" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="Dollars, credit card"><button class="clr" type="button" id="cardClear">Clear</button></div>
+    <div class="row"><button class="btn" type="button" id="cardPay">Pay back</button><button class="btn primary" type="button" id="cardBorrow">Borrow</button></div>
+    <div class="gtitle">Loan shark</div>
+    <p class="note num" id="sharkNote"></p>
+    <div id="sharkCtl">
+      <div class="seg" id="sharkPresets"></div>
+      <div class="amt-in"><span>$</span><input id="sharkInput" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="Dollars, loan shark"><button class="clr" type="button" id="sharkClear">Clear</button></div>
+      <div class="row"><button class="btn" type="button" id="sharkPay">Pay back</button><button class="btn primary" type="button" id="sharkBorrow">Borrow</button></div>
+    </div>
     <p class="err" id="cashErr" hidden></p>
   </div>
 </div>
@@ -377,14 +395,30 @@ body.still .card.flip{animation:none}
   </div>
 </div>
 
+<div class="sheet" id="deadSheet" hidden>
+  <div class="panel" role="alertdialog" aria-modal="true" aria-labelledby="deadH" aria-describedby="deadText">
+    <div class="phead"><h2 id="deadH">Game over</h2></div>
+    <div class="fence-art" aria-hidden="true">🦈</div>
+    <p class="fence-say" id="deadText"></p>
+    <button class="btn primary" type="button" id="deadStart">Start over with $10,000</button>
+  </div>
+</div>
+
+<div class="sheet" id="stuffSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="stuffH">
+    <div class="phead"><h2 id="stuffH">Your stuff</h2><button class="topbtn" type="button" data-close>Done</button></div>
+    <p class="note num" id="stuffNote"></p>
+    <div id="stuffStage"><div class="scard" id="stuffCard" aria-live="polite"></div></div>
+    <div class="row" id="stuffNav"><button class="btn" type="button" id="stuffPrev" aria-label="Previous">‹ Prev</button><span class="num" id="stuffPos"></span><button class="btn" type="button" id="stuffNext" aria-label="Next">Next ›</button></div>
+    <button class="btn" type="button" id="stuffSell">Sell to Guy</button>
+  </div>
+</div>
+
 <div class="sheet" id="bankSheet" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="bankH">
     <div class="phead"><h2 id="bankH">Choose your bankroll</h2><button class="topbtn" type="button" id="bankCancel">Cancel</button></div>
-    <p class="note" id="bankNote">This is the money you sit down with. Your record of past hands is kept.</p>
-    <label class="amt-in" for="bankInput"><span>$</span><input id="bankInput" type="number" inputmode="numeric" min="5" max="1000000" step="5" value="1000" aria-label="Starting bankroll in dollars"></label>
-    <div class="seg" id="bankPresets"></div>
-    <p class="err" id="bankErr" hidden></p>
-    <button class="btn primary" type="button" id="bankStart">Sit down with $1,000</button>
+    <p class="fence-say" id="bankNote"></p>
+    <button class="btn primary" type="button" id="bankStart">Sit down with $10,000</button>
   </div>
 </div>
 
@@ -393,6 +427,10 @@ body.still .card.flip{animation:none}
 'use strict';
 /* ---------- constants ---------- */
 const CHIPS = [5, 25, 100, 500, 1000];
+// Money: you walk in with $10,000. Then a credit card, then the loan shark.
+const START = 10000;
+const CARD_LIMIT = 50000, CARD_RATE = 0.20, YEAR_HANDS = 100, CARD_EVERY = 8;   // 20% a year; a "year" is 100 hands, charged every 8
+const SHARK_RATE = 0.10, SHARK_EVERY = 5, SHARK_MAX = 250000;                   // 10% of what you owe, every 5 hands
 const LIMITS = [100, 500, 1000, 5000, 10000, 0];
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
   resplit:true, resplitAces:false, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
@@ -417,19 +455,19 @@ const RULES = [
   { g:'Help', k:'warn', label:'Warn me about mistakes', desc:'Asks “Are you sure?” when a move or insurance goes against basic strategy for these rules.' },
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
-  { g:'Extras', k:'fence', label:'The man in the trench coat', desc:'Now and then, between hands, he offers hot goods. What you buy goes in your stash in Record, where you can sell it back. Casino security sometimes takes things.' },
+  { g:'Extras', k:'fence', label:'Guy', desc:'Guy, in a trench coat, turns up between hands selling hot goods, from a pinky ring to a private jet. Buy from him and he comes round more often. Turn him down five times in a row and he stops coming. Casino security sometimes takes things.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const SHORT_WORD = { win:'Win', lose:'Lose', bust:'Bust', push:'Push', bj:'Blackjack', sur:'Surrender', charlie:'Charlie', em:'Even money' };
 const RES_WORD = { win:'Win', lose:'Lose', bust:'Bust', push:'Push', bj:'Blackjack', sur:'Surrendered', charlie:'Five-card Charlie', em:'Even money' };
-const LS_STATE = 'bj.state.v1', LS_HIST = 'bj.history.v1';
+const LS_STATE = 'cg.state.v2', LS_HIST = 'cg.history.v2';
 const CHUNK = 200;
 let reduced = false, D = 640;   // set from the Animations switch on every draw
 function applyMotion(){ reduced = !rules().motion; D = reduced ? 140 : 640; document.body.classList.toggle('still', reduced); }
 
 /* ---------- state ---------- */
-let S = freshState(1000);
+let S = freshState();
 let history = [];
 let R = null;          // the round on the table (in play, or just finished)
 let busy = false;
@@ -441,9 +479,10 @@ let scope = 'session', logShown = 50;
 let sync = 'local';    // local | cloud | error
 let cloud = null;      // { col }
 
-function freshState(amount){
-  return { v:1, settings:{ decks:6, max:5000, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
-    sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0 };
+function freshState(amount = START){
+  return { v:2, settings:{ decks:6, max:5000, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
+    sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
+    card:0, shark:0, sharkNext:0, debtSeen:0, stash:[], guy:{ lvl:0, no:0, gone:false }, dead:null, cash:[] };
 }
 const rules = () => S.settings.rules;
 
@@ -451,6 +490,10 @@ const rules = () => S.settings.rules;
 const $ = id => document.getElementById(id);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const cents = x => Math.round(x * 100) / 100;
+function shortMoney(v){
+  const a = Math.abs(v), t = (x, d) => String(+x.toFixed(d));
+  return a < 1000 ? money(v) : a < 1e6 ? '$' + t(v / 1000, a < 10000 ? 1 : 0) + 'K' : '$' + t(v / 1e6, a < 1e7 ? 2 : 1) + 'M';
+}
 function money(n){
   const a = Math.abs(n), whole = Math.abs(a - Math.round(a)) < 0.001;
   return (n < 0 ? '−' : '') + '$' + a.toLocaleString('en-US', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2 });
@@ -574,7 +617,7 @@ function run(fn){
   Promise.resolve().then(fn)
     .then(async () => { if (R && R.phase === 'done' && !R.paid){ render(); await payoutAnim(); } })
     .catch(e => { console.error(e); if (R) { R.countFrom = null; R.paid = true; } })
-    .finally(() => { busy = false; saveLocal(); render(); fenceAfterHand(); });
+    .finally(() => { busy = false; saveLocal(); render(); if (!debtsAfterHand()) fenceAfterHand(); });
 }
 
 async function deal(){
@@ -1024,7 +1067,7 @@ function render(){
   const pl = cents(history.reduce((a, r) => r.s === S.session ? a + r.n : a, 0)), plTag = $('plTag');
   plTag.className = 'pl num' + (pl > 0 ? ' up' : pl < 0 ? ' down' : '');
   plTag.textContent = pl > 0 ? '▲ Up ' + money(pl) : pl < 0 ? '▼ Down ' + money(-pl) : 'Even';
-  plTag.setAttribute('aria-label', pl > 0 ? 'You are up ' + money(pl) + ' on this bankroll' : pl < 0 ? 'You are down ' + money(-pl) + ' on this bankroll' : 'You are even on this bankroll');
+  plTag.setAttribute('aria-label', pl > 0 ? 'You are up ' + money(pl) + ' this game' : pl < 0 ? 'You are down ' + money(-pl) + ' this game' : 'You are even this game');
   const n = R ? R.hands.length : 1;
   const w = Math.min(innerWidth, 560) - 32;
   const cw = n === 1 ? Math.min(62, w * 0.18) : n === 2 ? Math.min(50, w * 0.15) : Math.min(42, w * 0.12);
@@ -1077,7 +1120,9 @@ function render(){
   $('shoeLabel').textContent = S.settings.decks + (S.settings.decks === 1 ? ' deck' : ' decks');
   const short = v => v >= 1000 ? '$' + (v / 1000) + 'K' : '$' + v;
   $('limitsV').textContent = '$5–' + (S.settings.max ? short(S.settings.max) : 'no max');
-  $('limits').setAttribute('aria-label', 'Table limits ' + money(5) + ' to ' + (S.settings.max ? money(S.settings.max) : 'no maximum'));
+  const owe = cents(S.card + S.shark);
+  $('oweV').hidden = !owe; $('oweV').textContent = 'Owe ' + shortMoney(owe);
+  $('limits').setAttribute('aria-label', 'Table limits ' + money(5) + ' to ' + (S.settings.max ? money(S.settings.max) : 'no maximum') + (owe ? '. You owe ' + money(owe) : ''));
   // the result, big
   const ban = $('banner');
   if (R && R.phase === 'done' && R.net !== undefined){
@@ -1186,9 +1231,12 @@ function renderControls(){
       text += ' Place your next bet.';
     } else if (R && R.msg) text = R.msg;
     else text = '';
-    if (S.bankroll < 5 && !S.bet){
-      text = 'You’re out of chips. Buy more, or start a new bankroll.';
-      a.append(row(), row(btn('New bankroll', () => openBank()), btn('Buy chips', () => openCashier(), { primary:true })));
+    if (S.dead){
+      text = 'Game over. The loan shark got you.';
+      a.append(row(), row(btn('Start over', () => newGame(), { primary:true })));
+    } else if (S.bankroll < 5 && !S.bet){
+      text = 'You’re out of chips. Borrow, or start over.';
+      a.append(row(), row(btn('Start over', () => openBank(false)), btn('Borrow', () => openCashier(), { primary:true, disabled: !canBorrow() })));
     } else {
       const chips = document.createElement('div'); chips.id = 'chips';
       CHIPS.forEach(v => {
@@ -1271,12 +1319,12 @@ function renderRecord(){
   const list = scope === 'session' ? history.filter(r => r.s === S.session) : history;
   const sess = S.sessions.find(x => x.s === S.session);
   const cs = scope === 'session' ? cashList().filter(c => c.s === S.session) : cashList();
-  const chipMoves = cs.filter(c => !c.k);
-  const bought = cents(chipMoves.filter(c => c.a > 0).reduce((a, c) => a + c.a, 0)), cashed = cents(-chipMoves.filter(c => c.a < 0).reduce((a, c) => a + c.a, 0));
-  const goodsSpent = cents(-cs.filter(c => c.k === 'buy').reduce((a, c) => a + c.a, 0)), goodsSold = cents(cs.filter(c => c.k === 'sell').reduce((a, c) => a + c.a, 0));
+  const sum = k => cents(cs.filter(c => c.k === k).reduce((a, c) => a + Math.abs(c.a), 0));
+  const goodsSpent = sum('buy'), goodsSold = sum('sell'), vigPaid = sum('vig');
+  const died = cs.filter(c => c.k === 'dead').length;
   $('sessionNote').textContent = scope === 'session'
-    ? 'Bankroll ' + S.session + ', started ' + new Date(sess ? sess.at : Date.now()).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) + ' with ' + money(sess ? sess.start : S.bankroll) + '.' + (bought ? ' Bought ' + money(bought) + ' more.' : '') + (cashed ? ' Cashed in ' + money(cashed) + '.' : '') + ' Now ' + money(S.bankroll) + '.'
-    : S.sessions.length + (S.sessions.length === 1 ? ' bankroll' : ' bankrolls') + ' so far, ' + history.length + ' hands in all.';
+    ? 'Game ' + S.session + ', started ' + new Date(sess ? sess.at : Date.now()).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) + ' with ' + money(sess ? sess.start : START) + '. Now ' + money(S.bankroll) + (S.card + S.shark ? ', owing ' + money(cents(S.card + S.shark)) : '') + '.' + (S.dead ? ' The loan shark killed you.' : '')
+    : S.sessions.length + (S.sessions.length === 1 ? ' game' : ' games') + ' so far, ' + history.length + ' hands in all.' + (died ? ' The loan shark got you ' + (died === 1 ? 'once.' : died + ' times.') : '');
   drawChart(history.filter(r => r.s === S.session), 'session', '1', cashList().filter(c => c.s === S.session));
   drawChart(history, 'all', '2', cashList());
   const s = stats(list);
@@ -1285,9 +1333,8 @@ function renderRecord(){
   add('Net result', signed(s.n)); add('Total bet', money(s.w)); add('Hands', String(s.rounds));
   add('Won', String(s.won)); add('Lost', String(s.lost)); add('Pushed', String(s.push));
   add('Blackjacks', String(s.bj)); add('Biggest win', s.best > 0 ? signed(s.best) : '—'); add('Biggest loss', s.worst < 0 ? signed(s.worst) : '—');
-  add('Chips bought', money(bought)); add('Cashed in', money(cashed)); add('Chips now', money(S.bankroll));
-  if (goodsSpent || goodsSold){ add('Spent on hot goods', money(goodsSpent)); add('Sold hot goods for', money(goodsSold)); add('Your stash cost', money(stashList().reduce((a, x) => a + x.paid, 0))); }
-  renderStash();
+  add('Chips now', money(S.bankroll)); add('Card owed', money(S.card)); add('Shark owed', money(S.shark));
+  add('Shark’s cut paid', money(vigPaid)); add('Spent with Guy', money(goodsSpent)); add('Sold to Guy', money(goodsSold));
   const log = $('log'); log.replaceChildren();
   const items = list.map((r, i) => ({ t: r.t, r, num: i + 1 })).concat(cs.map(c => ({ t: c.t, c }))).sort((a, b) => b.t - a.t);
   if (!items.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No hands yet. Every bet you place will be listed here.'; log.append(e); }
@@ -1297,11 +1344,14 @@ function renderRecord(){
     const when = document.createElement('div'); when.className = 'when';
     if (it.c){
       const c = it.c;
-      const goods = c.k ? { buy:'Bought ' + c.item + ' (hot)', sell:'Sold ' + c.item, seized:'Security took ' + c.item }[c.k] : '';
-      when.textContent = (goods || (c.a > 0 ? 'Chips bought' : 'Chips cashed in')) + ' · ' + stamp(c.t);
+      const title = { buy:'Bought ' + c.item + ' from Guy', sell:'Sold ' + c.item + ' to Guy', seized:'Security took ' + c.item,
+        card:'Borrowed on the credit card', cardpay:'Paid the credit card', cardint:'Credit card interest',
+        shark:'Borrowed from the loan shark', sharkpay:'Paid the loan shark', vig:'The loan shark’s cut', dead:'Killed by the loan shark' }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
+      when.textContent = title + ' · ' + stamp(c.t);
       const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
       const what = document.createElement('div'); what.className = 'what num';
-      what.textContent = (c.k === 'buy' ? 'Paid from your bankroll' : c.k === 'sell' ? 'Added to your bankroll' : c.k === 'seized' ? 'You had paid ' + money(c.paid || 0) : c.a > 0 ? 'Added to your bankroll' : 'Taken off the table') + ' · Bankroll ' + money(c.b);
+      what.textContent = ({ seized:'You had paid ' + money(c.paid || 0), cardint: money(c.amt || 0) + ' added to what you owe', dead:'Couldn’t cover his ' + money(c.amt || 0) + ' cut' }[c.k] ||
+        (c.a > 0 ? 'Added to your chips' : 'Taken from your chips')) + ' · Chips ' + money(c.b);
       e.append(when, amt, what); log.append(e); return;
     }
     const r = it.r;
@@ -1329,7 +1379,7 @@ function shortMoney(v){ return Math.abs(v) >= 10000 ? (v < 0 ? '−' : '') + '$'
 function drawChart(list, scope, n, cash){
   const box = $('chart' + n); box.replaceChildren();
   // The line is what you've won or lost at the table: up is profit, down is loss.
-  // Chips bought or cashed in don't move it.
+  // Borrowing, paying back and Guy's deals don't move it.
   const series = []; let x = 0, cur = null, ser = null, hand = 0, total = 0;
   for (const r of list){
     if (r.s !== cur){ cur = r.s; ser = { s:r.s, pts:[{ x, y: total, hand:null, s:r.s }] }; series.push(ser); }
@@ -1376,7 +1426,7 @@ function drawChart(list, scope, n, cash){
     const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
     const step = p.n > 0 ? ' (won ' + money(p.n) + ')' : p.n < 0 ? ' (lost ' + money(-p.n) + ')' : ' (pushed)';
     $('chartRead' + n).textContent = p.hand == null
-      ? (scope === 'session' || p.y === 0 ? 'Start of bankroll ' + p.s + ': even' : 'Start of bankroll ' + p.s + ': ' + pl(p.y) + ' overall')
+      ? (scope === 'session' || p.y === 0 ? 'Start of game ' + p.s + ': even' : 'Start of game ' + p.s + ': ' + pl(p.y) + ' overall')
       : (latest ? 'Now ' + pl(p.y) + step.replace(')', ' on hand ' + p.hand.toLocaleString('en-US') + ')') : 'After hand ' + p.hand.toLocaleString('en-US') + ': ' + pl(p.y) + step)
   };
   const hit = el('rect', { x:padL - 10, y:0, width:W - padL - padR + 20, height:H, fill:'transparent' });
@@ -1394,120 +1444,210 @@ function drawChart(list, scope, n, cash){
   pick(chartPts.length - 1);
   $('chartNote' + n).textContent = chartPts.length === 1
     ? 'Play a hand and how far up or down you are will be drawn here.'
-    : 'Above the dashed line you are up; below it you are down. Touch the chart to see any hand. Chips bought or cashed in don\u2019t count.' + (scope !== 'session' && series.length > 1 ? ' Dotted upright lines mark where you started a new bankroll.' : '');
+    : 'Above the dashed line you are up; below it you are down. Touch the chart to see any hand. Borrowing, paying back and Guy\u2019s deals don\u2019t count.' + (scope !== 'session' && series.length > 1 ? ' Dotted upright lines mark where you started a new game.' : '');
 }
 
-/* ---------- cashier: buy chips or cash them in, any time ---------- */
+/* ---------- money moves that aren't bets: borrowing, paying back, Guy ---------- */
 const cashList = () => S.cash || (S.cash = []);
 function inPlay(){ return S.round && R ? cents(R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0)) : 0; }
+const handsThisGame = () => history.reduce((a, r) => a + (r.s === S.session ? 1 : 0), 0);
+const cardLeft = () => Math.max(0, cents(CARD_LIMIT - S.card));
+const cardMaxed = () => cardLeft() < 1;
+const sharkLeft = () => Math.max(0, cents(SHARK_MAX - S.shark));
+const sharkCut = () => cents(S.shark * SHARK_RATE);
+const cardInterest = () => cents(S.card * CARD_RATE * CARD_EVERY / YEAR_HANDS);
+function canBorrow(){ return !S.dead && (cardLeft() >= 1 || (cardMaxed() && sharkLeft() >= 1)); }
+// Every move of money that isn't a bet goes in the record. k says what kind:
+// card / cardpay / cardint, shark / sharkpay / vig, buy / sell / seized.
+function moneyMove(amount, k, extra){
+  const before = S.bankroll;
+  S.bankroll = cents(S.bankroll + amount);
+  cashList().push({ t: Date.now(), s: S.session, a: cents(amount), b: S.bankroll, k, ...(extra || {}) });
+  if (S.bet > S.bankroll) S.bet = 0;          // a bet not yet dealt can't be bigger than the chips left
+  touch(); saveLocal(); saveCloudState();
+  return before;
+}
+function showMove(before, from, to){
+  const amt = Math.abs(cents(S.bankroll - before));
+  if (amt) flyChips(from, to, amt, S.bankroll < before ? { fade: true } : {});
+  if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+}
+
+/* ---------- cashier: the credit card and the loan shark ---------- */
 function openCashier(){
+  if (S.dead) return;
   hideSheets();
   $('cashErr').hidden = true;
-  const fill = (id, list, input, onPick) => {
+  const fill = (id, list, input) => {
     const seg = $(id); seg.replaceChildren();
-    list.forEach(([label, v]) => {
-      const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
-      b.addEventListener('click', () => { $(input).value = v(Number($(input).value) || 0); onPick(); });
+    list.forEach(n => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = '+' + money(n);
+      b.addEventListener('click', () => { $(input).value = Math.min(1000000, Math.floor(Number($(input).value) || 0) + n); $('cashErr').hidden = true; cashierLabels(); });
       seg.append(b);
     });
   };
-  const addBuy = n => cur => Math.min(1000000, Math.floor(cur) + n);       // each tap adds
-  const addCash = n => cur => Math.min(S.bankroll, cents(cur + n));         // never more than the chips you have
-  fill('buyPresets', [['+$100', addBuy(100)], ['+$500', addBuy(500)], ['+$1,000', addBuy(1000)], ['+$5,000', addBuy(5000)]], 'buyInput', cashierLabels);
-  fill('cashPresets', [['+$100', addCash(100)], ['+$500', addCash(500)], ['+$1,000', addCash(1000)], ['All', () => S.bankroll]], 'cashInput', cashierLabels);
-  $('buyInput').value = 0; $('cashInput').value = 0;
+  fill('cardPresets', [1000, 5000, 10000, 25000], 'cardInput');
+  fill('sharkPresets', [5000, 10000, 25000, 50000], 'sharkInput');
+  $('cardInput').value = 0; $('sharkInput').value = 0;
   cashierLabels();
   $('cashSheet').hidden = false;
 }
 function cashierLabels(){
-  const ip = inPlay();
+  const ip = inPlay(), n = handsThisGame();
   $('cashNow').textContent = 'Your chips: ' + money(S.bankroll) + (ip ? ', plus ' + money(ip) + ' in play on this hand' : '') + '.';
-  const b = Math.floor(Number($('buyInput').value) || 0), c = cents(Number($('cashInput').value) || 0);
-  $('buyBtn').textContent = b > 0 ? 'Buy ' + money(b) + ' in chips' : 'Buy chips';
-  $('cashBtn').textContent = c > 0 ? 'Cash in ' + money(c) : 'Cash in';
-  $('buyBtn').disabled = b <= 0;
-  $('cashBtn').disabled = S.bankroll <= 0 || c <= 0;
-  $('buyClear').disabled = b <= 0; $('cashClear').disabled = c <= 0;
-  document.querySelectorAll('#cashPresets button').forEach(x => { x.disabled = S.bankroll <= 0 || c >= S.bankroll; });
+  // credit card
+  const cv = Math.floor(Number($('cardInput').value) || 0);
+  const nextInt = (Math.floor(n / CARD_EVERY) + 1) * CARD_EVERY;
+  $('cardNote').textContent = (S.card > 0
+      ? 'You owe ' + money(S.card) + '. ' + (cardMaxed() ? 'The card is maxed out.' : money(cardLeft()) + ' left to borrow.') +
+        ' At 20% a year, about ' + money(cardInterest()) + ' interest is added after hand ' + nextInt + '.'
+      : 'You owe nothing. The limit is ' + money(CARD_LIMIT) + ', at 20% a year.');
+  const cb = Math.min(cv, cardLeft()), cp = Math.min(cv, S.card, S.bankroll);
+  $('cardBorrow').textContent = cb > 0 ? 'Borrow ' + money(cb) : 'Borrow';
+  $('cardPay').textContent = cp > 0 ? 'Pay back ' + money(cp) : 'Pay back';
+  $('cardBorrow').disabled = cb <= 0; $('cardPay').disabled = cp <= 0; $('cardClear').disabled = cv <= 0;
+  // loan shark
+  const open = cardMaxed() || S.shark > 0;
+  $('sharkCtl').hidden = !open;
+  if (!open) $('sharkNote').textContent = 'He only lends once your credit card is maxed out.';
+  else if (S.shark > 0){
+    const left = Math.max(0, S.sharkNext - n);
+    $('sharkNote').textContent = 'You owe him ' + money(S.shark) + '. Every 5 hands he takes 10% of it from your chips: ' + money(sharkCut()) +
+      ', due after hand ' + S.sharkNext + ' (' + (left === 1 ? 'next hand' : left + ' hands from now') + '). If you can’t pay, he kills you.';
+  } else $('sharkNote').textContent = 'Your card is maxed. He lends up to ' + money(SHARK_MAX) + '. Every 5 hands he takes 10% of what you owe from your chips. If you can’t pay, he kills you.';
+  const sv = Math.floor(Number($('sharkInput').value) || 0);
+  const sb = Math.min(sv, sharkLeft()), sp = Math.min(sv, S.shark, S.bankroll);
+  $('sharkBorrow').textContent = sb > 0 ? 'Borrow ' + money(sb) : 'Borrow';
+  $('sharkPay').textContent = sp > 0 ? 'Pay back ' + money(sp) : 'Pay back';
+  $('sharkBorrow').disabled = sb <= 0 || !cardMaxed(); $('sharkPay').disabled = sp <= 0; $('sharkClear').disabled = sv <= 0;
 }
-function cashierMove(amount){
-  const before = S.bankroll;
-  S.bankroll = cents(S.bankroll + amount);
-  cashList().push({ t: Date.now(), s: S.session, a: cents(amount), b: S.bankroll });
-  if (S.bet > S.bankroll) S.bet = 0;          // a bet not yet dealt can't be bigger than the chips left
-  touch(); saveLocal(); saveCloudState();
+function cashErr(t){ $('cashErr').textContent = t; $('cashErr').hidden = false; }
+function borrow(who){
+  const input = $(who + 'Input'), v = Math.floor(Number(input.value) || 0);
+  const room = who === 'card' ? cardLeft() : (cardMaxed() ? sharkLeft() : 0);
+  const amt = Math.min(v, room);
+  if (amt <= 0) return cashErr(who === 'card' ? 'Your card is maxed out.' : 'He won’t lend you any more.');
+  if (who === 'card') S.card = cents(S.card + amt);
+  else { if (!S.shark) S.sharkNext = handsThisGame() + SHARK_EVERY; S.shark = cents(S.shark + amt); }
+  const before = moneyMove(amt, who);
   hideSheets(); render();
-  const btn = $('openCashier'), bank = $('bankAmt');
-  if (amount > 0) flyChips(btn, bank, amount); else flyChips(bank, btn, -amount, { fade: true });
-  if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+  showMove(before, $('openCashier'), $('bankAmt'));
+  say((who === 'card' ? 'Charged ' : 'The loan shark counts out ') + money(amt) + (who === 'card' ? ' to your credit card.' : '. Don’t make him come looking for you.'));
 }
-function buyChips(){
-  const v = Math.floor(Number($('buyInput').value) || 0);
-  if (v < 1 || v > 1000000){ $('cashErr').textContent = 'Choose an amount from $1 to $1,000,000 to buy.'; $('cashErr').hidden = false; return; }
-  cashierMove(v);
-}
-function cashInChips(){
-  const v = cents(Number($('cashInput').value) || 0);
-  if (v <= 0){ $('cashErr').textContent = 'Choose an amount to cash in.'; $('cashErr').hidden = false; return; }
-  if (v > S.bankroll){ $('cashErr').textContent = 'You can cash in up to ' + money(S.bankroll) + '. Chips in play on a hand stay on the table.'; $('cashErr').hidden = false; return; }
-  cashierMove(-v);
+function payBack(who){
+  const input = $(who + 'Input'), v = Math.floor(Number(input.value) || 0);
+  const owed = who === 'card' ? S.card : S.shark;
+  const amt = cents(Math.min(v, owed, S.bankroll));
+  if (amt <= 0) return cashErr('Nothing to pay back with that amount.');
+  if (who === 'card') S.card = cents(S.card - amt);
+  else { S.shark = cents(S.shark - amt); if (S.shark <= 0){ S.shark = 0; S.sharkNext = 0; } }
+  const before = moneyMove(-amt, who + 'pay');
+  hideSheets(); render();
+  showMove(before, $('bankAmt'), $('openCashier'));
+  say('Paid back ' + money(amt) + (who === 'shark' && !S.shark ? '. The loan shark is off your back.' : '.'));
 }
 
-/* ---------- bankroll sheet ---------- */
+/* ---------- interest, the shark's cut, and the end ---------- */
+// After each hand: the card's interest, the shark's weekly cut, a warning before he collects.
+function debtsAfterHand(){
+  if (S.dead || S.round) return !!S.dead;
+  const n = handsThisGame();
+  if (n === S.debtSeen) return false;
+  S.debtSeen = n;
+  if (S.card > 0 && n > 0 && n % CARD_EVERY === 0){
+    const i = cardInterest();
+    if (i > 0){ S.card = cents(S.card + i); cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'cardint', amt: i }); }
+  }
+  if (S.shark > 0 && n >= S.sharkNext){
+    const cut = sharkCut();
+    if (S.bankroll >= cut){
+      const before = moneyMove(-cut, 'vig');
+      S.sharkNext = n + SHARK_EVERY;
+      render(); showMove(before, $('bankAmt'), $('openCashier'));
+      say('The loan shark took his cut: ' + money(cut) + '.');
+    } else {
+      S.dead = { t: Date.now(), cut, chips: S.bankroll, owed: cents(S.shark + S.card), hands: n, stuff: stashList().length, game: S.session };
+      cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'dead', amt: cut });
+      touch(); saveLocal(); saveCloudState(); render();
+      setTimeout(showDead, D * 2 + 400);
+      return true;
+    }
+  }
+  touch(); saveLocal(); saveCloudState();
+  if (S.shark > 0 && S.sharkNext - n === 1 && S.bankroll < sharkCut()){
+    setTimeout(() => {
+      if (busy || S.round || S.dead || sheetOpen()) return;
+      guyOffer = false;
+      fenceSheet('The loan shark', '🦈', 'He leans in. “After your next hand I want my <b>' + money(sharkCut()) + '</b>. You’ve got ' + money(S.bankroll) + '. Find the rest.”',
+        [btn('Sell stuff', () => openStuff()), btn('Got it', () => hideSheets(), { primary:true })]);
+    }, D * 2 + 600);
+    return true;
+  }
+  return false;
+}
+function showDead(){
+  if (!S.dead) return;
+  const d = S.dead;
+  hideSheets();
+  $('deadText').innerHTML = 'The loan shark came for his <b>' + money(d.cut) + '</b>. You had ' + money(d.chips) + '. He doesn’t take IOUs.<br><br>' +
+    'You lasted ' + d.hands + (d.hands === 1 ? ' hand' : ' hands') + ', owed ' + money(d.owed) + ', and left ' + d.stuff + (d.stuff === 1 ? ' thing' : ' things') + ' behind.';
+  $('deadSheet').hidden = false;
+}
+function newGame(){
+  if (S.round && !S.dead) return;
+  const settings = S.settings, cash = S.cash || [];
+  if (firstVisit && !history.length){ S = freshState(); S.settings = settings; }
+  else {
+    const next = Math.max(0, ...S.sessions.map(x => x.s)) + 1;
+    S = { ...freshState(), settings, session: next, sessions: S.sessions.concat({ s: next, start: START, at: Date.now() }), cash, fenceSeen: history.length, fenceLast: history.length };
+  }
+  firstVisit = false; R = null; seen = new Set(); msgOverride = '';
+  touch(); saveLocal(); saveCloudState();
+  hideSheets(); render();
+}
+
+/* ---------- welcome / start over ---------- */
 function openBank(first){
-  $('bankH').textContent = first ? 'Choose your bankroll' : 'Start a new bankroll';
-  $('bankNote').textContent = first ? 'This is the money you sit down with. You can start a new bankroll any time from your Record.' : 'Your record of past hands is kept. The new bankroll is tracked as its own session.';
+  $('bankH').textContent = first ? 'Compulsive Gambler' : 'Start over?';
+  $('bankNote').textContent = first
+    ? 'You walk in with $10,000. When it’s gone there’s a credit card with $50,000 on it. After that, the loan shark.'
+    : 'You start again with $10,000. Your debts, your stuff and Guy’s opinion of you are wiped. Your record of past hands is kept.';
+  $('bankStart').textContent = first ? 'Sit down with $10,000' : 'Start over with $10,000';
   $('bankCancel').hidden = !!first;
-  $('bankErr').hidden = true;
-  const ps = $('bankPresets'); ps.replaceChildren();
-  [100, 500, 1000, 5000, 10000, 25000].forEach(v => {
-    const b = document.createElement('button'); b.type = 'button'; b.textContent = money(v);
-    b.setAttribute('aria-pressed', String(Number($('bankInput').value) === v));
-    b.addEventListener('click', () => { $('bankInput').value = v; bankInputChanged(); });
-    ps.append(b);
-  });
-  bankInputChanged();
   hideSheets(); $('bankSheet').hidden = false;
 }
-function bankInputChanged(){
-  const v = Math.floor(Number($('bankInput').value) || 0);
-  $('bankStart').textContent = v >= 5 ? 'Sit down with ' + money(v) : 'Sit down';
-  document.querySelectorAll('#bankPresets button').forEach(b => b.setAttribute('aria-pressed', String(b.textContent === money(v))));
-}
-function startBank(){
-  const v = Math.floor(Number($('bankInput').value) || 0);
-  if (v < 5 || v > 1000000){ $('bankErr').textContent = 'Choose an amount from $5 to $1,000,000.'; $('bankErr').hidden = false; return; }
-  if (S.round) return;
-  if (firstVisit && !history.length){ S.bankroll = v; S.sessions = [{ s:1, start:v, at:Date.now() }]; S.session = 1; }
-  else { S.session = Math.max(0, ...S.sessions.map(x => x.s)) + 1; S.sessions.push({ s:S.session, start:v, at:Date.now() }); S.bankroll = v; }
-  firstVisit = false; S.bet = 0; R = null;
-  touch(); saveLocal(); saveCloudState();
-  hideSheets(); render();
-}
 
-/* ---------- the man in the trench coat: hot goods between hands ---------- */
+/* ---------- Guy: hot goods between hands ---------- */
 const GOODS = [
-  ['a Swiss watch', '⌚', 200, 900], ['a gold chain', '📿', 250, 800], ['diamond cufflinks', '💎', 300, 1200],
-  ['a nice suit', '👔', 300, 1200], ['alligator shoes', '👞', 200, 700], ['a designer handbag', '👜', 400, 1500],
-  ['a laptop, still in the box', '💻', 300, 900], ['a case of champagne', '🍾', 200, 600], ['a diamond ring', '💍', 800, 4000],
-  ['a mink coat', '🧥', 1500, 5000], ['an oil painting', '🖼️', 2000, 8000], ['a vintage guitar', '🎸', 1000, 4000],
-  ['a motorcycle', '🏍️', 3000, 8000], ['a sports car', '🏎️', 8000, 15000],
+  ['a pinky ring', '💍', 150, 600], ['a Swiss watch', '⌚', 200, 900], ['a gold chain', '📿', 250, 800], ['a case of champagne', '🍾', 200, 600],
+  ['alligator shoes', '👞', 200, 700], ['a nice suit', '👔', 300, 1200], ['a designer handbag', '👜', 400, 1500], ['a laptop, still in the box', '💻', 300, 900],
+  ['a diamond necklace', '💎', 800, 4000], ['a mink coat', '🧥', 1500, 5000], ['a vintage guitar', '🎸', 1000, 4000], ['an oil painting', '🖼️', 2000, 8000],
+  ['a motorcycle', '🏍️', 3000, 8000], ['a grand piano', '🎹', 8000, 30000], ['a classic convertible', '🚗', 20000, 80000], ['a sports car', '🏎️', 40000, 150000],
+  ['a speedboat', '🚤', 50000, 250000], ['a racehorse', '🐎', 100000, 600000], ['a penthouse', '🏙️', 500000, 2500000], ['a yacht', '🛥️', 1000000, 6000000],
+  ['a mansion', '🏰', 2000000, 12000000], ['a private jet', '🛩️', 5000000, 30000000], ['a private island', '🏝️', 20000000, 80000000],
 ];
 const PITCH = ['Fell off a truck.', 'Don’t ask.', 'Straight off the docks.', 'Still warm.', 'Cash only, no receipts.', 'You didn’t get this from me.'];
-const FENCE_GAP = 6, FENCE_CHANCE = 1 / 15, SEIZE_CHANCE = 1 / 40;
+const SEIZE_CHANCE = 1 / 40, GUY_QUIT = 5;
 const stashList = () => S.stash || (S.stash = []);
+const guy = () => S.guy || (S.guy = { lvl: 0, no: 0, gone: false });
 const pickOne = a => a[Math.floor(Math.random() * a.length)];
-let fenceTimer = null;
+let fenceTimer = null, guyOffer = false;
+// Buying from Guy brings him round more often; turning him down sends him away.
+function guyOdds(){
+  const l = guy().lvl;
+  return l >= 0 ? { gap: Math.max(2, 6 - l), chance: (1 / 15) * (1 + l) }      // at his keenest: every 2+ hands, 1 in 3
+               : { gap: 6 + 3 * -l, chance: (1 / 15) / (1 - l) };
+}
 function sheetOpen(){ return [...document.querySelectorAll('.sheet')].some(x => !x.hidden); }
-function fenceFree(){ return !busy && !S.round && !S.bet && !sheetOpen() && !firstVisit; }
-// After each hand: maybe the man in the trench coat turns up, or maybe security does.
+function fenceFree(){ return !busy && !S.round && !S.bet && !S.dead && !sheetOpen() && !firstVisit; }
 function fenceAfterHand(){
   if (!rules().fence || !fenceFree()) return;
   const n = history.length;
   if (n === S.fenceSeen) return;
   S.fenceSeen = n;
   if (stashList().length && n - (S.fenceLast || 0) >= 2 && Math.random() < SEIZE_CHANCE){ S.fenceLast = n; return later(fenceSeize); }
-  if (n - (S.fenceLast || 0) >= FENCE_GAP && S.bankroll >= 200 && Math.random() < FENCE_CHANCE){ S.fenceLast = n; return later(fenceOffer); }
+  const o = guyOdds();
+  if (!guy().gone && n - (S.fenceLast || 0) >= o.gap && S.bankroll >= 150 && Math.random() < o.chance){ S.fenceLast = n; return later(fenceOffer); }
   function later(fn){ clearTimeout(fenceTimer); fenceTimer = setTimeout(() => { if (fenceFree()) fn(); }, D * 2 + 600); }
 }
 function fenceSheet(title, art, html, buttons){
@@ -1517,79 +1657,133 @@ function fenceSheet(title, art, html, buttons){
   $('fenceSheet').hidden = false;
 }
 const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
+const niceRound = v => { const st = v < 10000 ? 50 : v < 100000 ? 500 : v < 1e6 ? 5000 : 50000; return Math.floor(v / st) * st; };
 function fenceOffer(){
   const can = GOODS.filter(g => g[2] <= S.bankroll);
   if (!can.length) return;
-  const [item, art, lo, hi] = pickOne(can);
+  // half the time something near the top of what you can afford, half the time anything
+  const [item, art, lo, hi] = Math.random() < 0.5 ? pickOne(can.slice(-4)) : pickOne(can);
   const top = Math.min(hi, S.bankroll);
-  const price = Math.max(lo, Math.floor((lo + Math.random() * (top - lo)) / 50) * 50);
-  fenceSheet('Psst…', art,
-    'A man in a trench coat sidles up. “Got <b>' + esc(item) + '</b> here. ' + esc(pickOne(PITCH)) + ' <b>' + money(price) + '</b>, no questions asked.”',
-    [btn('No thanks', () => hideSheets()), btn('Buy for ' + money(price), () => fenceBuy(item, art, price), { primary:true })]);
+  const price = Math.max(lo, niceRound(lo + Math.random() * (top - lo)));
+  guyOffer = true;
+  fenceSheet('Guy', art,
+    'Guy sidles up, trench coat buttoned to the chin. “Psst. Got <b>' + esc(item) + '</b> here. ' + esc(pickOne(PITCH)) + ' <b>' + money(price) + '</b>, no questions asked.”',
+    [btn('No thanks', () => guyDecline()), btn('Buy for ' + money(price), () => fenceBuy(item, art, price), { primary:true })]);
 }
-function goodsMove(amount, k, item, extra){
-  const before = S.bankroll;
-  S.bankroll = cents(S.bankroll + amount);
-  cashList().push({ t: Date.now(), s: S.session, a: cents(amount), b: S.bankroll, k, item, ...(extra || {}) });
-  if (S.bet > S.bankroll) S.bet = 0;
-  touch(); saveLocal(); saveCloudState();
-  return before;
+function guyDecline(){
+  guyOffer = false;
+  const g = guy(); g.lvl = Math.max(-4, g.lvl - 1); g.no++;
+  if (g.no >= GUY_QUIT){
+    g.gone = true; touch(); saveLocal(); saveCloudState();
+    fenceSheet('Guy', '🧥', 'Guy shrugs. “Your loss. I got other customers.” He won’t be back this game.', [btn('Fine', () => hideSheets(), { primary:true })]);
+    return;
+  }
+  touch(); saveLocal(); saveCloudState(); hideSheets();
 }
 function fenceBuy(item, art, price){
+  guyOffer = false;
   if (price > S.bankroll || S.round) { hideSheets(); return; }
-  const before = goodsMove(-price, 'buy', item);
-  stashList().push({ id: Date.now() + '' + Math.floor(Math.random() * 1000), item, art, paid: price, t: Date.now() });
+  const g = guy(); g.lvl = Math.min(4, g.lvl + 1); g.no = 0;
+  const x = { id: Date.now() + '' + Math.floor(Math.random() * 1000), item, art, paid: price, t: Date.now(), game: S.session, hand: handsThisGame() };
+  const before = moneyMove(-price, 'buy', { item });
+  stashList().push(x);
   touch(); saveLocal(); saveCloudState();
   hideSheets(); render();
-  flyChips($('bankAmt'), $('openRecord'), price, { fade: true });
+  flyChips($('bankAmt'), $('openStuff'), price, { fade: true });
   if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
-  say('You bought ' + item + ' for ' + money(price) + '. It’s in your stash, in Record.');
+  cardFly(x);
+  say('You bought ' + item + ' for ' + money(price) + '. Tap Stuff to see it.');
 }
 function fenceSellOffer(x){
-  // what he'll pay changes only after you play another hand, so asking again won't get a better price
-  if (x.offerAt !== history.length){ x.offer = Math.max(10, Math.round(x.paid * (0.4 + Math.random() * 1.35) / 10) * 10); x.offerAt = history.length; saveLocal(); }
+  // his offer changes only after you play another hand, so asking again won't get a better price
+  if (x.offerAt !== history.length){ x.offer = Math.max(10, niceRound(x.paid * (0.4 + Math.random() * 1.35)) || 10); x.offerAt = history.length; saveLocal(); }
   const up = x.offer - x.paid;
-  fenceSheet('Sell it back?', x.art,
-    'He looks over your ' + esc(x.item.replace(/^(a|an) /, '')) + '. “I’ll give you <b>' + money(x.offer) + '</b> for it.” You paid ' + money(x.paid) + (up > 0 ? ', so that’s ' + money(up) + ' more.' : up < 0 ? ', so that’s ' + money(-up) + ' less.' : ', so you’d break even.') + ' His offer changes after you play another hand.',
-    [btn('Keep it', () => { hideSheets(); $('recordSheet').hidden = false; renderRecord(); }), btn('Sell for ' + money(x.offer), () => fenceSell(x), { primary:true })]);
+  guyOffer = false;
+  fenceSheet('Sell to Guy?', x.art,
+    'Guy looks over your ' + esc(x.item.replace(/^(a|an) /, '')) + '. “I’ll give you <b>' + money(x.offer) + '</b> for it.” You paid ' + money(x.paid) + (up > 0 ? ', so that’s ' + money(up) + ' more.' : up < 0 ? ', so that’s ' + money(-up) + ' less.' : ', so you’d break even.') + ' His offer changes after you play another hand.',
+    [btn('Keep it', () => openStuff(x)), btn('Sell for ' + money(x.offer), () => fenceSell(x), { primary:true })]);
 }
 function fenceSell(x){
   const list = stashList(), i = list.indexOf(x);
   if (i < 0) { hideSheets(); return; }
   list.splice(i, 1);
-  const before = goodsMove(x.offer, 'sell', x.item, { paid: x.paid });
+  const before = moneyMove(x.offer, 'sell', { item: x.item, paid: x.paid });
   hideSheets(); render();
-  flyChips($('openRecord'), $('bankAmt'), x.offer);
-  if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+  showMove(before, $('openStuff'), $('bankAmt'));
   say('Sold ' + x.item + ' for ' + money(x.offer) + '.');
 }
 function fenceSeize(){
   const list = stashList(); if (!list.length) return;
   const i = Math.floor(Math.random() * list.length), x = list[i];
   list.splice(i, 1);
-  goodsMove(0, 'seized', x.item, { paid: x.paid });
-  render();
+  cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'seized', item: x.item, paid: x.paid });
+  touch(); saveLocal(); saveCloudState(); render();
+  guyOffer = false;
   fenceSheet('Casino security', '🚨', 'Two men in dark suits stop by your seat. They’ve taken <b>' + esc(x.item) + '</b>. You paid ' + money(x.paid) + ' for it. It’s gone.',
     [btn('Oh well', () => hideSheets(), { primary:true })]);
 }
-function renderStash(){
-  const box = $('stash'); box.replaceChildren();
-  const list = stashList();
-  if (!list.length){
-    const e = document.createElement('div'); e.className = 'empty';
-    e.textContent = rules().fence ? 'Nothing yet. Now and then, between hands, a man in a trench coat offers something.' : 'Empty. The man in the trench coat is switched off in Rules.';
-    box.append(e); return;
+
+/* ---------- your stuff, as cards you flip through ---------- */
+let stuffAt = 0;
+const stuffOrder = () => stashList().slice().reverse();   // newest first
+const itemName = x => x.item.replace(/^(a|an) /, '').replace(/^./, ch => ch.toUpperCase());
+function fillCard(el, x){
+  el.replaceChildren();
+  el.classList.toggle('empty', !x);
+  if (!x){
+    const p = document.createElement('div'); p.className = 'wh';
+    p.textContent = rules().fence ? (guy().gone ? 'Nothing. Guy has stopped coming round this game.' : 'Nothing yet. Guy turns up between hands with things to sell.') : 'Nothing. Guy is switched off in Rules.';
+    p.style.color = 'var(--text)'; el.append(p); return;
   }
-  list.forEach(x => {
-    const d = document.createElement('div'); d.className = 'item';
-    const ico = document.createElement('div'); ico.className = 'ico'; ico.setAttribute('aria-hidden', 'true'); ico.textContent = x.art;
-    const t = document.createElement('div'); t.className = 't';
-    const b = document.createElement('b'); b.textContent = x.item.replace(/^(a|an) /, '').replace(/^./, ch => ch.toUpperCase());
-    const sp = document.createElement('span'); sp.className = 'num'; sp.textContent = 'Paid ' + money(x.paid);
-    t.append(b, sp);
-    d.append(ico, t, btn('Sell', () => fenceSellOffer(x)));
-    box.append(d);
-  });
+  const mk = (c, t) => { const d = document.createElement('div'); d.className = c; d.textContent = t; el.append(d); return d; };
+  mk('tag', 'Hot');
+  mk('art', x.art).setAttribute('aria-hidden', 'true');
+  mk('nm', itemName(x));
+  mk('pd num', 'Paid ' + money(x.paid));
+  mk('wh', 'Bought ' + new Date(x.t).toLocaleDateString(undefined, { month:'short', day:'numeric' }) + (x.hand ? ', hand ' + x.hand : ''));
+}
+function openStuff(x){
+  hideSheets();
+  const list = stuffOrder();
+  if (x){ const i = list.indexOf(x); if (i >= 0) stuffAt = i; }
+  stuffAt = Math.max(0, Math.min(stuffAt, list.length - 1));
+  renderStuff();
+  $('stuffSheet').hidden = false;
+}
+function renderStuff(){
+  const list = stuffOrder(), x = list[stuffAt];
+  const cost = list.reduce((a, y) => a + y.paid, 0);
+  $('stuffNote').textContent = list.length ? list.length + (list.length === 1 ? ' thing' : ' things') + ', which cost you ' + money(cost) + '. Swipe or tap Next to flip through.' : 'Everything you buy from Guy lands here as a card.';
+  fillCard($('stuffCard'), x);
+  $('stuffCard').setAttribute('aria-label', x ? itemName(x) + ', paid ' + money(x.paid) : 'No stuff yet');
+  $('stuffPos').textContent = list.length ? (stuffAt + 1) + ' of ' + list.length : '';
+  $('stuffPrev').disabled = stuffAt <= 0; $('stuffNext').disabled = stuffAt >= list.length - 1;
+  $('stuffSell').hidden = !x;
+  $('stuffSell').textContent = x ? 'Sell to Guy' : '';
+}
+async function flipStuff(dir){
+  const list = stuffOrder(), to = stuffAt + dir;
+  if (to < 0 || to >= list.length) return;
+  const card = $('stuffCard');
+  if (!reduced){ await card.animate([{ transform: 'rotateY(0)' }, { transform: 'rotateY(' + (dir > 0 ? -90 : 90) + 'deg)' }], { duration: 170, easing: 'ease-in' }).finished; }
+  stuffAt = to; renderStuff();
+  if (!reduced) card.animate([{ transform: 'rotateY(' + (dir > 0 ? 90 : -90) + 'deg)' }, { transform: 'rotateY(0)' }], { duration: 200, easing: 'ease-out' });
+}
+// what you just bought pops up as a card, then flies into the Stuff button
+function cardFly(x){
+  if (reduced) return;
+  const el = document.createElement('div'); el.className = 'scard fly'; fillCard(el, x); el.setAttribute('aria-hidden', 'true');
+  document.body.append(el);
+  const w = 150, h = 210, cx = innerWidth / 2 - w / 2, cy = innerHeight * 0.42 - h / 2;
+  const t = $('openStuff').getBoundingClientRect();
+  el.style.left = cx + 'px'; el.style.top = cy + 'px';
+  const dx = t.left + t.width / 2 - (cx + w / 2), dy = t.top + t.height / 2 - (cy + h / 2);
+  el.animate([
+    { transform: 'scale(.3) rotate(-8deg)', opacity: 0, offset: 0 },
+    { transform: 'scale(1.08) rotate(2deg)', opacity: 1, offset: 0.18 },
+    { transform: 'scale(1) rotate(0)', opacity: 1, offset: 0.62 },
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.12) rotate(14deg)', opacity: 0.3, offset: 1 },
+  ], { duration: 2000, easing: 'ease-in-out' }).finished.then(() => el.remove(), () => el.remove());
 }
 
 function hideSheets(){ document.querySelectorAll('.sheet').forEach(s => s.hidden = true); }
@@ -1605,7 +1799,7 @@ function idbOpen(){
   if (idbP) return idbP;
   idbP = new Promise((res, rej) => {
     try {
-      const r = indexedDB.open('blackjack', 1);
+      const r = indexedDB.open('compulsive-gambler', 1);
       r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('kv'); d.createObjectStore('rounds'); };
       r.onsuccess = () => res(r.result);
       r.onerror = () => rej(r.error);
@@ -1638,7 +1832,7 @@ async function idbReconcile(){
     const got = await idbLoad();
     const s = got.state;
     // The bankroll and settings: whichever save is newer wins.
-    const idbNewer = s && s.v === 1 && (s.updatedAt || 0) > (S.updatedAt || 0);
+    const idbNewer = s && s.v === 2 && (s.updatedAt || 0) > (S.updatedAt || 0);
     if (idbNewer){ S = s; S.settings.rules = { ...DEFAULT_RULES, ...S.settings.rules }; firstVisit = false; }
     // Hands are only ever added, never removed: the longer list is the complete one.
     const idbMore = got.rounds.length > history.length;
@@ -1660,7 +1854,7 @@ function loadLocal(){
   try {
     const s = JSON.parse(localStorage.getItem(LS_STATE) || 'null');
     const h = JSON.parse(localStorage.getItem(LS_HIST) || 'null');
-    if (s && s.v === 1 && s.updatedAt){ S = s; S.settings.rules = { ...DEFAULT_RULES, ...S.settings.rules }; }
+    if (s && s.v === 2 && s.updatedAt){ S = s; S.settings.rules = { ...DEFAULT_RULES, ...S.settings.rules }; }
     else firstVisit = true;
     if (Array.isArray(h)) history = h;
   } catch (e) { firstVisit = true; }
@@ -1671,14 +1865,14 @@ function queue(fn){
   chain = chain.then(fn).then(() => { if (sync !== 'cloud'){ sync = 'cloud'; } }).catch(e => { console.warn('save failed', e); sync = 'error'; });
 }
 const stateDoc = () => ({ ...S, histCount: history.length });
-function saveCloudState(){ queue(() => cloud.col.doc('state').set(stateDoc())); }
-function chunkId(i){ return 'log-' + String(i).padStart(5, '0'); }
+function saveCloudState(){ queue(() => cloud.col.doc('cg-state').set(stateDoc())); }
+function chunkId(i){ return 'cg-log-' + String(i).padStart(5, '0'); }
 function saveChunk(i){ const part = history.slice(i * CHUNK, (i + 1) * CHUNK); return cloud.col.doc(chunkId(i)).set({ rounds: part }); }
 function saveCloudRound(){
   if (!cloud) return;
   const i = Math.floor((history.length - 1) / CHUNK);
   queue(() => saveChunk(i));
-  queue(() => cloud.col.doc('state').set(stateDoc()));
+  queue(() => cloud.col.doc('cg-state').set(stateDoc()));
 }
 
 async function initCloud(){
@@ -1692,17 +1886,18 @@ async function initCloud(){
     const snap = await col.get();
     const docs = {}; snap.docs.forEach(d => { docs[d.id] = d.data(); });
     cloud = { col };
-    const cs = docs.state;
-    if (cs && cs.v === 1 && (cs.updatedAt || 0) > (S.updatedAt || 0) && !busy){
-      const logIds = Object.keys(docs).filter(k => k.startsWith('log-')).sort();
+    const cs = docs['cg-state'];
+    if (cs && cs.v === 2 && (cs.updatedAt || 0) > (S.updatedAt || 0) && !busy){
+      const logIds = Object.keys(docs).filter(k => k.startsWith('cg-log-')).sort();
       const hist = [];
       logIds.forEach(k => { (docs[k].rounds || []).forEach(r => hist.push(r)); });
       const { histCount, ...rest } = cs;
-      S = { ...freshState(1000), ...rest };
+      S = { ...freshState(), ...rest };
       S.settings.rules = { ...DEFAULT_RULES, ...(S.settings.rules || {}) };
       history = hist;
       firstVisit = false;
       if (!$('bankSheet').hidden && $('bankCancel').hidden) hideSheets();
+      if (S.dead) showDead();
       saveLocal(); saveHistLocal();
       R = null; seen = new Set();
       resumeRound();
@@ -1741,7 +1936,8 @@ $('countBtn').addEventListener('click', () => { countOpen = !countOpen; renderCo
 $('openRules').addEventListener('click', () => { hideSheets(); renderRules(); $('rulesSheet').hidden = false; });
 $('openRecord').addEventListener('click', () => { hideSheets(); logShown = 50; $('recordSheet').hidden = false; renderRecord(); });
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', hideSheets));
-document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e => { if (e.target === s && !(s.id === 'bankSheet' && $('bankCancel').hidden)) hideSheets(); }));
+const stuck = () => !$('deadSheet').hidden || (!$('bankSheet').hidden && $('bankCancel').hidden);
+document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e => { if (e.target !== s || stuck()) return; if (s.id === 'fenceSheet' && guyOffer) guyDecline(); else hideSheets(); }));
 $('bankCancel').addEventListener('click', hideSheets);
 $('deckMinus').addEventListener('click', () => { S.settings.decks = Math.max(1, S.settings.decks - 1); settingsChanged(); });
 $('deckPlus').addEventListener('click', () => { S.settings.decks = Math.min(8, S.settings.decks + 1); settingsChanged(); });
@@ -1750,17 +1946,25 @@ $('scopeSeg').addEventListener('click', e => { const b = e.target.closest('butto
 $('moreLog').addEventListener('click', () => { logShown += 50; renderRecord(); });
 $('newBankBtn').addEventListener('click', () => openBank(false));
 $('openCashier').addEventListener('click', openCashier);
-$('buyInput').addEventListener('input', cashierLabels);
-$('buyClear').addEventListener('click', () => { $('buyInput').value = 0; $('cashErr').hidden = true; cashierLabels(); });
-$('cashClear').addEventListener('click', () => { $('cashInput').value = 0; $('cashErr').hidden = true; cashierLabels(); });
-$('cashInput').addEventListener('input', cashierLabels);
-$('buyBtn').addEventListener('click', buyChips);
-$('cashBtn').addEventListener('click', cashInChips);
-$('bankInput').addEventListener('input', bankInputChanged);
-$('bankStart').addEventListener('click', startBank);
+$('bankStart').addEventListener('click', newGame);
+$('deadStart').addEventListener('click', newGame);
+['card', 'shark'].forEach(w => {
+  $(w + 'Input').addEventListener('input', () => { $('cashErr').hidden = true; cashierLabels(); });
+  $(w + 'Clear').addEventListener('click', () => { $(w + 'Input').value = 0; $('cashErr').hidden = true; cashierLabels(); });
+  $(w + 'Borrow').addEventListener('click', () => borrow(w));
+  $(w + 'Pay').addEventListener('click', () => payBack(w));
+});
+$('openStuff').addEventListener('click', () => openStuff());
+$('stuffPrev').addEventListener('click', () => flipStuff(-1));
+$('stuffNext').addEventListener('click', () => flipStuff(1));
+$('stuffSell').addEventListener('click', () => { const x = stuffOrder()[stuffAt]; if (x) fenceSellOffer(x); });
+(() => { let sx = null; const c = $('stuffCard');
+  c.addEventListener('pointerdown', e => { sx = e.clientX; });
+  c.addEventListener('pointerup', e => { if (sx == null) return; const dx = e.clientX - sx; sx = null; if (Math.abs(dx) > 40) flipStuff(dx < 0 ? 1 : -1); });
+  c.addEventListener('pointercancel', () => { sx = null; }); })();
 addEventListener('resize', () => { render(); if (!$('recordSheet').hidden) renderRecord(); });
 addEventListener('bj-fit', () => render());   // sent by the home-screen app after it corrects the screen height
-addEventListener('keydown', e => { if (e.key === 'Escape' && !($('bankSheet').hidden === false && $('bankCancel').hidden)) hideSheets(); });
+addEventListener('keydown', e => { if (e.key !== 'Escape' || stuck()) return; if (!$('fenceSheet').hidden && guyOffer) guyDecline(); else hideSheets(); });
 
 /* ---------- boot ---------- */
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && S.updatedAt) saveLocal(); });
@@ -1773,6 +1977,7 @@ if (!S.round) render();
   resumeRound();
   render();
   if (firstVisit) openBank(true);
+  else if (S.dead) showDead();
   initCloud();
 })();
 })();

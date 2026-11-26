@@ -1,8 +1,10 @@
-# Blackjack
+# Compulsive Gambler
 
 Casino blackjack for the phone, installable to the iPhone home screen and playable with no internet connection.
 
-Every casino rule is an on/off switch, the shoe holds 1 to 8 decks, the bankroll is yours to choose, chips run from $5 to $1,000, and every bet, win and loss is recorded, with charts of the current bankroll and the lifetime bankroll.
+You walk in with $10,000. When it's gone there's a credit card ($50,000 limit, 20% a year, where a year is 100 hands). Once the card is maxed, the loan shark lends; every 5 hands he takes 10% of what you owe from your chips, and if you can't pay, he kills you and the game is over. Between hands Guy, in a trench coat, sells hot goods from a pinky ring to a private jet; everything you buy is kept as a card under Stuff, and you can sell it back. Buy from him and he comes round more; turn him down five times in a row and he stops coming.
+
+Every casino rule is an on/off switch, the shoe holds 1 to 8 decks, chips run from $5 to $1,000, and every bet, win, loss and money move is recorded, with charts of how far up or down you are this game and over all games.
 
 ## Files
 
@@ -10,5 +12,6 @@ Every casino rule is an on/off switch, the shoe holds 1 to 8 decks, the bankroll
 - `sw.js` — keeps a copy on the phone so it opens offline. **Change `VERSION` in it whenever `index.html` changes**, or phones keep the old copy.
 - `manifest.webmanifest`, `icon-*.png` — the home-screen name and icon (`node tools/icon.js` redraws the icons).
 - `tools/offline-test.js` — loads the game, cuts the connection, and plays three hands to prove it works offline.
+- `tools/cg-test.js` — the money side: the $10,000 start, the card, the loan shark's cut, the warning, death, starting over, Guy and the Stuff cards.
 
 The record lives in the phone's own storage for this site. It is not synced anywhere.

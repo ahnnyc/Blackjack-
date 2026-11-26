@@ -9,7 +9,7 @@ const dir = __dirname;
   const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.stack || e.message));
   await p.goto('file://' + dir + '/page.html');
-  await p.fill('#bankInput', '500'); await p.click('#bankStart');
+  await p.click('#bankStart');
   await p.click('.chip.c25'); await p.waitForTimeout(170); await p.screenshot({ path: dir + '/f1-chip-flying.png' });
   await p.waitForTimeout(700);
   await p.click('#actions button:has-text("Deal")'); await p.waitForTimeout(1300); console.log('reduce motion on:', await p.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), '| moving now:', await p.evaluate(() => document.getAnimations().length)); await p.waitForTimeout(100); await p.screenshot({ path: dir + '/f2-dealing.png' });

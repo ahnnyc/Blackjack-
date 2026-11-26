@@ -8,12 +8,12 @@ const src = process.argv[2], out = process.argv[3];
     const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
     await ctx.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-    await p.goto('file://' + out + '.html'); await p.fill('#bankInput', '500'); await p.click('#bankStart');
+    await p.goto('file://' + out + '.html'); await p.click('#bankStart');
     await p.click('.chip.c25'); await p.waitForTimeout(300); await p.click('#actions button:has-text("Deal")'); await p.waitForTimeout(3500);
     const m = await p.evaluate(() => {
-      const bs = ['#countBtn', '#openCashier', '#openRules', '#openRecord'].map(s => document.querySelector(s).getBoundingClientRect());
+      const bs = ['#countBtn', '#openCashier', '#openStuff', '#openRules', '#openRecord'].map(s => document.querySelector(s).getBoundingClientRect());
       const overlap = bs.some((a, i) => bs.slice(i + 1).some(c => a.right > c.left + 0.5 && c.right > a.left + 0.5));
-      const R = bs.map(r => [Math.round(r.left), Math.round(r.right)]); return { R, oneLine: new Set(bs.map(r => Math.round(r.top))).size === 1, overlap, inside: bs.every(r => r.left >= 8 && r.right <= innerWidth - 8), labelsWrap: bs.some(r => r.height > 50), pageWider: document.documentElement.scrollWidth > innerWidth };
+      const R = bs.map(r => [Math.round(r.left), Math.round(r.right)]); return { R, oneLine: new Set(bs.map(r => Math.round(r.top))).size === 1, overlap, inside: bs.every(r => r.left >= 15 && r.right <= innerWidth - 15), labelsWrap: bs.some(r => r.height > 50), pageWider: document.documentElement.scrollWidth > innerWidth };
     });
     res[w + 'x' + h] = { ...m, errors: errs };
     await p.screenshot({ path: `${out}-${w}.png` }); await ctx.close();

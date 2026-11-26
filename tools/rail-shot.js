@@ -15,7 +15,7 @@ fs.writeFileSync(out + '.html', fs.readFileSync(src, 'utf8')
   await p.goto('file://' + out + '.html');
   await p.addStyleTag({ content: 'body{bottom:auto!important;height:797px!important} :root{--home-bar:0px}' });
   await p.evaluate(() => dispatchEvent(new Event('resize')));
-  await p.fill('#bankInput', '500'); await p.click('#bankStart');
+  await p.click('#bankStart');
   await p.click('.chip.c25'); await p.waitForTimeout(600);
   await p.click('#actions button:has-text("Deal")'); await p.waitForTimeout(4500);
   await p.screenshot({ path: out + '.png' });

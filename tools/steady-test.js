@@ -11,8 +11,8 @@ const isChip = l => /^(5|25|100|500|1K)$/.test(l);
     await ctx.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.goto('file://' + dir + '/page.html');
-    await p.evaluate(() => { const r = JSON.parse(localStorage.getItem('bj.state.v1') || 'null'); });
-    await p.fill('#bankInput', '3000'); await p.click('#bankStart');
+    await p.evaluate(() => { const r = JSON.parse(localStorage.getItem('cg.state.v2') || 'null'); });
+    await p.click('#bankStart');
     const rail = new Set(), slots = {}, phasesSeen = new Set(); let shots = 0;
     const snap = async tag => {
       const m = await p.evaluate(() => {

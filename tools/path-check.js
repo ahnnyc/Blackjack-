@@ -7,7 +7,7 @@ const dir = __dirname;
   await ctx.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
   const p = await ctx.newPage();
   await p.goto('file://' + dir + '/page.html');
-  await p.fill('#bankInput', '1000'); await p.click('#bankStart');
+  await p.click('#bankStart');
   for (let round = 0; round < 30; round++) {
     await p.click('.chip.c25'); await p.waitForTimeout(1000);
     await p.click('#actions button:has-text("Deal")');

@@ -8,7 +8,7 @@ const dir = __dirname;
   const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.stack || e.message));
   await p.goto('file://' + dir + '/page.html');
-  await p.fill('#bankInput', '1000'); await p.click('#bankStart');
+  await p.click('#bankStart');
   let warned = false, bannered = false, warnText = '', bannerText = '';
   for (let round = 0; round < 25 && !(warned && bannered); round++) {
     await p.click('.chip.c25'); await p.waitForTimeout(900);

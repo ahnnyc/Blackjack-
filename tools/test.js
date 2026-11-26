@@ -14,12 +14,12 @@ fs.writeFileSync(dir + '/page.html', '<!doctype html><html><head><meta charset=u
   await p.goto('file://' + dir + '/page.html');
   await p.waitForTimeout(300);
   await p.screenshot({ path: dir + '/shot-first.png' });
-  await p.fill('#bankInput', '500'); await p.click('#bankStart');
+  await p.click('#bankStart');
   let rounds = 0, shotTaken = false;
   for (let step = 0; step < 8000 && rounds < Number(process.argv[2] || 300); step++) {
     const labels = await p.$$eval('#actions button:not([disabled])', bs => bs.map(b => b.textContent));
     if (!labels.length) { await p.waitForTimeout(50); continue; }
-    if (labels.some(l => l.startsWith('Start a new'))) { await p.click('#actions button'); await p.fill('#bankInput', '300'); await p.click('#bankStart'); continue; }
+    if (labels.includes('Start over')) { await p.click('#actions button:text-is("Start over")'); await p.click('#bankStart'); continue; }
     if (labels.includes('Hit') && !shotTaken && rounds > 3) { await p.screenshot({ path: dir + '/shot-play.png' }); shotTaken = true; }
     if (labels.includes('Hit') && !global.s3) { const n = await p.$$eval('#hands .hand', hs => Math.max(...hs.map(h => h.querySelectorAll('.card').length), 0)); if (n >= 3) { await p.screenshot({ path: dir + '/shot-3cards.png' }); global.s3 = 1; } }
     if (labels.includes('Hit') && !global.s2) { const n = await p.$$eval('#hands .hand', hs => hs.length); if (n >= 2) { await p.screenshot({ path: dir + '/shot-split.png' }); global.s2 = 1; } }
@@ -31,7 +31,7 @@ fs.writeFileSync(dir + '/page.html', '<!doctype html><html><head><meta charset=u
   }
   await p.waitForTimeout(1500);
   const check = await p.evaluate(() => {
-    const S = JSON.parse(localStorage.getItem('bj.state.v1')); const H = JSON.parse(localStorage.getItem('bj.history.v1'));
+    const S = JSON.parse(localStorage.getItem('cg.state.v2')); const H = JSON.parse(localStorage.getItem('cg.history.v2'));
     const sess = S.sessions.find(x => x.s === S.session);
     const sum = H.filter(r => r.s === S.session).reduce((a, r) => a + r.n, 0);
     const kinds = {}; H.forEach(r => r.h.forEach(h => kinds[h.r] = (kinds[h.r] || 0) + 1));
