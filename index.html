@@ -1776,31 +1776,6 @@ function newGame(){
   hideSheets(); render();
 }
 
-// The back door: press and hold the Bankroll for 3 seconds to start from the beginning at any time, even mid-hand.
-const HOLD_MS = 3000;
-let holdTimer = null;
-function holdStart(e){
-  clearTimeout(holdTimer);
-  holdTimer = setTimeout(() => { holdTimer = null; if (S.dead) return; askStartOver(); }, HOLD_MS);
-}
-function holdEnd(){ clearTimeout(holdTimer); holdTimer = null; }
-function askStartOver(){
-  sheetQueue.length = 0; guyOffer = false;
-  fenceSheet('Start from the beginning?', '🔄', 'The game goes back to the start, as on your first visit: ' + money(START) + ' at the 6-deck table, the opening message, no debts, no stuff, only the first table open.' +
-    (S.round || R ? ' <b>The hand in play is lost.</b>' : '') + ' Your record of past hands is kept.',
-    [btn('Cancel', () => hideSheets()), btn('Start over', () => forceNewGame(), { primary:true })]);
-}
-async function forceNewGame(){
-  hideSheets();
-  while (busy) await wait(100);         // let a card or chip animation finish first
-  sheetQueue.length = 0;
-  S.round = null; R = null; S.bet = 0;
-  newGame();
-  freshWelcome = true; firstVisit = true;   // show the opening message, exactly as on a first visit
-  openBank(true);
-}
-let freshWelcome = false;
-
 /* ---------- tables: 6 decks up to 1 deck ---------- */
 function canSit(i){ return openList()[i] && S.bankroll + S.bet >= TABLES[i].min; }
 function moveTo(i){
@@ -2319,10 +2294,7 @@ $('scopeSeg').addEventListener('click', e => { const b = e.target.closest('butto
 $('moreLog').addEventListener('click', () => { logShown += 50; renderRecord(); });
 $('newBankBtn').addEventListener('click', () => openBank(false));
 $('openCashier').addEventListener('click', openCashier);
-$('bankStart').addEventListener('click', () => { if (freshWelcome){ freshWelcome = false; firstVisit = false; hideSheets(); render(); } else newGame(); });
-$('bank').addEventListener('pointerdown', holdStart);
-['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('bank').addEventListener(ev, holdEnd));
-$('bank').addEventListener('contextmenu', e => e.preventDefault());
+$('bankStart').addEventListener('click', newGame);
 $('deadStart').addEventListener('click', newGame);
 ['card', 'shark'].forEach(w => {
   $(w + 'Input').addEventListener('input', () => { $('cashErr').hidden = true; cashierLabels(); });
