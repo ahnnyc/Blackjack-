@@ -1,5 +1,5 @@
 // Draws the home-screen icon at the three sizes iPhone and browsers ask for:
-// a whale made of card suits (a mosaic of spades, hearts, diamonds and clubs), a diamond eye, and a spout of suits.
+// a whale made of card suits (a mosaic of spades, hearts, diamonds and clubs), a diamond eye, and a spout of dollar signs.
 const { chromium } = require('playwright');
 const path = require('path');
 const root = path.resolve(__dirname, '..');
@@ -37,11 +37,13 @@ const html = `<!doctype html><html><body style="margin:0">
   <path d="M 70 330 C 120 346, 170 346, 214 334" fill="none" stroke="#13294b" stroke-width="7" stroke-linecap="round"/>
   <!-- eye: a diamond -->
   <text x="132" y="286" font-size="52" fill="#13294b" stroke="#fbfaf5" stroke-width="3" text-anchor="middle">♦</text>
-  <!-- spout: suits as water -->
-  <text x="176" y="140" font-size="60" fill="#e4c57e" text-anchor="middle">♣</text>
-  <text x="132" y="104" font-size="40" fill="#e4c57e" text-anchor="middle" transform="rotate(-18 132 104)">♦</text>
-  <text x="222" y="100" font-size="40" fill="#e4c57e" text-anchor="middle" transform="rotate(18 222 100)">♥</text>
-  <text x="177" y="66" font-size="40" fill="#e4c57e" text-anchor="middle">♠</text>
+  <!-- spout: dollar signs -->
+  <text x="176" y="150" font-size="64" font-weight="700" fill="#e4c57e" text-anchor="middle">$</text>
+  <text x="132" y="112" font-size="48" font-weight="700" fill="#e4c57e" text-anchor="middle" transform="rotate(-22 132 112)">$</text>
+  <text x="220" y="112" font-size="48" font-weight="700" fill="#e4c57e" text-anchor="middle" transform="rotate(22 220 112)">$</text>
+  <text x="176" y="80" font-size="44" font-weight="700" fill="#e4c57e" text-anchor="middle">$</text>
+  <text x="104" y="70" font-size="34" font-weight="700" fill="#e4c57e" text-anchor="middle" transform="rotate(-34 104 70)">$</text>
+  <text x="248" y="70" font-size="34" font-weight="700" fill="#e4c57e" text-anchor="middle" transform="rotate(34 248 70)">$</text>
   </g>
 </svg></div></body></html>`;
 (async () => {
