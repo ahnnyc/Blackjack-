@@ -1859,21 +1859,11 @@ function nextGoal(){
 const AWAY_MS = 10 * 60 * 1000;   // back after 10 minutes or more away also counts as reopening
 function welcomeBack(){
   if (firstVisit || S.dead) return;
-  const t = tbl(), n = handsThisGame(), lines = [];
-  lines.push('Chips: <b>' + money(S.bankroll) + '</b>' + (S.card + S.shark > 0 ? ' (' + money(ownChips()) + ' after debts)' : ''));
-  if (S.card > 0) lines.push('Credit card owed: ' + money(S.card));
-  if (S.shark > 0) lines.push('Loan shark owed: ' + money(S.shark) + '. He takes ' + money(sharkCut()) + ' after hand ' + S.sharkNext + '.');
-  lines.push('Table: ' + deckTable(t.d) + ', bets ' + money(t.min) + ' to ' + money(t.max));
-  if (stashList().length) lines.push('Stuff: ' + stashList().length + (stashList().length === 1 ? ' thing' : ' things'));
-  if (rules().stay){
-    const m = n % DAY, day = Math.floor(n / DAY) + 1;
-    const nx = [[25, 'breakfast'], [75, 'lunch'], [125, 'dinner'], [DAY, 'the room']].find(x => x[0] > m);
-    const left = nx[0] - m;
-    lines.push('Day ' + day + ', hand ' + n + '. Next: ' + nx[1] + ' in ' + left + (left === 1 ? ' hand' : ' hands') + '.');
-  } else lines.push('Hands this game: ' + n);
+  const lines = [];
+  lines.push('Chips: <b>' + money(S.bankroll) + '</b>');
   lines.push(nextGoal());
   guyOffer = false;
-  fenceSheet('Welcome back', '🐋', lines.join('<br>'), [btn('Play', () => hideSheets(), { primary:true })]);
+  fenceSheet('Welcome back', '🐋', lines.join('<br><br>'), [btn('Play', () => hideSheets(), { primary:true })]);
 }
 let hiddenAt = 0;
 addEventListener('visibilitychange', () => {
