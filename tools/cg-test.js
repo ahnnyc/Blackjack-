@@ -3,7 +3,7 @@
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
 const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, fenceOffer, fenceBuyback, guyDecline, appraise, get lastOffer(){ return lastOffer; }, fenceAfterHand, debtsAfterHand, tablesAfterHand, stashList, guy, guyOdds, applyMotion, render, saveLocal };\n";
 fs.writeFileSync(dir + '/cg-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
-  fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true, sound:true };', 'fence:false, sound:true };').replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
+  fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true, sound:true };', 'fence:false, sound:true };').replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */').replace('function checkLevel(){', 'function checkLevel(){ S.level = levelOf(prestige()); return;')   /* prestige-level messages are tested elsewhere */ + '</body></html>');
 const isChip = l => /^(5|25|100|500|1K)$/.test(l);
 (async () => {
   const b = await chromium.launch();

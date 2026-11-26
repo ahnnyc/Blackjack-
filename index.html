@@ -60,9 +60,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 #ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:var(--rail-line)}
 #topgap{flex:1}
-#bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:nowrap;gap:4px 10px;min-width:0;white-space:nowrap}
+#bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:4px 10px;min-width:0;white-space:nowrap}
 @media (max-width:599px){ #top{gap:4px} #top .topbtn, #top #countBtn{padding:0 7px;font-size:15px} }
 @media (max-width:359px){ #top{gap:3px} #top .topbtn, #top #countBtn{padding:0 5px;font-size:14px} }
+#levelBtn{flex:none;min-height:36px;padding:0 10px;border-radius:18px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;font-weight:700;white-space:nowrap}
 #plTag{font-size:17px;font-weight:700;white-space:nowrap;color:var(--muted)}
 #plTag.up{color:var(--good)} #plTag.down{color:var(--bad)}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
@@ -323,7 +324,7 @@ body.still .card.flip{animation:none}
   </main>
 
   <footer id="ctl">
-    <div id="bank"><span class="lbl">Bankroll</span><span class="amt num" id="bankAmt">$1,000</span><span class="pl num" id="plTag"></span></div>
+    <div id="bank"><button type="button" id="levelBtn" aria-label="Prestige level"></button><span class="amt num" id="bankAmt" aria-label="Bankroll">$1,000</span><span class="pl num" id="plTag"></span></div>
     <div id="countBox" hidden><span>Running count <b class="num" id="rcV">0</b></span><span>True count <b class="num" id="tcV">0</b></span><span class="num" id="decksV"></span></div>
     <div id="msg" role="status" aria-live="polite"></div>
     <div id="actions"></div>
@@ -488,6 +489,17 @@ const PEOPLE = {
   crew:  { name:'entourage', fee:2500, prestige:25000, art:'👯' },
 };
 const HOST_CHANCE = 1 / 25, HOST_GAP = 10;
+// Prestige levels, named so the player knows where they stand.
+const LEVELS = [
+  { name:'Bait',        at:0 },
+  { name:'Minnow',      at:1000 },      // meals comped
+  { name:'Guppy',       at:5000 },
+  { name:'Tuna',        at:10000 },     // meals and the room comped
+  { name:'Dolphin',     at:25000 },
+  { name:'Whale',       at:100000 },
+  { name:'Super Whale', at:1000000 },
+];
+const levelOf = v => LEVELS.reduce((a, l, i) => v >= l.at ? i : a, 0);
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
   resplit:true, resplitAces:true, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
   charlie:false, push22:false, csm:false, totals:false, motion:true, warn:true, fence:true, stay:true, host:true, sound:true };
@@ -650,7 +662,7 @@ function migrate(){
 function freshState(amount = START){
   return { v:2, settings:{ decks:6, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
-    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
+    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, level:0, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
 const rules = () => S.settings.rules;
 
@@ -1246,8 +1258,23 @@ function stackEl(amount, max){
   chipsFor(amount).slice(0, max || 5).forEach(v => { const i = document.createElement('i'); i.className = 'c' + v + (chipLabel(v).length > 3 ? ' long' : ''); i.textContent = chipLabel(v); st.append(i); });
   return st;
 }
+function levelNote(i){
+  const perk = i >= 3 ? ' Meals and your room are comped.' : i >= 1 ? ' Meals are comped.' : '';
+  const nx = LEVELS[i + 1];
+  return perk + (nx ? ' Next level: ' + nx.name + ' at ' + money(nx.at) + ' prestige.' : ' This is the top level.');
+}
+function checkLevel(){
+  const i = levelOf(prestige());
+  if (S.level == null){ S.level = i; return; }
+  if (i === S.level) return;
+  const up = i > S.level; S.level = i; touch(); saveLocal();
+  queueSheet(() => { guyOffer = false; fenceSheet(up ? 'New prestige level' : 'Prestige level down', '🐋',
+    'You are now a <b>' + LEVELS[i].name + '</b> (prestige ' + money(prestige()) + ').' + levelNote(i), [btn('OK', () => hideSheets(), { primary:true })]); });
+}
 function render(){
   applyMotion();
+  $('levelBtn').textContent = LEVELS[levelOf(prestige())].name;
+  checkLevel();
   const root = document.documentElement; for (let i = 0; i < 4; i++) root.classList.toggle('t' + i, i === tableNo());
   if (S.round && !R) R = S.round;
   $('bankAmt').textContent = money(R && R.countFrom != null ? R.countFrom : S.bankroll);
@@ -2186,7 +2213,7 @@ function renderStuff(){
   const list = stuffOrder(), x = list[stuffAt];
   const cost = list.reduce((a, y) => a + y.paid, 0);
   const pp = people(), with_ = [pp.candy ? 'eye candy (' + pp.candy + ')' : '', pp.crew ? 'an entourage' : ''].filter(Boolean).join(' and ');
-  $('stuffNote').textContent = 'Prestige: ' + money(prestige()) + '. ' + (with_ ? 'With you: ' + with_ + '. ' : '') + (list.length ? list.length + (list.length === 1 ? ' thing' : ' things') + ', which cost you ' + money(cost) + '. Swipe or tap Next to flip through.' : 'Everything you buy from Guy lands here as a card.');
+  $('stuffNote').textContent = 'Prestige: ' + money(prestige()) + ' (' + LEVELS[levelOf(prestige())].name + ').' + levelNote(levelOf(prestige())) + ' ' + (with_ ? 'With you: ' + with_ + '. ' : '') + (list.length ? list.length + (list.length === 1 ? ' thing' : ' things') + ', which cost you ' + money(cost) + '. Swipe or tap Next to flip through.' : 'Everything you buy from Guy lands here as a card.');
   fillCard($('stuffCard'), x);
   $('stuffCard').setAttribute('aria-label', x ? itemName(x) + ', paid ' + money(x.paid) : 'No stuff yet');
   $('stuffPos').textContent = list.length ? (stuffAt + 1) + ' of ' + list.length : '';
@@ -2392,6 +2419,7 @@ $('moreLog').addEventListener('click', () => { logShown += 50; renderRecord(); }
 $('newBankBtn').addEventListener('click', () => openBank(false));
 $('openCashier').addEventListener('click', openCashier);
 $('bankStart').addEventListener('click', sitDown);
+$('levelBtn').addEventListener('click', () => openStuff());
 $('deadStart').addEventListener('click', () => newGame(true));
 ['card', 'shark'].forEach(w => {
   $(w + 'Input').addEventListener('input', () => { $('cashErr').hidden = true; cashierLabels(); });
