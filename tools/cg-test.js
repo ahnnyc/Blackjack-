@@ -115,7 +115,7 @@ const isChip = l => /^(5|25|100|500|1K)$/.test(l);
   out.deadSheetStaysOnTapOutside = await p.isVisible('#deadSheet');
   await p.reload(); await p.waitForTimeout(2200);
   out.deadAfterReload = await p.isVisible('#deadSheet');
-  await p.click('#deadStart'); await p.waitForTimeout(400);
+  await p.click('#deadStart'); await p.waitForTimeout(400); out.welcomeAfterDeath = await p.isVisible('#bankSheet'); await p.click('#bankStart'); await p.waitForTimeout(300);
   out.newGame = { ...(await st()), owe: await p.isHidden('#oweV'), guy: await p.evaluate(() => __bj.guy()) };
   // 8) out of chips -> Borrow
   await p.evaluate(() => { __bj.S.bankroll = 0; __bj.render(); });
