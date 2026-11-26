@@ -651,7 +651,7 @@ function run(fn){
   Promise.resolve().then(fn)
     .then(async () => { if (R && R.phase === 'done' && !R.paid){ render(); await payoutAnim(); } })
     .catch(e => { console.error(e); if (R) { R.countFrom = null; R.paid = true; } })
-    .finally(() => { busy = false; saveLocal(); render(); if (!debtsAfterHand() && !tablesAfterHand()) fenceAfterHand(); });
+    .finally(() => { busy = false; saveLocal(); render(); if (!debtsAfterHand() && !tablesAfterHand()) fenceAfterHand(); pumpSheets(150); });
 }
 
 async function deal(){
@@ -1289,7 +1289,7 @@ function renderControls(){
       a.append(row(
         btn('Clear', clearBet, { disabled: !S.bet }),
         btn(S.lastBet ? 'Rebet ' + money(Math.min(S.lastBet, maxBet())) : 'Rebet', rebet, { disabled: !canRe }),
-        btn(S.bet ? 'Deal ' + money(S.bet) : 'Deal', () => run(deal), { primary:true, disabled: S.bet < minBet() })
+        btn(S.bet ? 'Deal ' + money(S.bet) : 'Deal', () => { if (sheetQueue.length && !sheetOpen()) return pumpSheets(0); run(deal); }, { primary:true, disabled: S.bet < minBet() })   // anything waiting (Guy, the host...) shows before the next deal
       ));
     }
   }
@@ -1605,12 +1605,12 @@ function debtsAfterHand(){
   }
   touch(); saveLocal(); saveCloudState();
   if (S.shark > 0 && S.sharkNext - n === 1 && S.bankroll < sharkCut()){
-    setTimeout(() => {
-      if (busy || S.round || S.dead || sheetOpen()) return;
+    queueSheet(() => {
+      if (!(S.shark > 0 && S.sharkNext - handsThisGame() === 1 && S.bankroll < sharkCut())) return pumpSheets(0);   // no longer true
       guyOffer = false;
       fenceSheet('The loan shark', '🦈', 'He leans in. “After your next hand I want my <b>' + money(sharkCut()) + '</b>. You’ve got ' + money(S.bankroll) + '. Find the rest.”',
         [btn('Sell stuff', () => openStuff()), btn('Got it', () => hideSheets(), { primary:true })]);
-    }, D * 2 + 600);
+    });
     return true;
   }
   return false;
@@ -1699,7 +1699,7 @@ function tablesAfterHand(){
     'A casino host in a dark suit leans over your shoulder. “We’ve noticed your play. The house would like to invite you to ' + game + '. Bets run ' + money(t.min) + ' to ' + money(t.max) + ', and with fewer decks the odds are better for you.”',
     [btn('Not yet', () => hideSheets()), btn('Accept', () => { moveTo(opened); hideSheets(); render(); }, { primary:true, disabled: !canSit(opened) })]); });
   return true;
-  function later(fn){ setTimeout(() => { if (!busy && !S.round && !sheetOpen()) fn(); }, D * 2 + 500); }
+  function later(fn){ queueSheet(fn); }
 }
 
 /* ---------- welcome / start over ---------- */
@@ -1746,9 +1746,9 @@ function guyOdds(){
   return { gap: Math.max(2, o.gap - Math.floor(steps)), chance: Math.min(0.8, o.chance * (1 + steps)) };
 }
 function sheetOpen(){ return [...document.querySelectorAll('.sheet')].some(x => !x.hidden); }
-function fenceFree(){ return !busy && !S.round && !S.bet && !S.dead && !sheetOpen() && !firstVisit; }
+function fenceFree(){ return !busy && !S.round && !S.dead && !firstVisit; }
 function fenceAfterHand(){
-  if (!rules().fence || !fenceFree()) return;
+  if (!rules().fence || !fenceFree() || sheetQueue.length) return;
   const n = history.length;
   if (n === S.fenceSeen) return;
   S.fenceSeen = n;
@@ -1757,7 +1757,7 @@ function fenceAfterHand(){
   if (big.length && n - (S.fenceLast || 0) >= BUYBACK_GAP && Math.random() < BUYBACK_CHANCE){ S.fenceLast = n; const x = pickOne(big); return later(() => fenceBuyback(x)); }
   const o = guyOdds();
   if (n - (S.fenceLast || 0) >= o.gap && S.bankroll >= 25 && Math.random() < o.chance){ S.fenceLast = n; return later(fenceOffer); }
-  function later(fn){ clearTimeout(fenceTimer); fenceTimer = setTimeout(() => { if (fenceFree()) fn(); }, D * 2 + 600); }
+  function later(fn){ queueSheet(fn); }
 }
 function fenceSheet(title, art, html, buttons){
   hideSheets();
@@ -1917,7 +1917,20 @@ function cardFly(x){
   ], { duration: 2000, easing: 'ease-in-out' }).finished.then(() => el.remove(), () => el.remove());
 }
 
-function hideSheets(){ document.querySelectorAll('.sheet').forEach(s => s.hidden = true); }
+function hideSheets(){ document.querySelectorAll('.sheet').forEach(s => s.hidden = true); pumpSheets(300); }
+// Things that pop up between hands (Guy, security, the casino host, the pit boss, the loan shark's warning)
+// wait in line here. Each shows at the next pause; if you've already started the next hand, it waits for
+// the end of that one. Nothing is thrown away.
+const sheetQueue = [];
+let pumpTimer = null;
+function queueSheet(fn){ sheetQueue.push(fn); pumpSheets(150); }
+function pumpSheets(delay){
+  clearTimeout(pumpTimer);
+  pumpTimer = setTimeout(() => {
+    if (!sheetQueue.length || busy || S.round || S.dead || firstVisit || sheetOpen()) return;
+    sheetQueue.shift()();
+  }, delay);
+}
 
 /* ---------- saving ---------- */
 function touch(){ S.updatedAt = Date.now(); }
