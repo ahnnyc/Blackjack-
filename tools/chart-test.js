@@ -9,7 +9,7 @@ const isChip = l => /^(5|25|100|500|1K)$/.test(l);
   const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto('file://' + dir + '/page.html');
-  await p.fill('#bankInput', '1000'); await p.click('#bankStart');
+  await p.click('#bankStart');
   const playHands = async n => {
     for (let k = 0; k < n; k++) {
       await p.click('.chip.c25'); await p.waitForTimeout(300);
@@ -25,15 +25,15 @@ const isChip = l => /^(5|25|100|500|1K)$/.test(l);
       await p.waitForTimeout(2200);
     }
   };
-  const nets = () => p.evaluate(() => { const S = JSON.parse(localStorage.getItem('bj.state.v1')); const H = JSON.parse(localStorage.getItem('bj.history.v1') || '[]');
+  const nets = () => p.evaluate(() => { const S = JSON.parse(localStorage.getItem('cg.state.v2')); const H = JSON.parse(localStorage.getItem('cg.history.v2') || '[]');
     const r2 = v => Math.round(v * 100) / 100;
     return { session: r2(H.filter(r => r.s === S.session).reduce((a, r) => a + r.n, 0)), all: r2(H.reduce((a, r) => a + r.n, 0)), hands: H.length }; });
   const words = v => v > 0 ? 'up $' + v.toLocaleString('en-US', { minimumFractionDigits: v % 1 ? 2 : 0 }) : v < 0 ? 'down $' + (-v).toLocaleString('en-US', { minimumFractionDigits: v % 1 ? 2 : 0 }) : 'even';
   const out = {};
   await playHands(6);
-  await p.click('#openCashier'); await p.click('#buyPresets button:has-text("$500")'); await p.click('#buyBtn'); await p.waitForTimeout(1500);
+  await p.click('#openCashier'); await p.click('#cardPresets button:text-is("+$1,000")'); await p.click('#cardBorrow'); await p.waitForTimeout(1500);
   await playHands(2);
-  await p.click('#openCashier'); await p.fill('#cashInput', '200'); await p.dispatchEvent('#cashInput', 'input'); await p.click('#cashBtn'); await p.waitForTimeout(1500);
+  await p.click('#openCashier'); await p.fill('#cardInput', '200'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardPay'); await p.waitForTimeout(1500);
   let n = await nets();
   await p.click('#openRecord'); await p.waitForTimeout(400);
   let r1 = await p.textContent('#chartRead1'), r2 = await p.textContent('#chartRead2');
@@ -41,7 +41,7 @@ const isChip = l => /^(5|25|100|500|1K)$/.test(l);
   await p.screenshot({ path: dir + '/chart-updown.png' });
   await p.click('#recordSheet [data-close]');
   // a second bankroll
-  await p.click('#openRecord'); await p.click('#newBankBtn'); await p.fill('#bankInput', '300'); await p.click('#bankStart');
+  await p.click('#openRecord'); await p.click('#newBankBtn'); await p.click('#bankStart');
   await playHands(3);
   n = await nets();
   await p.click('#openRecord'); await p.waitForTimeout(400);

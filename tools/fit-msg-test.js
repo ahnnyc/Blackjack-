@@ -9,7 +9,7 @@ const isChip = l => /^(5|25|100|500|1K)$/.test(l);
     await ctx.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.goto('file://' + dir + '/page.html');
-    await p.fill('#bankInput', '100000'); await p.click('#bankStart');
+    await p.click('#bankStart');
     const seen = new Set(), bad = []; let shot = 0, splitSeen = 0;
     for (let round = 0; round < 12; round++) {
       for (const c of ['.chip.c1000','.chip.c1000','.chip.c500','.chip.c25']) { await p.click(c); await p.waitForTimeout(80); }

@@ -17,7 +17,7 @@ const TOP = Number(process.env.TOP || 59), BOTTOM = Number(process.env.BOTTOM ||
     await ctx.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
     const p = await ctx.newPage();
     await p.goto('file://' + out + '.html');
-    await p.fill('#bankInput', '500'); await p.click('#bankStart');
+    await p.click('#bankStart');
     await p.click('.chip.c25'); await p.waitForTimeout(400);
     await p.click('#actions button:has-text("Deal")'); await p.waitForTimeout(4500);
     const m = await p.evaluate(() => {

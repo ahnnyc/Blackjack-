@@ -13,7 +13,7 @@ const url = process.argv[2];
   await p.evaluate(() => navigator.serviceWorker.ready);
   await p.reload();
   const controlled = await p.evaluate(() => !!navigator.serviceWorker.controller);
-  await p.fill('#bankInput', '750'); await p.click('#bankStart');
+  await p.click('#bankStart');
 
   await ctx.setOffline(true);
   await p.reload();
@@ -31,7 +31,7 @@ const url = process.argv[2];
   }
   await p.waitForTimeout(3000);
   await p.reload();
-  const hist = await p.evaluate(() => JSON.parse(localStorage.getItem('bj.history.v1') || '[]').length);
+  const hist = await p.evaluate(() => JSON.parse(localStorage.getItem('cg.history.v2') || '[]').length);
   await p.screenshot({ path: process.argv[3] || 'offline.png' });
   console.log(JSON.stringify({ controlled, offlineTitle: title, bankAfterOfflineReload: bank, handsRecordedOffline: hist, errors: errs }));
   await b.close();

@@ -9,7 +9,7 @@ const val = l => { const r = l.split(' of ')[0]; return ['2','3','4','5','6'].in
   const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.stack || e.message));
   await p.goto('file://' + dir + '/page.html');
-  await p.fill('#bankInput', '5000'); await p.click('#bankStart');
+  await p.click('#bankStart');
   await p.click('#countBtn');
   const shown = async () => Number((await p.textContent('#rcV')).replace('−', '-').replace('+', ''));
   const onScreen = async () => p.$$eval('#table .card:not(.back)', es => es.map(e => e.getAttribute('aria-label')));

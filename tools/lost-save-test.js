@@ -8,9 +8,9 @@ const url = process.argv[2];
   const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() !== 'log' && !m.text().includes('ERR_FAILED')) errs.push(m.type() + ': ' + m.text()); });
   await p.goto(url);
-  await p.fill('#bankInput', '600'); await p.click('#bankStart');
+  await p.click('#bankStart');
   await p.waitForTimeout(300);
-  const oldState = await p.evaluate(() => localStorage.getItem('bj.state.v1'));   // what the iPhone kept
+  const oldState = await p.evaluate(() => localStorage.getItem('cg.state.v2'));   // what the iPhone kept
   let played = 0;
   for (let i = 0; i < 600 && played < 5; i++) {
     const labels = await p.$$eval('#actions button:not([disabled])', bs => bs.map(x => x.textContent));
@@ -30,15 +30,15 @@ const url = process.argv[2];
     await p.click(`#actions button:not([disabled]):text-is("${pick}")`); if (await p.isVisible('#warnGo')) await p.click('#warnGo');
   }
   await p.waitForTimeout(800);
-  const before = await p.evaluate(() => ({ bank: document.querySelector('#bankAmt').textContent, hands: JSON.parse(localStorage.getItem('bj.history.v1') || '[]').length }));
-  before.idb = await p.evaluate(() => new Promise(res => { const r = indexedDB.open('blackjack'); r.onsuccess = () => { const t = r.result.transaction(['kv','rounds']); const c = t.objectStore('rounds').count(); const k = t.objectStore('rounds').getAllKeys(); t.oncomplete = () => { res({ rounds: c.result, keys: k.result }); r.result.close(); }; }; }));
+  const before = await p.evaluate(() => ({ bank: document.querySelector('#bankAmt').textContent, hands: JSON.parse(localStorage.getItem('cg.history.v2') || '[]').length }));
+  before.idb = await p.evaluate(() => new Promise(res => { const r = indexedDB.open('compulsive-gambler'); r.onsuccess = () => { const t = r.result.transaction(['kv','rounds']); const c = t.objectStore('rounds').count(); const k = t.objectStore('rounds').getAllKeys(); t.oncomplete = () => { res({ rounds: c.result, keys: k.result }); r.result.close(); }; }; }));
   // the fault: normal save rolls back to just after choosing the bankroll
   await p.close();
   const p2 = await ctx.newPage(); p2.on('pageerror', e => errs.push(e.message));
-  await p2.addInitScript(s => { localStorage.setItem('bj.state.v1', s); localStorage.removeItem('bj.history.v1'); }, oldState);
+  await p2.addInitScript(s => { localStorage.setItem('cg.state.v2', s); localStorage.removeItem('cg.history.v2'); }, oldState);
   await p2.goto(url); await p2.waitForTimeout(1500);
   const rolledBack = oldState;
-  const after = await p2.evaluate(() => ({ bank: document.querySelector('#bankAmt').textContent, hands: JSON.parse(localStorage.getItem('bj.history.v1') || '[]').length, bankSheetOpen: !document.querySelector('#bankSheet').hidden }));
+  const after = await p2.evaluate(() => ({ bank: document.querySelector('#bankAmt').textContent, hands: JSON.parse(localStorage.getItem('cg.history.v2') || '[]').length, bankSheetOpen: !document.querySelector('#bankSheet').hidden }));
   await p2.click('#openRecord'); await p2.waitForTimeout(300);
   const listed = await p2.$$eval('#log .entry', es => es.length);
   console.log(JSON.stringify({ before, after, listedInRecord: listed, errors: errs }));

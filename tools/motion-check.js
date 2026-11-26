@@ -8,7 +8,7 @@ const dir = __dirname;
   const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.stack || e.message));
   await p.goto('file://' + dir + '/page.html');
-  await p.fill('#bankInput', '5000'); await p.click('#bankStart');
+  await p.click('#bankStart');
   const seen = { shuffle: false, sweep: false, sideways: false, insurance: false, bustTaken: false, slide: false };
   const count = sel => p.$$eval(sel, e => e.length);
   for (let round = 0; round < 60 && Object.values(seen).some(v => !v); round++) {

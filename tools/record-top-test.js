@@ -9,7 +9,7 @@ const src = process.argv[2], out = process.argv[3];
     const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
     await ctx.route(/fonts\.(googleapis|gstatic)/, r => r.abort());
     const p = await ctx.newPage(); await p.goto('file://' + out + '.html');
-    await p.fill('#bankInput', '500'); await p.click('#bankStart');
+    await p.click('#bankStart');
     for (const id of ['#openRecord', '#openRules', '#openCashier']) {
       await p.click(id); await p.waitForTimeout(500);
       const m = await p.evaluate(() => { const s = [...document.querySelectorAll('.sheet')].find(x => !x.hidden); const pn = s.querySelector('.panel').getBoundingClientRect(); const d = s.querySelector('[data-close]'); return { panelTop: Math.round(pn.top), doneTop: d ? Math.round(d.getBoundingClientRect().top) : null }; });
