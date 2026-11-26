@@ -1,7 +1,7 @@
 {
-  "name": "Blackjack Whale",
-  "short_name": "Blackjack Whale",
-  "description": "Blackjack Whale: casino blackjack with $10,000 to start, a credit card, a loan shark, and Guy selling hot goods.",
+  "name": "Vegas Whale",
+  "short_name": "Vegas Whale",
+  "description": "Vegas Whale: casino blackjack with $10,000 to start, a credit card, a loan shark, and Guy selling hot goods.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -1,20 +1,49 @@
-// Draws the home-screen icon at the three sizes iPhone and browsers ask for.
+// Draws the home-screen icon at the three sizes iPhone and browsers ask for:
+// a whale made of card suits (a mosaic of spades, hearts, diamonds and clubs), a diamond eye, and a spout of suits.
 const { chromium } = require('playwright');
 const path = require('path');
 const root = path.resolve(__dirname, '..');
+const suits = ['♠', '♥', '♦', '♣'];
+// whale outline: big round head on the left, tail stock rising to flukes at the top right
+const whale = `M 58 318
+ C 52 238, 120 182, 214 182
+ C 292 182, 338 222, 372 252
+ C 392 270, 408 268, 418 250
+ C 426 236, 430 214, 424 196
+ C 410 186, 392 172, 384 150
+ C 404 158, 426 166, 444 168
+ C 456 150, 468 132, 488 124
+ C 486 150, 474 178, 452 196
+ C 452 230, 446 276, 424 306
+ C 394 352, 330 380, 246 384
+ C 150 388, 64 372, 58 318 Z`;
+let glyphs = '';
+for (let r = 0, y = 150; y < 410; r++, y += 26) {
+  for (let x = 40 + (r % 2 ? 13 : 0), c = 0; x < 500; x += 26, c++) {
+    const s = suits[(c + r * 2) % 4];
+    const red = s === '♥' || s === '♦';
+    glyphs += `<text x="${x}" y="${y}" font-size="25" fill="${red ? '#f6d9d4' : '#fbfaf5'}" text-anchor="middle">${s}</text>`;
+  }
+}
 const html = `<!doctype html><html><body style="margin:0">
-<div id="i" style="width:512px;height:512px;background:radial-gradient(circle at 50% 35%,#16624f,#09362b 75%);position:relative;overflow:hidden;font-family:Arial,Helvetica,sans-serif">
-  <div style="position:absolute;left:96px;top:118px;width:200px;height:280px;border-radius:22px;background:#fbfaf5;transform:rotate(-12deg);box-shadow:0 10px 24px rgba(0,0,0,.45);color:#b3231b">
-    <div style="position:absolute;left:18px;top:10px;font-weight:700;font-size:92px;line-height:1">K</div>
-    <div style="position:absolute;left:24px;top:104px;font-size:64px;line-height:1">&#9829;</div>
-  </div>
-  <div style="position:absolute;left:216px;top:104px;width:200px;height:280px;border-radius:22px;background:#fbfaf5;transform:rotate(9deg);box-shadow:0 10px 24px rgba(0,0,0,.45);color:#1d1d23">
-    <div style="position:absolute;left:20px;top:10px;font-weight:700;font-size:92px;line-height:1">A</div>
-    <div style="position:absolute;left:26px;top:104px;font-size:64px;line-height:1">&#9824;</div>
-    <div style="position:absolute;right:18px;bottom:8px;font-size:120px;line-height:1">&#9824;</div>
-  </div>
-  <div style="position:absolute;left:0;right:0;bottom:34px;text-align:center;color:#e4c57e;font:700 46px Georgia,serif;letter-spacing:4px">21</div>
-</div></body></html>`;
+<div id="i" style="width:512px;height:512px;background:radial-gradient(circle at 50% 38%,#16624f,#09362b 75%);font-family:'DejaVu Sans',sans-serif">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs><clipPath id="w"><path d="${whale}"/></clipPath></defs>
+  <g transform="translate(-4 38)">
+  <path d="${whale}" fill="#1f4f86"/>
+  <g clip-path="url(#w)">${glyphs}</g>
+  <path d="${whale}" fill="none" stroke="#fbfaf5" stroke-width="6" stroke-linejoin="round"/>
+  <!-- mouth -->
+  <path d="M 70 330 C 120 346, 170 346, 214 334" fill="none" stroke="#13294b" stroke-width="7" stroke-linecap="round"/>
+  <!-- eye: a diamond -->
+  <text x="132" y="286" font-size="52" fill="#13294b" stroke="#fbfaf5" stroke-width="3" text-anchor="middle">♦</text>
+  <!-- spout: suits as water -->
+  <text x="176" y="140" font-size="60" fill="#e4c57e" text-anchor="middle">♣</text>
+  <text x="132" y="104" font-size="40" fill="#e4c57e" text-anchor="middle" transform="rotate(-18 132 104)">♦</text>
+  <text x="222" y="100" font-size="40" fill="#e4c57e" text-anchor="middle" transform="rotate(18 222 100)">♥</text>
+  <text x="177" y="66" font-size="40" fill="#e4c57e" text-anchor="middle">♠</text>
+  </g>
+</svg></div></body></html>`;
 (async () => {
   const b = await chromium.launch();
   for (const size of [512, 192, 180]) {
