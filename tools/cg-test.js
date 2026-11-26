@@ -1,4 +1,4 @@
-// Compulsive Gambler: the $10,000 start, the credit card, the loan shark (cut, warning, death), starting over,
+// Compulsive Gambler: the $1,000 start, the credit card, the loan shark (cut, warning, death), starting over,
 // Guy (buying, turning him down, the card that flies to Stuff), the Stuff cards, and the books adding up.
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
 const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, fenceOffer, fenceBuyback, guyDecline, appraise, get lastOffer(){ return lastOffer; }, fenceAfterHand, debtsAfterHand, tablesAfterHand, stashList, guy, guyOdds, applyMotion, render, saveLocal };\n";
