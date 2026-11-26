@@ -6,6 +6,8 @@ You walk in with $1,000. When it's gone there's a credit card ($50,000 limit; 20
 
 There are four tables: 6 decks ($5 to $1,000), 4 decks ($25 to $5,000), 2 decks ($100 to $25,000) and 1 deck ($500 to $100,000). You start at 6 decks; the next table opens when you have enough chips of your own after debts ($1,250 / $7,500 / $100,000) or have bet enough at the table below ($150 / $5,000 / $200,000); the casino host invites you up. Each table has its own felt: worn gray-green, blue, black, and red with gold trim. If you can't cover a table's minimum you're moved down. Every other casino rule is an on/off switch, and every bet, win, loss and money move is recorded, with charts of how far up or down you are this game and over all games.
 
+Time passes in hands: every 150 hands is a day, about an hour of play. You stop for breakfast (after hand 25), lunch (75) and dinner (125), and pay for your room at the end of the day (150). Prices go with your table: the diner and a budget motel at 6 decks ($5 / $8 / $12, room $49), the coffee shop and a hotel room at 4 decks ($25 / $40 / $85, room $249), the steakhouse and a tower suite at 2 decks ($40 / $75 / $180, room $799), and everything comped at the 1-deck high-roller table. When your own chips (after debts) are under $1,000, the casino comps the bill. It can be switched off in Rules, under Extras.
+
 ## Files
 
 - `index.html` — the game. Built from `tools/game.html` by `python3 tools/build.py`; edit the game there, then rebuild.
