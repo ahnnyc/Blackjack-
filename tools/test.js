@@ -1,7 +1,7 @@
 const { chromium, devices } = require('playwright');
 const fs = require('fs');
 const dir = __dirname;
-const body = fs.readFileSync(dir + '/blackjack.html', 'utf8');
+const body = fs.readFileSync(dir + '/blackjack.html', 'utf8').replace('fence:true };', 'fence:false };');
 fs.writeFileSync(dir + '/page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' + body + '</body></html>');
 (async () => {
   const b = await chromium.launch();
@@ -36,7 +36,7 @@ fs.writeFileSync(dir + '/page.html', '<!doctype html><html><head><meta charset=u
     const sum = H.filter(r => r.s === S.session).reduce((a, r) => a + r.n, 0);
     const kinds = {}; H.forEach(r => r.h.forEach(h => kinds[h.r] = (kinds[h.r] || 0) + 1));
     let chainOk = true; for (let i = 1; i < H.length; i++) { if (H[i].s === H[i - 1].s && Math.abs(H[i - 1].b + H[i].n - H[i].b) > 0.001) chainOk = false; }
-    return { rounds: H.length, bankroll: S.bankroll, expected: Math.round((sess.start + sum) * 100) / 100, inRound: !!S.round,
+    return { rounds: H.length, bankroll: S.bankroll, expected: Math.round((sess.start + sum) * 100) / 100, inRound: !!S.round, onTable: S.round ? S.round.hands.reduce((a, h) => a + h.bet, 0) + (S.round.ins || 0) : 0,
       kinds, splits: H.filter(r => r.h.length > 1).length, maxHands: Math.max(...H.map(r => r.h.length)), ins: H.filter(r => r.ins).length, doubles: H.filter(r=>r.h.some(h=>h.dbl)).length, chainOk, sessions: S.sessions.length };
   });
   console.log(JSON.stringify(check));

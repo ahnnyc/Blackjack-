@@ -217,6 +217,16 @@ body.still #banner.pop{animation:none}
 .amt-in .clr{flex:none;min-height:40px;padding:0 14px;border-radius:20px;border:1.5px solid var(--line);background:none;font-size:16px;color:var(--text)}
 .amt-in .clr:disabled,.seg button:disabled{opacity:.45;border-style:dashed;cursor:default}
 .empty{color:var(--muted);font-size:16px;padding:10px 0}
+.fence-art{font-size:64px;line-height:1;text-align:center;margin:4px 0}
+.fence-say{font-size:19px;line-height:1.4;margin:0}
+.fence-say b{color:var(--gold)}
+.stash{display:flex;flex-direction:column}
+.stash .item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #24453a}
+.stash .ico{font-size:30px;width:38px;text-align:center;flex:none}
+.stash .t{flex:1;min-width:0}
+.stash .t b{display:block;font-size:17px;font-weight:600}
+.stash .t span{font-size:16px;color:var(--muted)}
+.stash .item .btn{flex:none;min-height:44px;padding:0 16px}
 body.still .card.flip{animation:none}
 @media (prefers-reduced-motion: reduce){.sw .trk::after{transition:none}}
 </style>
@@ -299,6 +309,8 @@ body.still .card.flip{animation:none}
     <p class="readout num" id="chartRead2"></p>
     <div class="chart" id="chart2"></div>
     <p class="note" id="chartNote2"></p>
+    <div class="gtitle">Your stash</div>
+    <div class="stash" id="stash"></div>
     <div class="gtitle">Totals and every hand</div>
     <div class="seg" id="scopeSeg">
       <button type="button" data-scope="session" aria-pressed="true">Current roll</button>
@@ -340,6 +352,15 @@ body.still .card.flip{animation:none}
   </div>
 </div>
 
+<div class="sheet" id="fenceSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="fenceH" aria-describedby="fenceText">
+    <div class="phead"><h2 id="fenceH">Psst…</h2></div>
+    <div class="fence-art" id="fenceArt" aria-hidden="true"></div>
+    <p class="fence-say" id="fenceText"></p>
+    <div class="row" id="fenceBtns"></div>
+  </div>
+</div>
+
 <div class="sheet" id="bankSheet" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="bankH">
     <div class="phead"><h2 id="bankH">Choose your bankroll</h2><button class="topbtn" type="button" id="bankCancel">Cancel</button></div>
@@ -359,7 +380,7 @@ const CHIPS = [5, 25, 100, 500, 1000];
 const LIMITS = [100, 500, 1000, 5000, 10000, 0];
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
   resplit:true, resplitAces:false, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
-  charlie:false, push22:false, csm:false, totals:false, motion:true, warn:true };
+  charlie:false, push22:false, csm:false, totals:false, motion:true, warn:true, fence:true };
 const RULES = [
   { g:'Dealer', k:'h17', label:'Dealer hits soft 17', desc:'Off: the dealer stands on every 17.' },
   { g:'Dealer', k:'peek', label:'Dealer checks for blackjack', desc:'Off: no peek. If the dealer has blackjack, you lose doubles and splits too.' },
@@ -380,6 +401,7 @@ const RULES = [
   { g:'Help', k:'warn', label:'Warn me about mistakes', desc:'Asks “Are you sure?” when a move or insurance goes against basic strategy for these rules.' },
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
+  { g:'Extras', k:'fence', label:'The man in the trench coat', desc:'Now and then, between hands, he offers hot goods. What you buy goes in your stash in Record, where you can sell it back. Casino security sometimes takes things.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -536,7 +558,7 @@ function run(fn){
   Promise.resolve().then(fn)
     .then(async () => { if (R && R.phase === 'done' && !R.paid){ render(); await payoutAnim(); } })
     .catch(e => { console.error(e); if (R) { R.countFrom = null; R.paid = true; } })
-    .finally(() => { busy = false; saveLocal(); render(); });
+    .finally(() => { busy = false; saveLocal(); render(); fenceAfterHand(); });
 }
 
 async function deal(){
@@ -1233,7 +1255,9 @@ function renderRecord(){
   const list = scope === 'session' ? history.filter(r => r.s === S.session) : history;
   const sess = S.sessions.find(x => x.s === S.session);
   const cs = scope === 'session' ? cashList().filter(c => c.s === S.session) : cashList();
-  const bought = cents(cs.filter(c => c.a > 0).reduce((a, c) => a + c.a, 0)), cashed = cents(-cs.filter(c => c.a < 0).reduce((a, c) => a + c.a, 0));
+  const chipMoves = cs.filter(c => !c.k);
+  const bought = cents(chipMoves.filter(c => c.a > 0).reduce((a, c) => a + c.a, 0)), cashed = cents(-chipMoves.filter(c => c.a < 0).reduce((a, c) => a + c.a, 0));
+  const goodsSpent = cents(-cs.filter(c => c.k === 'buy').reduce((a, c) => a + c.a, 0)), goodsSold = cents(cs.filter(c => c.k === 'sell').reduce((a, c) => a + c.a, 0));
   $('sessionNote').textContent = scope === 'session'
     ? 'Bankroll ' + S.session + ', started ' + new Date(sess ? sess.at : Date.now()).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) + ' with ' + money(sess ? sess.start : S.bankroll) + '.' + (bought ? ' Bought ' + money(bought) + ' more.' : '') + (cashed ? ' Cashed in ' + money(cashed) + '.' : '') + ' Now ' + money(S.bankroll) + '.'
     : S.sessions.length + (S.sessions.length === 1 ? ' bankroll' : ' bankrolls') + ' so far, ' + history.length + ' hands in all.';
@@ -1246,6 +1270,8 @@ function renderRecord(){
   add('Won', String(s.won)); add('Lost', String(s.lost)); add('Pushed', String(s.push));
   add('Blackjacks', String(s.bj)); add('Biggest win', s.best > 0 ? signed(s.best) : '—'); add('Biggest loss', s.worst < 0 ? signed(s.worst) : '—');
   add('Chips bought', money(bought)); add('Cashed in', money(cashed)); add('Chips now', money(S.bankroll));
+  if (goodsSpent || goodsSold){ add('Spent on hot goods', money(goodsSpent)); add('Sold hot goods for', money(goodsSold)); add('Your stash cost', money(stashList().reduce((a, x) => a + x.paid, 0))); }
+  renderStash();
   const log = $('log'); log.replaceChildren();
   const items = list.map((r, i) => ({ t: r.t, r, num: i + 1 })).concat(cs.map(c => ({ t: c.t, c }))).sort((a, b) => b.t - a.t);
   if (!items.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No hands yet. Every bet you place will be listed here.'; log.append(e); }
@@ -1255,9 +1281,11 @@ function renderRecord(){
     const when = document.createElement('div'); when.className = 'when';
     if (it.c){
       const c = it.c;
-      when.textContent = (c.a > 0 ? 'Chips bought' : 'Chips cashed in') + ' · ' + stamp(c.t);
-      const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = (c.a > 0 ? '+' : '−') + money(Math.abs(c.a));
-      const what = document.createElement('div'); what.className = 'what num'; what.textContent = (c.a > 0 ? 'Added to your bankroll' : 'Taken off the table') + ' · Bankroll ' + money(c.b);
+      const goods = c.k ? { buy:'Bought ' + c.item + ' (hot)', sell:'Sold ' + c.item, seized:'Security took ' + c.item }[c.k] : '';
+      when.textContent = (goods || (c.a > 0 ? 'Chips bought' : 'Chips cashed in')) + ' · ' + stamp(c.t);
+      const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
+      const what = document.createElement('div'); what.className = 'what num';
+      what.textContent = (c.k === 'buy' ? 'Paid from your bankroll' : c.k === 'sell' ? 'Added to your bankroll' : c.k === 'seized' ? 'You had paid ' + money(c.paid || 0) : c.a > 0 ? 'Added to your bankroll' : 'Taken off the table') + ' · Bankroll ' + money(c.b);
       e.append(when, amt, what); log.append(e); return;
     }
     const r = it.r;
@@ -1439,6 +1467,113 @@ function startBank(){
   firstVisit = false; S.bet = 0; R = null;
   touch(); saveLocal(); saveCloudState();
   hideSheets(); render();
+}
+
+/* ---------- the man in the trench coat: hot goods between hands ---------- */
+const GOODS = [
+  ['a Swiss watch', '⌚', 200, 900], ['a gold chain', '📿', 250, 800], ['diamond cufflinks', '💎', 300, 1200],
+  ['a nice suit', '👔', 300, 1200], ['alligator shoes', '👞', 200, 700], ['a designer handbag', '👜', 400, 1500],
+  ['a laptop, still in the box', '💻', 300, 900], ['a case of champagne', '🍾', 200, 600], ['a diamond ring', '💍', 800, 4000],
+  ['a mink coat', '🧥', 1500, 5000], ['an oil painting', '🖼️', 2000, 8000], ['a vintage guitar', '🎸', 1000, 4000],
+  ['a motorcycle', '🏍️', 3000, 8000], ['a sports car', '🏎️', 8000, 15000],
+];
+const PITCH = ['Fell off a truck.', 'Don’t ask.', 'Straight off the docks.', 'Still warm.', 'Cash only, no receipts.', 'You didn’t get this from me.'];
+const FENCE_GAP = 6, FENCE_CHANCE = 1 / 15, SEIZE_CHANCE = 1 / 40;
+const stashList = () => S.stash || (S.stash = []);
+const pickOne = a => a[Math.floor(Math.random() * a.length)];
+let fenceTimer = null;
+function sheetOpen(){ return [...document.querySelectorAll('.sheet')].some(x => !x.hidden); }
+function fenceFree(){ return !busy && !S.round && !S.bet && !sheetOpen() && !firstVisit; }
+// After each hand: maybe the man in the trench coat turns up, or maybe security does.
+function fenceAfterHand(){
+  if (!rules().fence || !fenceFree()) return;
+  const n = history.length;
+  if (n === S.fenceSeen) return;
+  S.fenceSeen = n;
+  if (stashList().length && n - (S.fenceLast || 0) >= 2 && Math.random() < SEIZE_CHANCE){ S.fenceLast = n; return later(fenceSeize); }
+  if (n - (S.fenceLast || 0) >= FENCE_GAP && S.bankroll >= 200 && Math.random() < FENCE_CHANCE){ S.fenceLast = n; return later(fenceOffer); }
+  function later(fn){ clearTimeout(fenceTimer); fenceTimer = setTimeout(() => { if (fenceFree()) fn(); }, D * 2 + 600); }
+}
+function fenceSheet(title, art, html, buttons){
+  hideSheets();
+  $('fenceH').textContent = title; $('fenceArt').textContent = art; $('fenceText').innerHTML = html;
+  $('fenceBtns').replaceChildren(...buttons);
+  $('fenceSheet').hidden = false;
+}
+const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
+function fenceOffer(){
+  const can = GOODS.filter(g => g[2] <= S.bankroll);
+  if (!can.length) return;
+  const [item, art, lo, hi] = pickOne(can);
+  const top = Math.min(hi, S.bankroll);
+  const price = Math.max(lo, Math.floor((lo + Math.random() * (top - lo)) / 50) * 50);
+  fenceSheet('Psst…', art,
+    'A man in a trench coat sidles up. “Got <b>' + esc(item) + '</b> here. ' + esc(pickOne(PITCH)) + ' <b>' + money(price) + '</b>, no questions asked.”',
+    [btn('No thanks', () => hideSheets()), btn('Buy for ' + money(price), () => fenceBuy(item, art, price), { primary:true })]);
+}
+function goodsMove(amount, k, item, extra){
+  const before = S.bankroll;
+  S.bankroll = cents(S.bankroll + amount);
+  cashList().push({ t: Date.now(), s: S.session, a: cents(amount), b: S.bankroll, k, item, ...(extra || {}) });
+  if (S.bet > S.bankroll) S.bet = 0;
+  touch(); saveLocal(); saveCloudState();
+  return before;
+}
+function fenceBuy(item, art, price){
+  if (price > S.bankroll || S.round) { hideSheets(); return; }
+  const before = goodsMove(-price, 'buy', item);
+  stashList().push({ id: Date.now() + '' + Math.floor(Math.random() * 1000), item, art, paid: price, t: Date.now() });
+  touch(); saveLocal(); saveCloudState();
+  hideSheets(); render();
+  flyChips($('bankAmt'), $('openRecord'), price, { fade: true });
+  if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+  say('You bought ' + item + ' for ' + money(price) + '. It’s in your stash, in Record.');
+}
+function fenceSellOffer(x){
+  // what he'll pay changes only after you play another hand, so asking again won't get a better price
+  if (x.offerAt !== history.length){ x.offer = Math.max(10, Math.round(x.paid * (0.4 + Math.random() * 1.35) / 10) * 10); x.offerAt = history.length; saveLocal(); }
+  const up = x.offer - x.paid;
+  fenceSheet('Sell it back?', x.art,
+    'He looks over your ' + esc(x.item.replace(/^(a|an) /, '')) + '. “I’ll give you <b>' + money(x.offer) + '</b> for it.” You paid ' + money(x.paid) + (up > 0 ? ', so that’s ' + money(up) + ' more.' : up < 0 ? ', so that’s ' + money(-up) + ' less.' : ', so you’d break even.') + ' His offer changes after you play another hand.',
+    [btn('Keep it', () => { hideSheets(); $('recordSheet').hidden = false; renderRecord(); }), btn('Sell for ' + money(x.offer), () => fenceSell(x), { primary:true })]);
+}
+function fenceSell(x){
+  const list = stashList(), i = list.indexOf(x);
+  if (i < 0) { hideSheets(); return; }
+  list.splice(i, 1);
+  const before = goodsMove(x.offer, 'sell', x.item, { paid: x.paid });
+  hideSheets(); render();
+  flyChips($('openRecord'), $('bankAmt'), x.offer);
+  if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+  say('Sold ' + x.item + ' for ' + money(x.offer) + '.');
+}
+function fenceSeize(){
+  const list = stashList(); if (!list.length) return;
+  const i = Math.floor(Math.random() * list.length), x = list[i];
+  list.splice(i, 1);
+  goodsMove(0, 'seized', x.item, { paid: x.paid });
+  render();
+  fenceSheet('Casino security', '🚨', 'Two men in dark suits stop by your seat. They’ve taken <b>' + esc(x.item) + '</b>. You paid ' + money(x.paid) + ' for it. It’s gone.',
+    [btn('Oh well', () => hideSheets(), { primary:true })]);
+}
+function renderStash(){
+  const box = $('stash'); box.replaceChildren();
+  const list = stashList();
+  if (!list.length){
+    const e = document.createElement('div'); e.className = 'empty';
+    e.textContent = rules().fence ? 'Nothing yet. Now and then, between hands, a man in a trench coat offers something.' : 'Empty. The man in the trench coat is switched off in Rules.';
+    box.append(e); return;
+  }
+  list.forEach(x => {
+    const d = document.createElement('div'); d.className = 'item';
+    const ico = document.createElement('div'); ico.className = 'ico'; ico.setAttribute('aria-hidden', 'true'); ico.textContent = x.art;
+    const t = document.createElement('div'); t.className = 't';
+    const b = document.createElement('b'); b.textContent = x.item.replace(/^(a|an) /, '').replace(/^./, ch => ch.toUpperCase());
+    const sp = document.createElement('span'); sp.className = 'num'; sp.textContent = 'Paid ' + money(x.paid);
+    t.append(b, sp);
+    d.append(ico, t, btn('Sell', () => fenceSellOffer(x)));
+    box.append(d);
+  });
 }
 
 function hideSheets(){ document.querySelectorAll('.sheet').forEach(s => s.hidden = true); }
