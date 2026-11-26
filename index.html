@@ -65,7 +65,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 @media (max-width:359px){ #top{gap:3px} #top .topbtn, #top #countBtn{padding:0 5px;font-size:14px} }
 #levelBtn{flex:none;min-height:36px;padding:0 10px;border-radius:18px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;font-weight:700;white-space:nowrap}
 /* each prestige level has its own badge color, getting richer as you climb (the name always says the level) */
-#levelBtn.lv0{background:transparent;color:#eeeeee;border-color:#8a8f8c;border-style:dashed}
+#levelBtn.lv0{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C10 0 62 0 80 18 C62 36 10 36 2 18 Z M80 18 L98 6 L93 18 L98 30 Z' fill='none' stroke='%23b8bdb9' stroke-width='1.6' stroke-dasharray='4 3' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='8' cy='14' r='1.4' fill='%23b8bdb9'/></svg>") no-repeat center/100% 100%;color:#eeeeee;border:0;padding:0 40px 0 20px;min-height:40px}   /* Guppy: a dashed fish outline */
 #levelBtn.lv1{background:#f4f4f4;color:#111111;border-color:#ffffff}
 #levelBtn.lv2{background:#1d58a3;color:#ffffff;border-color:#7fb1f0}
 #levelBtn.lv3{background:#8fd3ff;color:#06263d;border-color:#d6f0ff}
@@ -502,7 +502,7 @@ const PEOPLE = {
 const HOST_CHANCE = 1 / 25, HOST_GAP = 10;
 // Prestige levels, named so the player knows where they stand.
 const LEVELS = [
-  { name:'Bait',        at:0 },          // smallest to biggest
+  { name:'Guppy',       at:0 },          // smallest to biggest
   { name:'Minnow',      at:1000 },       // meals comped
   { name:'Barracuda',   at:5000 },
   { name:'Swordfish',   at:10000 },      // meals and the room comped
