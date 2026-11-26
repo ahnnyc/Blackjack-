@@ -406,7 +406,7 @@ body.still .card.flip{animation:none}
 
 <div class="sheet" id="fenceSheet" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="fenceH" aria-describedby="fenceText">
-    <div class="phead"><h2 id="fenceH">Psst…</h2></div>
+    <div class="phead"><h2 id="fenceH">Guy</h2></div>
     <div class="fence-art" id="fenceArt" aria-hidden="true"></div>
     <p class="fence-say" id="fenceText"></p>
     <div class="row" id="fenceBtns"></div>
@@ -505,7 +505,7 @@ const RULES = [
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
   { g:'Extras', k:'stay', label:'Hotel and meals', desc:'Every 150 hands is a day. You stop for breakfast, lunch and dinner along the way, and pay for your room at the end of the day. Prices go with your table, from a diner and a budget motel to a penthouse. When your own chips (after debts) are under $1,000, the casino comps the bill.' },
-  { g:'Extras', k:'fence', label:'Guy', desc:'Guy, in a trench coat, turns up between hands selling hot goods, from a pinky ring to a private jet. Buy from him and he comes more often with nicer things; turn him down and he comes less often with junk. If you own something big, he may come back with a buyer. Casino security sometimes takes things.' },
+  { g:'Extras', k:'fence', label:'Guy', desc:'Between hands, Guy offers to sell you goods, from a ring to a private jet. Buy from him and he comes more often with better things; turn him down and he comes less often with cheaper things. He may offer to buy back something that cost over $10,000. Casino security sometimes takes things you bought.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -1514,11 +1514,11 @@ function renderRecord(){
       const c = it.c;
       const title = { buy:'Bought ' + c.item + ' from Guy', sell:'Sold ' + c.item + ' to Guy', seized:'Security took ' + c.item,
         card:'Borrowed on the credit card', cardpay:'Paid the credit card', cardint:'Credit card interest',
-        shark:'Borrowed from the loan shark', sharkpay:'Paid the loan shark', vig:'The loan shark’s cut', dead:'Killed by the loan shark', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'on the house') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
+        shark:'Borrowed from the loan shark', sharkpay:'Paid the loan shark', vig:'The loan shark’s cut', dead:'Killed by the loan shark', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
       when.textContent = title + ' · ' + stamp(c.t);
       const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
       const what = document.createElement('div'); what.className = 'what num';
-      what.textContent = ({ seized:'You had paid ' + money(c.paid || 0), cardint: money(c.amt || 0) + ' added to what you owe', dead:'Couldn’t cover his ' + money(c.amt || 0) + ' cut', comp: c.whale ? 'On the house for high rollers' : 'On the house, worth ' + money(c.amt || 0) }[c.k] ||
+      what.textContent = ({ seized:'You had paid ' + money(c.paid || 0), cardint: money(c.amt || 0) + ' added to what you owe', dead:'Couldn’t cover his ' + money(c.amt || 0) + ' cut', comp: c.whale ? 'Comped for high rollers' : 'Comped, worth ' + money(c.amt || 0) }[c.k] ||
         (c.a > 0 ? 'Added to your chips' : 'Taken from your chips')) + ' · Chips ' + money(c.b);
       e.append(when, amt, what); log.append(e); return;
     }
@@ -1700,7 +1700,7 @@ function borrow(who){
   const before = moneyMove(amt, who);
   hideSheets(); render();
   showMove(before, $('openCashier'), $('bankAmt'));
-  say((who === 'card' ? 'Charged ' : 'The loan shark counts out ') + money(amt) + (who === 'card' ? ' to your credit card.' : '. Don’t make him come looking for you.'));
+  say('Borrowed ' + money(amt) + (who === 'card' ? ' on your credit card.' : ' from the loan shark.'));
 }
 function payBack(who){
   const input = $(who + 'Input'), v = Math.floor(Number(input.value) || 0);
@@ -1712,7 +1712,7 @@ function payBack(who){
   const before = moneyMove(-amt, who + 'pay');
   hideSheets(); render();
   showMove(before, $('bankAmt'), $('openCashier'));
-  say('Paid back ' + money(amt) + (who === 'shark' && !S.shark ? '. The loan shark is off your back.' : '.'));
+  say('Paid back ' + money(amt) + (who === 'shark' && !S.shark ? '. The loan shark is paid off.' : '.'));
   tablesAfterHand();
 }
 
@@ -1747,8 +1747,8 @@ function debtsAfterHand(){
     queueSheet(() => {
       if (!(S.shark > 0 && S.sharkNext - handsThisGame() === 1 && S.bankroll < sharkCut())) return pumpSheets(0);   // no longer true
       guyOffer = false;
-      fenceSheet('The loan shark', '🦈', 'He leans in. “After your next hand I want my <b>' + money(sharkCut()) + '</b>. You’ve got ' + money(S.bankroll) + '. Find the rest.”',
-        [btn('Sell stuff', () => openStuff()), btn('Got it', () => hideSheets(), { primary:true })]);
+      fenceSheet('The loan shark', '🦈', 'After your next hand the loan shark takes <b>' + money(sharkCut()) + '</b>. You have ' + money(S.bankroll) + '. If you can’t pay, the game is over.',
+        [btn('Sell stuff', () => openStuff()), btn('OK', () => hideSheets(), { primary:true })]);
     });
     return true;
   }
@@ -1758,7 +1758,7 @@ function showDead(){
   if (!S.dead) return;
   const d = S.dead;
   hideSheets();
-  $('deadText').innerHTML = 'The loan shark came for his <b>' + money(d.cut) + '</b>. You had ' + money(d.chips) + '. He doesn’t take IOUs.<br><br>' +
+  $('deadText').innerHTML = 'The loan shark was owed <b>' + money(d.cut) + '</b>. You had ' + money(d.chips) + '.<br><br>' +
     'You lasted ' + d.hands + (d.hands === 1 ? ' hand' : ' hands') + ', owed ' + money(d.owed) + ', and left ' + d.stuff + (d.stuff === 1 ? ' thing' : ' things') + ' behind.';
   $('deadSheet').hidden = false;
 }
@@ -1821,7 +1821,7 @@ function tablesAfterHand(){
     const from = tbl();
     let to = 0; for (let i = tableNo() - 1; i >= 0; i--) if (canSit(i)){ to = i; break; }
     moveTo(to); render();
-    later(() => { guyOffer = false; fenceSheet('The pit boss', '🎩', 'You can’t cover the ' + money(from.min) + ' minimum at the ' + deckTable(from.d) + '. The pit boss walks you to the <b>' + deckTable(TABLES[to].d) + '</b>, bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
+    later(() => { guyOffer = false; fenceSheet('Moved down', '🎩', 'You can’t cover the ' + money(from.min) + ' minimum at the ' + deckTable(from.d) + '. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
     return true;
   }
   // newly opened tables
@@ -1833,20 +1833,28 @@ function tablesAfterHand(){
   if (opened < 0) return false;
   touch(); saveLocal(); saveCloudState();
   const t = TABLES[opened];
-  const game = opened === 3 ? 'our most exclusive game, the <b>1-deck high-roller table</b>' : 'a more exclusive game, the <b>' + deckTable(t.d) + '</b>';
-  later(() => { guyOffer = false; fenceSheet('An invitation', '🥂',
-    'A casino host in a dark suit leans over your shoulder. “We’ve noticed your play. The house would like to invite you to ' + game + '. Bets run ' + money(t.min) + ' to ' + money(t.max) + ', and with fewer decks the odds are better for you.”',
-    [btn('Not yet', () => hideSheets()), btn('Accept', () => { moveTo(opened); hideSheets(); render(); }, { primary:true, disabled: !canSit(opened) })]); });
+  later(() => { guyOffer = false; fenceSheet('New table open', '🥂',
+    'The <b>' + deckTable(t.d) + '</b> is open: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks give you better odds.<br><br>' + nextGoal(),
+    [btn('Stay here', () => hideSheets()), btn('Move up', () => { moveTo(opened); hideSheets(); render(); }, { primary:true, disabled: !canSit(opened) })]); });
   return true;
   function later(fn){ queueSheet(fn); }
+}
+
+// The next table to open, and what opens it, in one line.
+function goalAfterRestart(){ const t = TABLES[1]; return 'Next goal: the ' + deckTable(t.d) + '. Have ' + money(t.chipsNeed) + ' in chips of your own, or bet ' + money(t.betNeed) + ' in all at the ' + deckTable(TABLES[0].d) + '.'; }
+function nextGoal(){
+  const i = openList().findIndex((o, k) => k > 0 && !o);
+  if (i < 0) return 'All four tables are open.';
+  const t = TABLES[i];
+  return 'Next goal: the ' + deckTable(t.d) + '. Have ' + money(t.chipsNeed) + ' in chips of your own, or bet ' + money(t.betNeed) + ' in all at the ' + deckTable(TABLES[i - 1].d) + '.';
 }
 
 /* ---------- welcome / start over ---------- */
 function openBank(first){
   $('bankH').textContent = first ? 'Vegas Whale' : 'Start over?';
-  $('bankNote').textContent = first
-    ? 'You walk in with $1,000. When it’s gone there’s a credit card with $50,000 on it. After that, the loan shark.'
-    : 'You start again with $1,000. Your debts, your stuff and Guy’s opinion of you are wiped. Your record of past hands is kept.';
+  $('bankNote').innerHTML = first
+    ? 'You start with $1,000. When it runs out, you can borrow up to $50,000 on a credit card, then from a loan shark.<br><br>' + nextGoal()
+    : 'You start again with $1,000 at the 6-deck table. Debts and stuff are cleared. Your record is kept.<br><br>' + goalAfterRestart();
   $('bankStart').textContent = first ? 'Sit down with $1,000' : 'Start over with $1,000';
   $('bankCancel').hidden = !!first;
   hideSheets(); $('bankSheet').hidden = false;
@@ -1866,7 +1874,6 @@ const GOODS = [
   ['a penthouse', '🏙️', 500000, 2500000], ['a vineyard', '🍇', 800000, 4000000], ['a yacht', '🛥️', 1000000, 6000000], ['a mansion', '🏰', 2000000, 12000000],
   ['a private jet', '🛩️', 5000000, 30000000], ['a private island', '🏝️', 20000000, 80000000],
 ].sort((a, b) => a[2] - b[2]);   // cheapest first
-const PITCH = ['Fell off a truck.', 'Don’t ask.', 'Straight off the docks.', 'Still warm.', 'Cash only, no receipts.', 'You didn’t get this from me.'];
 const SEIZE_CHANCE = 1 / 40, BUYBACK_OVER = 10000, BUYBACK_CHANCE = 1 / 4, BUYBACK_GAP = 2;
 const stashList = () => S.stash || (S.stash = []);
 const guy = () => S.guy || (S.guy = { lvl: 0, no: 0 });
@@ -1905,26 +1912,26 @@ function stayBill(i, day){
   const price = room ? st.room : st.meals[i];
   const what = room ? 'a night in ' + st.sleep : MEAL_NAMES[i] + ' at ' + st.eat;
   const art = room ? '🛏️' : MEAL_ART[i];
-  const title = room ? 'Day ' + day + ' is over' : 'Break for ' + MEAL_NAMES[i];
-  const head = room ? 'You head up to ' + st.sleep + '.' : 'You step away from the table for ' + MEAL_NAMES[i] + ' at ' + st.eat + '.';
+  const title = room ? 'End of day ' + day : MEAL_NAMES[i][0].toUpperCase() + MEAL_NAMES[i].slice(1);
+  const head = room ? 'A night in ' + st.sleep + ':' : MEAL_NAMES[i][0].toUpperCase() + MEAL_NAMES[i].slice(1) + ' at ' + st.eat + ':';
   if (price === 0){
     cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'comp', what, amt: 0, whale: 1 });
     touch(); saveLocal(); saveCloudState();
-    fenceSheet(title, art, head + ' <b>On the house.</b> The casino looks after its high rollers.', [btn('Back to the table', () => hideSheets(), { primary:true })]);
+    fenceSheet(title, art, head + ' <b>comped</b> for high rollers.', [btn('OK', () => hideSheets(), { primary:true })]);
     return;
   }
   if (ownChips() < START){
     cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'comp', what, amt: price });
     touch(); saveLocal(); saveCloudState();
-    fenceSheet(title, art, head + ' The pit boss can see it’s been a rough day. <b>' + (room ? 'Your room is' : 'It’s') + ' on the house</b> (worth ' + money(price) + ').',
-      [btn('Thanks', () => hideSheets(), { primary:true })]);
+    fenceSheet(title, art, head + ' <b>comped</b> (' + money(price) + '), because your own chips are under ' + money(START) + '.',
+      [btn('OK', () => hideSheets(), { primary:true })]);
     return;
   }
   const before = moneyMove(-price, room ? 'room' : 'meal', { what });
   render();
   flyChips($('bankAmt'), $('top'), price, { fade: true });
   if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
-  fenceSheet(title, art, head + ' The bill: <b>' + money(price) + '</b>, taken from your chips.', [btn('Back to the table', () => hideSheets(), { primary:true })]);
+  fenceSheet(title, art, head + ' <b>' + money(price) + '</b>, taken from your chips.', [btn('OK', () => hideSheets(), { primary:true })]);
 }
 
 function fenceAfterHand(){
@@ -1974,7 +1981,7 @@ function fenceOffer(){
   lastOffer = { item, price, worth, said };
   guyOffer = true;
   fenceSheet('Guy', art,
-    (l < 0 ? 'Guy shuffles over, not looking too happy with you. “Psst. Got <b>' : 'Guy sidles up, trench coat buttoned to the chin. “Psst. Got <b>') + esc(item) + '</b> here. Worth <b>' + money(said) + '</b>, easy. ' + esc(pickOne(PITCH)) + ' Yours for <b>' + money(price) + '</b>, no questions asked.”',
+    'Guy is selling <b>' + esc(item) + '</b> for <b>' + money(price) + '</b>. He says it’s worth ' + money(said) + '.',
     [btn('No thanks', () => guyDecline()), btn('Buy for ' + money(price), () => fenceBuy(item, art, price, worth, said), { primary:true })]);
 }
 function guyDecline(){
@@ -1988,7 +1995,7 @@ function fenceBuyback(x){
   if (stashList().indexOf(x) < 0) return;
   const offer = Math.max(niceRound(x.paid * 1.2), niceRound((x.worth || x.paid) * (0.9 + Math.random() * 0.8)));
   guyOffer = false;
-  fenceSheet('Guy', x.art, 'Guy’s back. “That ' + esc(x.item.replace(/^(a|an) /, '')) + ' I sold you? I got a buyer who wants it bad. I’ll give you <b>' + money(offer) + '</b> for it.” You paid ' + money(x.paid) + ', so that’s ' + money(offer - x.paid) + ' more.',
+  fenceSheet('Guy', x.art, 'Guy offers <b>' + money(offer) + '</b> for your ' + esc(x.item.replace(/^(a|an) /, '')) + '. You paid ' + money(x.paid) + ', so that’s ' + money(offer - x.paid) + ' more.',
     [btn('Keep it', () => hideSheets()), btn('Sell for ' + money(offer), () => { x.offer = offer; fenceSell(x); }, { primary:true })]);
 }
 function fenceBuy(item, art, price, worth, said){
@@ -2012,7 +2019,7 @@ function fenceSellOffer(x){
   const up = x.offer - x.paid;
   guyOffer = false;
   fenceSheet('Sell to Guy?', x.art,
-    'Guy looks over your ' + esc(x.item.replace(/^(a|an) /, '')) + '. “I’ll give you <b>' + money(x.offer) + '</b> for it.” You paid ' + money(x.paid) + (up > 0 ? ', so that’s ' + money(up) + ' more.' : up < 0 ? ', so that’s ' + money(-up) + ' less.' : ', so you’d break even.') + ' His offer changes after you play another hand.',
+    'Guy offers <b>' + money(x.offer) + '</b> for your ' + esc(x.item.replace(/^(a|an) /, '')) + '. You paid ' + money(x.paid) + (up > 0 ? ', so that’s ' + money(up) + ' more.' : up < 0 ? ', so that’s ' + money(-up) + ' less.' : ', so you’d break even.') + ' The offer changes after your next hand.',
     [btn('Keep it', () => openStuff(x)), btn('Sell for ' + money(x.offer), () => fenceSell(x), { primary:true })]);
 }
 function fenceSell(x){
@@ -2032,8 +2039,8 @@ function fenceSeize(){
   cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'seized', item: x.item, paid: x.paid });
   touch(); saveLocal(); saveCloudState(); render();
   guyOffer = false;
-  fenceSheet('Casino security', '🚨', 'Two men in dark suits stop by your seat. They’ve taken <b>' + esc(x.item) + '</b>. You paid ' + money(x.paid) + ' for it. It’s gone.',
-    [btn('Oh well', () => hideSheets(), { primary:true })]);
+  fenceSheet('Casino security', '🚨', 'Casino security took <b>' + esc(x.item) + '</b>. You paid ' + money(x.paid) + ' for it.',
+    [btn('OK', () => hideSheets(), { primary:true })]);
 }
 
 /* ---------- your stuff, as cards you flip through ---------- */
