@@ -1837,12 +1837,16 @@ function tablesAfterHand(){
     const t = TABLES[i];
     if (!openList()[i] && (ownChips() >= t.chipsNeed || betAtList()[i - 1] >= t.betNeed)){ openList()[i] = true; opened = i; }
   }
-  if (opened < 0) return false;
-  touch(); saveLocal(); saveCloudState();
-  const t = TABLES[opened];
+  if (opened >= 0){ S.invite = Math.max(S.invite || 0, opened); touch(); saveLocal(); saveCloudState(); }
+  // The offer to move up waits for the end of the shoe, so a move always starts with a fresh shuffle.
+  if (!S.invite) return false;
+  if (tableNo() >= S.invite){ S.invite = 0; saveLocal(); return false; }   // already moved up by hand
+  if (!needShuffle()) return false;
+  const up = S.invite, t = TABLES[up];
+  S.invite = 0; touch(); saveLocal(); saveCloudState();
   later(() => { guyOffer = false; fenceSheet('New table open', '🥂',
-    'The <b>' + deckTable(t.d) + '</b> is open: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks give you better odds.<br><br>' + nextGoal(),
-    [btn('Stay here', () => hideSheets()), btn('Move up', () => { moveTo(opened); hideSheets(); render(); }, { primary:true, disabled: !canSit(opened) })]); });
+    'The <b>' + deckTable(t.d) + '</b> is open: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks give you better odds. The shoe here is due for a shuffle, so you can move now and start with a fresh shoe.<br><br>' + nextGoal(),
+    [btn('Stay here', () => hideSheets()), btn('Move up', () => { moveTo(up); hideSheets(); render(); }, { primary:true, disabled: !canSit(up) })]); });
   return true;
   function later(fn){ queueSheet(fn); }
 }
