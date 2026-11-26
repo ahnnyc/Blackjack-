@@ -464,9 +464,17 @@ const STAY = [
   { eat:'the steakhouse',     sleep:'a tower suite',  meals:[40, 75, 180], room:799 },
   { eat:'the high-limit lounge', sleep:'the penthouse',  meals:[0, 0, 0],    room:0 },    // the high-roller table: the casino comps its whales
 ];
+// Prestige: what you paid for your stuff, plus the people with you. It counts with your chips toward
+// opening tables, and earns comps: meals at PRESTIGE_MEALS, meals and the room at PRESTIGE_ROOM.
+const PRESTIGE_MEALS = 1000, PRESTIGE_ROOM = 10000;
+const PEOPLE = {
+  candy: { name:'eye candy', fee:300,  prestige:5000,  art:'💃🕺' },
+  crew:  { name:'entourage', fee:2500, prestige:25000, art:'👯' },
+};
+const HOST_CHANCE = 1 / 25, HOST_GAP = 10;
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
   resplit:true, resplitAces:true, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
-  charlie:false, push22:false, csm:false, totals:false, motion:true, warn:true, fence:true, stay:true, sound:true };
+  charlie:false, push22:false, csm:false, totals:false, motion:true, warn:true, fence:true, stay:true, host:true, sound:true };
 const RULES = [
   { g:'Dealer', k:'h17', label:'Dealer hits soft 17', desc:'Off: the dealer stands on every 17.' },
   { g:'Dealer', k:'peek', label:'Dealer checks for blackjack', desc:'Off: no peek. If the dealer has blackjack, you lose doubles and splits too.' },
@@ -488,7 +496,8 @@ const RULES = [
   { g:'Display', k:'sound', label:'Sounds', desc:'Chips click, cards snap as they’re dealt and flipped, the shoe riffles, and cards swish as they’re collected. Your iPhone’s silent switch mutes them.' },
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
-  { g:'Extras', k:'stay', label:'Hotel and meals', desc:'Every 150 hands is a day. You stop for breakfast, lunch and dinner along the way, and pay for your room at the end of the day. Prices go with your table, from a diner and a budget motel to a penthouse. When your own chips (after debts) are under $1,000, the casino comps the bill.' },
+  { g:'Extras', k:'stay', label:'Hotel and meals', desc:'Every 150 hands is a day. You stop for breakfast, lunch and dinner along the way, and pay for your room at the end of the day. Prices go with your table, from a diner and a budget motel to a penthouse. Meals are comped once your prestige reaches $1,000, and the room too at $10,000. When your own chips (after debts) are under $1,000, the bill is comped as well.' },
+  { g:'Extras', k:'host', label:'Eye candy and entourage', desc:'Between hands the casino host offers a companion at your side ($300 a day, $5,000 in prestige) and, from the 2-deck table up, an entourage ($2,500 a day, $25,000 in prestige). Fees are charged at the end of each day. If you can’t pay, they leave.' },
   { g:'Extras', k:'fence', label:'Guy', desc:'Between hands, Guy offers to sell you goods, from a ring to a private jet. Buy from him and he comes more often with better things; turn him down and he comes less often with cheaper things. He may offer to buy back something that cost over $10,000. Casino security sometimes takes things you bought.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
@@ -625,7 +634,7 @@ function migrate(){
 function freshState(amount = START){
   return { v:2, settings:{ decks:6, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
-    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
+    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
 const rules = () => S.settings.rules;
 
@@ -680,6 +689,12 @@ const minBet = () => tbl().min;
 const openList = () => S.open || (S.open = [true, false, false, false]);
 const betAtList = () => S.betAt || (S.betAt = [0, 0, 0, 0]);
 const ownChips = () => cents(S.bankroll - S.card - S.shark);
+const people = () => S.people || (S.people = {});
+function prestige(){
+  const things = (S.stash || []).reduce((a, x) => a + (x.paid || 0), 0);
+  const p = people();
+  return cents(things + (p.candy ? PEOPLE.candy.prestige : 0) + (p.crew ? PEOPLE.crew.prestige : 0));
+}
 const cur = () => R && R.hands[R.active];
 function canHit(h){ return !(h.splitAces && !rules().hitSplitAces) && val(h.cards).t < 21; }
 function canDouble(h){
@@ -766,7 +781,7 @@ function run(fn){
   Promise.resolve().then(fn)
     .then(async () => { if (R && R.phase === 'done' && !R.paid){ render(); await payoutAnim(); } })
     .catch(e => { console.error(e); if (R) { R.countFrom = null; R.paid = true; } })
-    .finally(() => { busy = false; saveLocal(); render(); const stop = debtsAfterHand(); if (!S.dead) stayAfterHand(); if (!S.dead) brokeAfterHand(); if (!stop && !tablesAfterHand()) fenceAfterHand(); pumpSheets(150); });
+    .finally(() => { busy = false; saveLocal(); render(); const stop = debtsAfterHand(); if (!S.dead) stayAfterHand(); if (!S.dead) brokeAfterHand(); if (!S.dead) hostAfterHand(); if (!stop && !tablesAfterHand()) fenceAfterHand(); pumpSheets(150); });
 }
 
 async function deal(){
@@ -1498,11 +1513,11 @@ function renderRecord(){
       const c = it.c;
       const title = { buy:'Bought ' + c.item + ' from Guy', sell:'Sold ' + c.item + ' to Guy', seized:'Security took ' + c.item,
         card:'Borrowed on the credit card', cardpay:'Paid the credit card', cardint:'Credit card interest',
-        shark:'Borrowed from the loan shark', sharkpay:'Paid the loan shark', vig:'The loan shark’s cut', dead:'Killed by the loan shark', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
+        shark:'Borrowed from the loan shark', sharkpay:'Paid the loan shark', vig:'The loan shark’s cut', dead:'Killed by the loan shark', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left' }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
       when.textContent = title + ' · ' + stamp(c.t);
       const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
       const what = document.createElement('div'); what.className = 'what num';
-      what.textContent = ({ seized:'You had paid ' + money(c.paid || 0), cardint: money(c.amt || 0) + ' added to what you owe', dead:'Couldn’t cover his ' + money(c.amt || 0) + ' cut', comp: c.whale ? 'Comped for high rollers' : 'Comped, worth ' + money(c.amt || 0) }[c.k] ||
+      what.textContent = ({ seized:'You had paid ' + money(c.paid || 0), cardint: money(c.amt || 0) + ' added to what you owe', dead:'Couldn’t cover his ' + money(c.amt || 0) + ' cut', comp: c.whale ? 'Comped for high rollers' : 'Comped' + (c.pres ? ' for prestige' : '') + ', worth ' + money(c.amt || 0) }[c.k] ||
         (c.a > 0 ? 'Added to your chips' : 'Taken from your chips')) + ' · Chips ' + money(c.b);
       e.append(when, amt, what); log.append(e); return;
     }
@@ -1782,7 +1797,7 @@ function openTables(){
 }
 function renderTables(){
   const here = tableNo(), list = $('tablesList'); list.replaceChildren();
-  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Open the next table with enough chips, or by betting enough at the table below.';
+  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Open the next table with enough chips and prestige, or by betting enough at the table below.';
   TABLES.forEach((t, i) => {
     const open = openList()[i], row = document.createElement('div');
     row.className = 'trow' + (i === here ? ' here' : '') + (open ? '' : ' locked');
@@ -1795,7 +1810,7 @@ function renderTables(){
     row.append(st);
     if (!open){
       const need = document.createElement('div'); need.className = 'need num';
-      need.textContent = 'Opens at ' + money(t.chipsNeed) + ' in chips (you have ' + money(S.bankroll) + '), or after ' + money(t.betNeed) + ' bet at the ' + deckTable(TABLES[i - 1].d) + ' (you’ve bet ' + money(betAtList()[i - 1]) + ').';
+      need.textContent = 'Opens at ' + money(t.chipsNeed) + ' in chips and prestige (you have ' + money(cents(S.bankroll + prestige())) + '), or after ' + money(t.betNeed) + ' bet at the ' + deckTable(TABLES[i - 1].d) + ' (you’ve bet ' + money(betAtList()[i - 1]) + ').';
       row.append(need);
     } else if (i !== here){
       const ok = canSit(i) && !S.round;
@@ -1820,7 +1835,7 @@ function tablesAfterHand(){
   let opened = -1;
   for (let i = 1; i < TABLES.length; i++){
     const t = TABLES[i];
-    if (!openList()[i] && (S.bankroll >= t.chipsNeed || betAtList()[i - 1] >= t.betNeed)){ openList()[i] = true; opened = i; }
+    if (!openList()[i] && (S.bankroll + prestige() >= t.chipsNeed || betAtList()[i - 1] >= t.betNeed)){ openList()[i] = true; opened = i; }
   }
   if (opened >= 0){ S.invite = Math.max(S.invite || 0, opened); touch(); saveLocal(); saveCloudState(); }
   // The offer to move up waits for the end of the shoe, so a move always starts with a fresh shuffle.
@@ -1841,7 +1856,7 @@ function nextGoal(){
   const i = openList().findIndex((o, k) => k > 0 && !o);
   if (i < 0) return 'All four tables are open.';
   const t = TABLES[i];
-  return 'Next goal: the ' + deckTable(t.d) + '. Have ' + money(t.chipsNeed) + ' in chips, or bet ' + money(t.betNeed) + ' in all at the ' + deckTable(TABLES[i - 1].d) + '.';
+  return 'Next goal: the ' + deckTable(t.d) + '. Have ' + money(t.chipsNeed) + ' in chips and prestige, or bet ' + money(t.betNeed) + ' in all at the ' + deckTable(TABLES[i - 1].d) + '.';
 }
 
 /* ---------- welcome back: where you stand, each time the app is opened again ---------- */
@@ -1920,6 +1935,50 @@ function brokeAfterHand(){
   });
 }
 
+/* ---------- people: eye candy and an entourage, from the casino host ---------- */
+function hostAfterHand(){
+  if (!rules().host || S.dead || S.round || busy || sheetQueue.length) return;
+  const n = handsThisGame(), p = people();
+  if (n - (S.hostLast || 0) < HOST_GAP || Math.random() >= HOST_CHANCE) return;
+  let k = null;
+  if (!p.crew && tableNo() >= 2 && S.bankroll >= PEOPLE.crew.fee * 4) k = 'crew';
+  else if (!p.candy && S.bankroll >= PEOPLE.candy.fee * 4) k = 'candy';
+  if (!k) return;
+  S.hostLast = n; touch(); saveLocal();
+  queueSheet(() => hostOffer(k));
+}
+function hostOffer(k){
+  if (!rules().host || people()[k]) return pumpSheets(0);
+  guyOffer = false;
+  const x = PEOPLE[k];
+  const hire = who => { people()[k] = who; touch(); saveLocal(); saveCloudState(); hideSheets(); render();
+    say((k === 'candy' ? 'Your eye candy (' + who + ') is at your side.' : 'Your entourage is with you.') + ' Prestige: ' + money(prestige()) + '.'); tablesAfterHand(); };
+  if (k === 'candy') fenceSheet('Eye candy', x.art,
+    'The casino host can introduce you to a companion who sits at your side at the table. <b>' + money(x.fee) + ' a day</b>, charged at the end of each day. Adds ' + money(x.prestige) + ' to your prestige.',
+    [btn('No thanks', () => hideSheets()), btn('A man', () => hire('a man'), { primary:true }), btn('A woman', () => hire('a woman'), { primary:true })]);
+  else fenceSheet('Entourage', x.art,
+    'The casino host can set you up with an entourage: a group of friends who follow you around the casino. <b>' + money(x.fee) + ' a day</b>, charged at the end of each day. Adds ' + money(x.prestige) + ' to your prestige.',
+    [btn('No thanks', () => hideSheets()), btn('Hire', () => hire(true), { primary:true })]);
+}
+function peopleFee(k, day){
+  const p = people(); if (!p[k] || S.dead || S.round) return pumpSheets(0);
+  guyOffer = false;
+  const x = { ...PEOPLE[k] }, label = k === 'candy' ? 'Your eye candy' : 'Your entourage';
+  if (k === 'candy') x.art = p.candy === 'a man' ? '🕺' : '💃';
+  if (S.bankroll < x.fee){
+    delete p[k]; touch(); saveLocal(); saveCloudState(); render();
+    cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'left', what: x.name });
+    fenceSheet('End of day ' + day, x.art, label + '’s fee is ' + money(x.fee) + '. You can’t pay it, so ' + (k === 'candy' ? 'they' : 'they') + ' left. Prestige: ' + money(prestige()) + '.', [btn('OK', () => hideSheets(), { primary:true })]);
+    return;
+  }
+  const before = moneyMove(-x.fee, 'fee', { what: x.name });
+  render(); flyChips($('bankAmt'), $('top'), x.fee, { fade: true });
+  if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+  fenceSheet('End of day ' + day, x.art, label + '’s fee for the day: <b>' + money(x.fee) + '</b>, taken from your chips.',
+    [btn('Send home', () => { delete people()[k]; touch(); saveLocal(); saveCloudState(); hideSheets(); render(); say((k === 'candy' ? 'Your eye candy went home.' : 'Your entourage went home.') + ' Prestige: ' + money(prestige()) + '.'); }),
+     btn('OK', () => hideSheets(), { primary:true })]);
+}
+
 /* ---------- the stay: meals and the room ---------- */
 function stayAfterHand(){
   if (S.dead || S.round) return;
@@ -1929,6 +1988,7 @@ function stayAfterHand(){
   for (let m = S.staySeen + 1; m <= n; m++){
     const stop = STAY_STOPS.find(x => m % DAY === x.at);
     if (stop && rules().stay) queueSheet(() => stayBill(stop.i, Math.ceil(m / DAY)));
+    if (m % DAY === 0) ['candy', 'crew'].forEach(k => { if (people()[k]) queueSheet(() => peopleFee(k, m / DAY)); });
   }
   S.staySeen = n; touch(); saveLocal();
 }
@@ -1945,6 +2005,14 @@ function stayBill(i, day){
     cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'comp', what, amt: 0, whale: 1 });
     touch(); saveLocal(); saveCloudState();
     fenceSheet(title, art, head + ' <b>comped</b> for high rollers.', [btn('OK', () => hideSheets(), { primary:true })]);
+    return;
+  }
+  const pr = prestige();
+  if (pr >= PRESTIGE_ROOM || (!room && pr >= PRESTIGE_MEALS)){
+    const where = room ? 'A night in ' + STAY[Math.min(3, t + 1)].sleep + ':' : head;
+    cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'comp', what, amt: price, pres: 1 });
+    touch(); saveLocal(); saveCloudState();
+    fenceSheet(title, art, where + ' <b>comped</b> (' + money(price) + ') for your prestige of ' + money(pr) + '.', [btn('OK', () => hideSheets(), { primary:true })]);
     return;
   }
   if (ownChips() < START){
@@ -2101,7 +2169,8 @@ function openStuff(x){
 function renderStuff(){
   const list = stuffOrder(), x = list[stuffAt];
   const cost = list.reduce((a, y) => a + y.paid, 0);
-  $('stuffNote').textContent = list.length ? list.length + (list.length === 1 ? ' thing' : ' things') + ', which cost you ' + money(cost) + '. Swipe or tap Next to flip through.' : 'Everything you buy from Guy lands here as a card.';
+  const pp = people(), with_ = [pp.candy ? 'eye candy (' + pp.candy + ')' : '', pp.crew ? 'an entourage' : ''].filter(Boolean).join(' and ');
+  $('stuffNote').textContent = 'Prestige: ' + money(prestige()) + '. ' + (with_ ? 'With you: ' + with_ + '. ' : '') + (list.length ? list.length + (list.length === 1 ? ' thing' : ' things') + ', which cost you ' + money(cost) + '. Swipe or tap Next to flip through.' : 'Everything you buy from Guy lands here as a card.');
   fillCard($('stuffCard'), x);
   $('stuffCard').setAttribute('aria-label', x ? itemName(x) + ', paid ' + money(x.paid) : 'No stuff yet');
   $('stuffPos').textContent = list.length ? (stuffAt + 1) + ' of ' + list.length : '';
