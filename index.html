@@ -181,6 +181,8 @@ body.still #banner.pop{animation:none}
 }
 .chip:disabled{opacity:.35;cursor:default}
 .c5{background:#b42b2b}.c25{background:#1f7a46}.c100{background:#24242a}.c500{background:#6b3aa0}.c1000{background:#b86a12}
+.c5000{background:#1d5fa8}.c25000{background:#b02a6a}.c100000{background:#7a6212}
+.chip.long{font-size:14px} .stack i.long{font-size:12px}
 
 /* sheets */
 .sheet{position:fixed;inset:0;background:rgba(3,14,10,.72);display:flex;align-items:flex-end;justify-content:center;z-index:20}
@@ -248,6 +250,17 @@ body.still #banner.pop{animation:none}
 .scard.fly{position:fixed;z-index:60;pointer-events:none;width:150px}
 .scard.fly .art{font-size:58px} .scard.fly .nm{font-size:16px} .scard.fly .pd{font-size:15px}
 #stuffNav span{flex:none;min-width:70px;text-align:center;align-self:center;font-size:17px;font-weight:600}
+.tlist{display:flex;flex-direction:column;gap:10px}
+.trow{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.trow.here{border:3px solid var(--gold)}
+.trow.locked{border-style:dashed}
+.trow .th{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.trow .th b{font-size:20px}
+.trow .th span{font-size:17px;font-weight:600}
+.trow .st{font-size:16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.trow .need{font-size:16px;color:var(--muted);line-height:1.4}
+.trow .btn{min-height:44px}
+#limits, #shoeBox{cursor:pointer}
 .fence-art{font-size:64px;line-height:1;text-align:center;margin:4px 0}
 .fence-say{font-size:19px;line-height:1.4;margin:0}
 .fence-say b{color:var(--gold)}
@@ -316,14 +329,10 @@ body.still .card.flip{animation:none}
     <div class="phead"><h2 id="rulesH">Table rules</h2><button class="topbtn" type="button" data-close>Done</button></div>
     <p class="note" id="rulesNote">Changes take effect on the next hand.</p>
     <div class="group">
-      <div class="gtitle">Decks in the shoe</div>
-      <div class="stepper"><button type="button" id="deckMinus" aria-label="Fewer decks">−</button><output id="deckOut" class="num">6 decks</output><button type="button" id="deckPlus" aria-label="More decks">+</button></div>
+      <div class="gtitle">Table</div>
+      <p class="note num" id="tableNote"></p>
+      <button class="btn" type="button" id="rulesTables">Change table</button>
       <p class="note num" id="shoeNote"></p>
-    </div>
-    <div class="group">
-      <div class="gtitle">Table maximum bet</div>
-      <div class="seg" id="limitSeg"></div>
-      <p class="note">Table minimum is $5.</p>
     </div>
     <div class="group" id="ruleList"></div>
     <p class="note">The Count button shows the Hi-Lo card count: cards 2 to 6 add 1, 7 to 9 add nothing, and 10s, faces and aces take away 1. The true count is the running count divided by the decks left. The count starts again at each shuffle, and the dealer’s face-down card counts once it is turned over.</p>
@@ -396,6 +405,14 @@ body.still .card.flip{animation:none}
   </div>
 </div>
 
+<div class="sheet" id="tablesSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="tablesH">
+    <div class="phead"><h2 id="tablesH">Tables</h2><button class="topbtn" type="button" data-close>Done</button></div>
+    <p class="note" id="tablesNote"></p>
+    <div id="tablesList" class="tlist"></div>
+  </div>
+</div>
+
 <div class="sheet" id="deadSheet" hidden>
   <div class="panel" role="alertdialog" aria-modal="true" aria-labelledby="deadH" aria-describedby="deadText">
     <div class="phead"><h2 id="deadH">Game over</h2></div>
@@ -427,13 +444,23 @@ body.still .card.flip{animation:none}
 (() => {
 'use strict';
 /* ---------- constants ---------- */
-const CHIPS = [5, 25, 100, 500, 1000];
+// Four tables. Fewer decks, bigger bets, better odds. You open the next one with enough chips of your own
+// (after debts) or by betting enough at the table below; once open it stays open for that game.
+const TABLES = [
+  { d: 6, min: 5,   max: 1000,   chips: [5, 25, 100, 500, 1000] },
+  { d: 4, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000],      chipsNeed: 25000,  betNeed: 50000 },
+  { d: 2, min: 100, max: 25000,  chips: [100, 500, 1000, 5000, 25000],   chipsNeed: 100000, betNeed: 250000 },
+  { d: 1, min: 500, max: 100000, chips: [500, 1000, 5000, 25000, 100000], chipsNeed: 500000, betNeed: 1000000 },
+];
+const DENOMS = [100000, 25000, 5000, 1000, 500, 100, 25, 5];
+const chipLabel = v => v >= 1000 ? (v / 1000) + 'K' : String(v);
+const deckWord = d => d + (d === 1 ? ' deck' : ' decks');
+const deckTable = d => d + '-deck table';
 // Money: you walk in with $10,000. Then a credit card, then the loan shark.
 const START = 10000;
 const CARD_LIMIT = 50000, CARD_RATE = 0.20, CARD_EVERY = 10;    // 20% interest added every 10 hands
 const SHARK_RATE = 0.20, SHARK_EVERY = 5, SHARK_MAX = 250000;     // he takes 20% of what you owe every 5 hands
 const pct = r => Math.round(r * 100) + '%';
-const LIMITS = [100, 500, 1000, 5000, 10000, 0];
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
   resplit:true, resplitAces:true, hitSplitAces:false, splitTens:true, lateSurrender:true, earlySurrender:false,
   charlie:false, push22:false, csm:false, totals:false, motion:true, warn:true, fence:true };
@@ -485,11 +512,13 @@ let cloud = null;      // { col }
 function migrate(){
   const st = S.settings; if (!st) return;
   if (!(st.fix >= 1)){ st.rules.resplitAces = true; st.fix = 1; }
+  if (!(st.fix >= 2)){ S.table = 0; S.open = [true, false, false, false]; S.betAt = [0, 0, 0, 0]; st.fix = 2; }
+  st.decks = tbl().d;   // the table sets the shoe
 }
 function freshState(amount = START){
-  return { v:2, settings:{ decks:6, max:5000, fix:1, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
+  return { v:2, settings:{ decks:6, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
-    card:0, shark:0, sharkNext:0, debtSeen:0, stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
+    card:0, shark:0, sharkNext:0, debtSeen:0, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
 const rules = () => S.settings.rules;
 
@@ -537,7 +566,13 @@ function draw(){
 }
 
 /* ---------- rules checks ---------- */
-const maxBet = () => S.settings.max || Infinity;
+const tableNo = () => Math.max(0, Math.min(3, S.table || 0));
+const tbl = () => TABLES[tableNo()];
+const maxBet = () => tbl().max;
+const minBet = () => tbl().min;
+const openList = () => S.open || (S.open = [true, false, false, false]);
+const betAtList = () => S.betAt || (S.betAt = [0, 0, 0, 0]);
+const ownChips = () => cents(S.bankroll - S.card - S.shark);
 const cur = () => R && R.hands[R.active];
 function canHit(h){ return !(h.splitAces && !rules().hitSplitAces) && val(h.cards).t < 21; }
 function canDouble(h){
@@ -624,13 +659,13 @@ function run(fn){
   Promise.resolve().then(fn)
     .then(async () => { if (R && R.phase === 'done' && !R.paid){ render(); await payoutAnim(); } })
     .catch(e => { console.error(e); if (R) { R.countFrom = null; R.paid = true; } })
-    .finally(() => { busy = false; saveLocal(); render(); if (!debtsAfterHand()) fenceAfterHand(); });
+    .finally(() => { busy = false; saveLocal(); render(); if (!debtsAfterHand() && !tablesAfterHand()) fenceAfterHand(); });
 }
 
 async function deal(){
   if (S.round) return;
   const bet = S.bet;
-  if (bet < 5){ say('Tap a chip to place a bet of at least $5.'); return; }
+  if (bet < minBet()){ say('The minimum bet here is ' + money(minBet()) + '.'); return; }
   if (bet > S.bankroll){ say("That's more than your bankroll."); return; }
   if (bet > maxBet()){ say('That is over the table maximum of ' + money(maxBet()) + '.'); return; }
   const spotBox = $('spot').getBoundingClientRect();
@@ -833,6 +868,8 @@ function settle(){
   if (R.ins) rec.ins = { bet: R.ins, n: cents(R.insRet - R.ins) };
   rec.w = cents(R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0));
   rec.n = cents(rec.h.reduce((a, h) => a + h.n, 0) + (rec.ins ? rec.ins.n : 0));
+  rec.tb = tableNo();
+  betAtList()[tableNo()] = cents(betAtList()[tableNo()] + rec.w);
   history.push(rec);
   R.phase = 'done'; R.net = rec.n; R.msg = '';
   S.round = null;
@@ -861,7 +898,7 @@ function rebet(){
   if (busy || S.round) return;
   clearTableIfDone();
   const b = Math.min(S.lastBet, maxBet());
-  if (b < 5 || b > S.bankroll){ say("You can't cover your last bet."); return; }
+  if (b < minBet() || b > S.bankroll){ say("You can't cover your last bet."); return; }
   const fromBox = $('chips') && $('chips').getBoundingClientRect();
   S.bet = b; saveLocal(); render();
   flyChips(fromBox, $('spotStack'), b);
@@ -1056,13 +1093,13 @@ function handLabel(cards, fromSplit){
 }
 function chipsFor(a){
   const out = []; let r = Math.round(a * 100) / 100;
-  for (const v of [1000, 500, 100, 25, 5]) while (r >= v - 0.001 && out.length < 6){ out.push(v); r -= v; }
+  for (const v of DENOMS) while (r >= v - 0.001 && out.length < 6){ out.push(v); r -= v; }
   if (!out.length && a > 0) out.push(5);
   return out;
 }
 function stackEl(amount, max){
   const st = document.createElement('span'); st.className = 'stack'; st.setAttribute('aria-hidden', 'true');
-  chipsFor(amount).slice(0, max || 5).forEach(v => { const i = document.createElement('i'); i.className = 'c' + v; i.textContent = v >= 1000 ? (v / 1000) + 'K' : String(v); st.append(i); });
+  chipsFor(amount).slice(0, max || 5).forEach(v => { const i = document.createElement('i'); i.className = 'c' + v + (chipLabel(v).length > 3 ? ' long' : ''); i.textContent = chipLabel(v); st.append(i); });
   return st;
 }
 function render(){
@@ -1126,10 +1163,10 @@ function render(){
   // decks in the shoe
   $('shoeLabel').textContent = S.settings.decks + (S.settings.decks === 1 ? ' deck' : ' decks');
   const short = v => v >= 1000 ? '$' + (v / 1000) + 'K' : '$' + v;
-  $('limitsV').textContent = '$5–' + (S.settings.max ? short(S.settings.max) : 'no max');
+  $('limitsV').textContent = shortMoney(minBet()) + '–' + shortMoney(maxBet());
   const owe = cents(S.card + S.shark);
   $('oweV').hidden = !owe; $('oweV').textContent = 'Owe ' + shortMoney(owe);
-  $('limits').setAttribute('aria-label', 'Table limits ' + money(5) + ' to ' + (S.settings.max ? money(S.settings.max) : 'no maximum') + (owe ? '. You owe ' + money(owe) : ''));
+  $('limits').setAttribute('aria-label', deckWord(tbl().d) + ' table, bets ' + money(minBet()) + ' to ' + money(maxBet()) + (owe ? '. You owe ' + money(owe) : '') + '. Tap to change table.');
   // the result, big
   const ban = $('banner');
   if (R && R.phase === 'done' && R.net !== undefined){
@@ -1246,20 +1283,20 @@ function renderControls(){
       a.append(row(), row(btn('Start over', () => openBank(false)), btn('Borrow', () => openCashier(), { primary:true, disabled: !canBorrow() })));
     } else {
       const chips = document.createElement('div'); chips.id = 'chips';
-      CHIPS.forEach(v => {
+      tbl().chips.forEach(v => {
         const c = document.createElement('button'); c.type = 'button'; c.className = 'chip num c' + v;
-        c.textContent = v >= 1000 ? (v / 1000) + 'K' : String(v);
+        c.textContent = chipLabel(v); if (chipLabel(v).length > 3) c.classList.add('long');
         c.setAttribute('aria-label', 'Add a ' + money(v) + ' chip');
         c.disabled = busy || S.bet + v > S.bankroll || S.bet + v > maxBet();
         c.addEventListener('click', () => addChip(v, c));
         chips.append(c);
       });
       a.append(chips);
-      const canRe = S.lastBet >= 5 && !S.bet && Math.min(S.lastBet, maxBet()) <= S.bankroll;
+      const canRe = S.lastBet >= minBet() && !S.bet && Math.min(S.lastBet, maxBet()) <= S.bankroll;
       a.append(row(
         btn('Clear', clearBet, { disabled: !S.bet }),
         btn(S.lastBet ? 'Rebet ' + money(Math.min(S.lastBet, maxBet())) : 'Rebet', rebet, { disabled: !canRe }),
-        btn(S.bet ? 'Deal ' + money(S.bet) : 'Deal', () => run(deal), { primary:true, disabled: S.bet < 5 })
+        btn(S.bet ? 'Deal ' + money(S.bet) : 'Deal', () => run(deal), { primary:true, disabled: S.bet < minBet() })
       ));
     }
   }
@@ -1271,17 +1308,9 @@ function renderRules(){
   const locked = !!S.round;
   $('rulesNote').textContent = locked ? 'Finish this hand to change the rules.' : 'Changes take effect on the next hand.';
   const d = S.settings.decks;
-  $('deckOut').textContent = d + (d === 1 ? ' deck' : ' decks');
-  $('deckMinus').disabled = locked || d <= 1; $('deckPlus').disabled = locked || d >= 8;
+  $('tableNote').textContent = 'You’re at the ' + deckTable(d) + ': bets ' + money(minBet()) + ' to ' + money(maxBet()) + '.';
   const left = S.shoe && S.shoeDecks === d ? S.shoe.length - S.pos : d * 52;
   $('shoeNote').textContent = left + ' of ' + d * 52 + ' cards left before the next shuffle point.';
-  const seg = $('limitSeg'); seg.replaceChildren();
-  LIMITS.forEach(l => {
-    const b = document.createElement('button'); b.type = 'button'; b.textContent = l ? money(l) : 'No limit';
-    b.setAttribute('aria-pressed', String(S.settings.max === l)); b.disabled = locked;
-    b.addEventListener('click', () => { S.settings.max = l; if (S.bet > maxBet()) S.bet = 0; settingsChanged(); });
-    seg.append(b);
-  });
   const list = $('ruleList'); list.replaceChildren();
   let g = '';
   RULES.forEach(r => {
@@ -1552,6 +1581,7 @@ function payBack(who){
   hideSheets(); render();
   showMove(before, $('bankAmt'), $('openCashier'));
   say('Paid back ' + money(amt) + (who === 'shark' && !S.shark ? '. The loan shark is off your back.' : '.'));
+  tablesAfterHand();
 }
 
 /* ---------- interest, the shark's cut, and the end ---------- */
@@ -1603,14 +1633,78 @@ function showDead(){
 function newGame(){
   if (S.round && !S.dead) return;
   const settings = S.settings, cash = S.cash || [];
-  if (firstVisit && !history.length){ S = freshState(); S.settings = settings; }
+  if (firstVisit && !history.length){ S = freshState(); S.settings = settings; S.settings.decks = TABLES[0].d; }
   else {
     const next = Math.max(0, ...S.sessions.map(x => x.s)) + 1;
+    settings.decks = TABLES[0].d;
     S = { ...freshState(), settings, session: next, sessions: S.sessions.concat({ s: next, start: START, at: Date.now() }), cash, fenceSeen: history.length, fenceLast: history.length };
   }
   firstVisit = false; R = null; seen = new Set(); msgOverride = '';
   touch(); saveLocal(); saveCloudState();
   hideSheets(); render();
+}
+
+/* ---------- tables: 6 decks up to 1 deck ---------- */
+function canSit(i){ return openList()[i] && S.bankroll + S.bet >= TABLES[i].min; }
+function moveTo(i){
+  if (S.round || i === tableNo()) return;
+  S.table = i; S.settings.decks = TABLES[i].d;
+  S.bet = 0;
+  if (S.lastBet) S.lastBet = Math.max(TABLES[i].min, Math.min(TABLES[i].max, S.lastBet));   // Rebet fits the new table
+  touch(); saveLocal(); saveCloudState();
+}
+function openTables(){
+  hideSheets(); renderTables(); $('tablesSheet').hidden = false;
+}
+function renderTables(){
+  const here = tableNo(), list = $('tablesList'); list.replaceChildren();
+  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Open the next table with chips of your own, after debts, or by betting enough at the table below.';
+  TABLES.forEach((t, i) => {
+    const open = openList()[i], row = document.createElement('div');
+    row.className = 'trow' + (i === here ? ' here' : '') + (open ? '' : ' locked');
+    const th = document.createElement('div'); th.className = 'th';
+    const b = document.createElement('b'); b.textContent = deckWord(t.d);
+    const sp = document.createElement('span'); sp.className = 'num'; sp.textContent = money(t.min) + ' to ' + money(t.max);
+    th.append(b, sp); row.append(th);
+    const st = document.createElement('div'); st.className = 'st';
+    st.textContent = i === here ? '✓ You’re here' : open ? 'Open' : '🔒 Locked';
+    row.append(st);
+    if (!open){
+      const need = document.createElement('div'); need.className = 'need num';
+      need.textContent = 'Opens at ' + money(t.chipsNeed) + ' in chips of your own (you have ' + money(Math.max(0, ownChips())) + '), or after ' + money(t.betNeed) + ' bet at the ' + deckTable(TABLES[i - 1].d) + ' (you’ve bet ' + money(betAtList()[i - 1]) + ').';
+      row.append(need);
+    } else if (i !== here){
+      const ok = canSit(i) && !S.round;
+      const bt = btn(ok ? 'Move to this table' : S.round ? 'Finish this hand first' : 'You need ' + money(t.min) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
+      row.append(bt);
+    }
+    list.append(row);
+  });
+}
+// After each hand: open any table you've earned; move you down if you can't cover the minimum.
+function tablesAfterHand(){
+  if (S.round || S.dead) return false;
+  // can't cover the minimum here: down to the best open table you can afford
+  if (tableNo() > 0 && S.bankroll + S.bet < minBet()){
+    const from = tbl();
+    let to = 0; for (let i = tableNo() - 1; i >= 0; i--) if (canSit(i)){ to = i; break; }
+    moveTo(to); render();
+    later(() => { guyOffer = false; fenceSheet('The pit boss', '🎩', 'You can’t cover the ' + money(from.min) + ' minimum at the ' + deckTable(from.d) + '. The pit boss walks you to the <b>' + deckTable(TABLES[to].d) + '</b>, bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
+    return true;
+  }
+  // newly opened tables
+  let opened = -1;
+  for (let i = 1; i < TABLES.length; i++){
+    const t = TABLES[i];
+    if (!openList()[i] && (ownChips() >= t.chipsNeed || betAtList()[i - 1] >= t.betNeed)){ openList()[i] = true; opened = i; }
+  }
+  if (opened < 0) return false;
+  touch(); saveLocal(); saveCloudState();
+  const t = TABLES[opened];
+  later(() => { guyOffer = false; fenceSheet('New table open', '🃏', 'The <b>' + deckTable(t.d) + '</b> is open to you: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks means better odds.',
+    [btn('Stay here', () => hideSheets()), btn('Move up', () => { moveTo(opened); hideSheets(); render(); }, { primary:true, disabled: !canSit(opened) })]); });
+  return true;
+  function later(fn){ setTimeout(() => { if (!busy && !S.round && !sheetOpen()) fn(); }, D * 2 + 500); }
 }
 
 /* ---------- welcome / start over ---------- */
@@ -1733,6 +1827,7 @@ function fenceBuy(item, art, price, worth, said){
   if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
   cardFly(x);
   say('You bought ' + item + ' for ' + money(price) + '. Tap Stuff to see it.');
+  tablesAfterHand();
 }
 function fenceSellOffer(x){
   // his offer changes only after you play another hand, so asking again won't get a better price
@@ -1981,9 +2076,7 @@ document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click
 const stuck = () => !$('deadSheet').hidden || (!$('bankSheet').hidden && $('bankCancel').hidden);
 document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e => { if (e.target !== s || stuck()) return; if (s.id === 'fenceSheet' && guyOffer) guyDecline(); else hideSheets(); }));
 $('bankCancel').addEventListener('click', hideSheets);
-$('deckMinus').addEventListener('click', () => { S.settings.decks = Math.max(1, S.settings.decks - 1); settingsChanged(); });
-$('deckPlus').addEventListener('click', () => { S.settings.decks = Math.min(8, S.settings.decks + 1); settingsChanged(); });
-$('resetRules').addEventListener('click', () => { S.settings.rules = { ...DEFAULT_RULES }; S.settings.decks = 6; S.settings.max = 5000; settingsChanged(); });
+$('resetRules').addEventListener('click', () => { S.settings.rules = { ...DEFAULT_RULES }; settingsChanged(); });
 $('scopeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scope = b.dataset.scope; logShown = 50; renderRecord(); });
 $('moreLog').addEventListener('click', () => { logShown += 50; renderRecord(); });
 $('newBankBtn').addEventListener('click', () => openBank(false));
@@ -1997,6 +2090,9 @@ $('deadStart').addEventListener('click', newGame);
   $(w + 'Pay').addEventListener('click', () => payBack(w));
 });
 $('openStuff').addEventListener('click', () => openStuff());
+$('limits').addEventListener('click', openTables);
+$('shoeBox').addEventListener('click', openTables);
+$('rulesTables').addEventListener('click', openTables);
 $('stuffPrev').addEventListener('click', () => flipStuff(-1));
 $('stuffNext').addEventListener('click', () => flipStuff(1));
 $('stuffSell').addEventListener('click', () => { const x = stuffOrder()[stuffAt]; if (x) fenceSellOffer(x); });
