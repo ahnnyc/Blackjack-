@@ -4,11 +4,11 @@ Casino blackjack for the phone, installable to the iPhone home screen and playab
 
 You walk in with $1,000. Everything you do feeds one ranking: your prestige rank, from Guppy to Super Whale, which sets how you live, what you must bet, and which offers you get. A typical player who plays well reaches Super Whale in about 117 hours, counting restarts (modelled before building: prestige from play, sponsors paying 75% of the bills, credit lines up to $1,000,000 at Whale, debt costing half its size in prestige; a Whale has bet about $1 million to get there and a Super Whale about $20 million).
 
-There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $500), 6 decks ($25 to $5,000), 2 decks ($100 to $25,000) and 1 deck ($500 to $100,000). As in a real casino, you can sit at any table whose minimum you can cover (tap the Limits sign); the ranges never change. Your rank's minimum bet still applies wherever you sit, so your own range at a table is the higher of the two minimums up to the table's maximum. A table whose maximum is under your rank's minimum is too small for you: a Whale can't play 8 decks, a Super Whale can't play 8 or 6, and ranking up moves you to the smallest table that fits once the current shoe runs out (until then you bet the table maximum). If you can't cover a table's minimum you're moved down. Each table has its own felt: worn gray-green, blue, black, and red with gold trim. Every other casino rule is an on/off switch, and every bet, win, loss and money move is recorded, with charts of how far up or down you are this game and over all games.
+There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $500), 6 decks ($25 to $5,000), 2 decks ($100 to $25,000) and 1 deck ($500 to $100,000). As in a real casino, you can sit at any table whose minimum you can cover (tap the Limits sign) and bet anything in its range, whatever your rank; the ranges never change. If you can't cover a table's minimum you're moved down. Each table has its own felt: worn gray-green, blue, black, and red with gold trim. Every other casino rule is an on/off switch, and every bet, win, loss and money move is recorded, with charts of how far up or down you are this game and over all games.
 
 ## Ranks
 
-| Rank | Prestige | Minimum bet | Stay | Eat | Get around | A day (before savings) | Sponsor |
+| Rank | Prestige | Expected bet (never shown) | Stay | Eat | Get around | A day (before savings) | Sponsor |
 |---|---|---|---|---|---|---|---|
 | Guppy | $0 | $5 | motel $49 | fast food $25 | walking | $74 | a local bar |
 | Minnow | $1,000 | $10 | hotel room $99 | coffee shop $60 | city bus $10 | $169 | a pawn shop |
@@ -16,10 +16,10 @@ There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $500), 6
 | Swordfish | $10,000 | $50 | suite $499 | steakhouse $300 | rental car $120 | $919 | a sports-betting app |
 | Marlin | $25,000 | $250 | tower suite $799 | fine dining $500 | car service $300 | $1,599 | an energy drink |
 | Whale | $250,000 | $2,500 | villa $1,500 | chef's table $1,000 | limo with driver $800 | $3,300 | a watch brand |
-| Super Whale | $5,000,000 | $10,000 | penthouse | anywhere | private car and driver | comped | none |
+| Super Whale | $5,000,000 | $10,000 | penthouse | anywhere | private car and driver | comped (else $9,000) | none |
 
 - **Prestige** = prestige from play (every $4 bet earns $1) + what you paid for things (counted only once your debts are paid, so nothing bought on credit counts until it's paid off) − half of any debt left over beyond what your things are worth (so losing money and borrowing can drop your rank; modelled: about 117 hours to Super Whale, 62% of starts make it) + eye candy ($5,000) and an entourage ($25,000).
-- **Minimum bet** is your rank's minimum or the table's, whichever is higher.
+- **Bets:** as in a real casino you can sit at any table and bet its minimum; there's no minimum by rank. But the casino rates you: if your average bet over a day is under what your rank is expected to bet (the lowest rank you held that day, so ranking up mid-day costs nothing), your sponsor pays nothing that day, any comps for the day are charged to you (a Super Whale pays $9,000), and your eye candy and entourage leave. Nobody is warned beforehand; the end-of-day "Low bets today" message is how the player finds out. Modelled (300 players each): betting your rank's level, 58% of starts reach Super Whale in a median 120 hours; dropping to $5 bets when chips run low, or always betting $5, never gets there.
 - **A day** is 150 hands. Breakfast, lunch and dinner come after hands 25, 75 and 125; the room and getting around at the end of the day.
 - **Sponsors** pay 75% of the day's bills at the end of the day if you made the right move (basic strategy) on at least 95% of your hands. New players (Guppy, Minnow) whose own chips are under $1,000 get their bills comped.
 
@@ -47,9 +47,9 @@ If you can't cover your minimum bet: borrow on your credit line, then from the l
 
 Starting over (from the Record screen, the out-of-chips message or game over) goes back to the opening message, as on a first visit.
 
-When the app is reopened, or you come back after 10 minutes or more away, a Welcome back message says who you are (rank, prestige, how far to the next rank, minimum bet), the life you live at that rank (where you stay, eat and how you get around, counting homes, cars, a chef and deals you have, what it costs a day, your sponsor, who is with you), then your chips and what you owe.
+When the app is reopened, or you come back after 10 minutes or more away, a Welcome back message says who you are (rank, prestige, how far to the next rank), the life you live at that rank (where you stay, eat and how you get around, counting homes, cars, a chef and deals you have, what it costs a day, your sponsor, who is with you), then your chips and what you owe.
 
-Every message in the game is short and plain: what happened and the numbers, no jokes. The welcome screen says the $1,000 start, the next rank and how prestige is earned, and that you can sit at any table you can cover. Borrowing is explained when the chips run out. There are no table unlocks, so no new-table messages; the only table message is the move up when your rank outgrows a table. A free bill is always called comped.
+Every message in the game is short and plain: what happened and the numbers, no jokes. The welcome screen says the $1,000 start, the next rank and how prestige is earned, and that you can sit at any table you can cover. Borrowing is explained when the chips run out. There are no table unlocks and no table messages. A free bill is always called comped.
 
 ## Files
 
@@ -57,7 +57,8 @@ Every message in the game is short and plain: what happened and the numbers, no 
 - `sw.js` — keeps a copy on the phone so it opens offline. **Change `VERSION` in it whenever `index.html` changes**, or phones keep the old copy.
 - `manifest.webmanifest`, `icon-*.png` — the home-screen name and icon (`node tools/icon.js` redraws the icons).
 - `tools/offline-test.js` — loads the game, cuts the connection, and plays three hands to prove it works offline.
-- `tools/cg-test.js` — the money side: the $1,000 start, prestige from play, offers, credit lines and daily interest, bills and sponsors, rank minimum bets, the loan shark, the grave, starting over.
+- `tools/cg-test.js` — the money side: the $1,000 start, prestige from play, offers, credit lines and daily interest, bills and sponsors, no minimum by rank, the loan shark, the grave, starting over.
+- `tools/rating-test.js` — every table open, no minimum by rank, and the low-bet day: sponsor, comps and people lost, told only afterwards; ranking up mid-day is safe.
 
 The record lives in the phone's own storage for this site. It is not synced anywhere.
 

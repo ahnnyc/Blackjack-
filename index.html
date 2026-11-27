@@ -492,15 +492,17 @@ const pct = r => Math.round(r * 100) + '%';
 const DAY = 150;
 const STAY_STOPS = [ { at:25, i:0 }, { at:75, i:1 }, { at:125, i:2 }, { at:0, i:3 } ];
 const MEAL_NAMES = ['breakfast', 'lunch', 'dinner'], MEAL_ART = ['🍳', '🥪', '🍽️'];
-// Each rank's life: where you stay, eat and how you get around, its daily costs, its minimum bet, and who sponsors you.
+// Each rank's life: where you stay, eat and how you get around, its daily costs, who sponsors you, and the average bet the
+// casino expects (level). Nobody is told the level: a day whose average bet falls under it costs the sponsor's pay, any comps
+// and your eye candy and entourage, and the end-of-day message says why. Super Whale prices apply only on such a day.
 const LIFE = [
-  { stay:'a motel',       eat:'fast food',          go:'walking',                     room:49,   meals:[6, 8, 11],     ride:0,   minBet:5,    sponsor:'a local bar' },
-  { stay:'a hotel room',  eat:'the coffee shop',    go:'the city bus',                room:99,   meals:[12, 18, 30],   ride:10,  minBet:10,   sponsor:'a pawn shop' },
-  { stay:'a scenic room', eat:'a café',             go:'taxis',                       room:249,  meals:[30, 45, 75],   ride:60,  minBet:25,   sponsor:'a sports bar chain' },
-  { stay:'a suite',       eat:'the steakhouse',     go:'a rental car',                room:499,  meals:[60, 90, 150],  ride:120, minBet:50,   sponsor:'a sports-betting app' },
-  { stay:'a tower suite', eat:'fine dining',        go:'a car service',               room:799,  meals:[100, 150, 250],ride:300, minBet:250,  sponsor:'an energy drink' },
-  { stay:'a villa',       eat:'the chef’s table',   go:'a limo with a driver',        room:1500, meals:[200, 300, 500],ride:800, minBet:2500, sponsor:'a watch brand' },
-  { stay:'the penthouse', eat:'anywhere you like',  go:'your private car and driver', room:0,    meals:[0, 0, 0],      ride:0,   minBet:10000, sponsor:null, comped:true },
+  { stay:'a motel',       eat:'fast food',          go:'walking',                     room:49,   meals:[6, 8, 11],     ride:0,   level:5,    sponsor:'a local bar' },
+  { stay:'a hotel room',  eat:'the coffee shop',    go:'the city bus',                room:99,   meals:[12, 18, 30],   ride:10,  level:10,   sponsor:'a pawn shop' },
+  { stay:'a scenic room', eat:'a café',             go:'taxis',                       room:249,  meals:[30, 45, 75],   ride:60,  level:25,   sponsor:'a sports bar chain' },
+  { stay:'a suite',       eat:'the steakhouse',     go:'a rental car',                room:499,  meals:[60, 90, 150],  ride:120, level:50,   sponsor:'a sports-betting app' },
+  { stay:'a tower suite', eat:'fine dining',        go:'a car service',               room:799,  meals:[100, 150, 250],ride:300, level:250,  sponsor:'an energy drink' },
+  { stay:'a villa',       eat:'the chef’s table',   go:'a limo with a driver',        room:1500, meals:[200, 300, 500],ride:800, level:2500, sponsor:'a watch brand' },
+  { stay:'the penthouse', eat:'anywhere you like',  go:'your private car and driver', room:5000, meals:[500, 750, 1250],ride:1500, level:10000, sponsor:null, comped:true },
 ];
 // Prestige: earned from play (every $4 you bet earns $1), plus what you paid for your things (counted once your debts
 // are cleared, so nothing bought on credit counts until it's paid for), plus the people with you.
@@ -783,7 +785,7 @@ const maxBet = () => tbl().max;
 const tableMin = () => tbl().min;
 const rankNo = () => levelOf(prestige());
 const life = () => LIFE[rankNo()];
-const minBet = () => Math.min(maxBet(), Math.max(tableMin(), life().minBet));   // your rank's minimum or the table's, whichever is higher
+const minBet = () => tableMin();   // as in a real casino, the table's minimum; your rank only sets what the casino expects (LIFE.level)
 const openList = () => [true, true, true, true];   // every table is open to anyone who can cover its minimum
 const betAtList = () => S.betAt || (S.betAt = [0, 0, 0, 0]);
 const ownChips = () => cents(S.bankroll - S.card - S.shark);
@@ -1114,6 +1116,8 @@ function settle(){
   rec.tb = tableNo();
   betAtList()[tableNo()] = cents(betAtList()[tableNo()] + rec.w);
   S.playPres = cents((S.playPres || 0) + rec.w * PRESTIGE_PLAY);   // every $4 bet earns $1 of prestige
+  { const d = S.day || (S.day = { ok:0, all:0, bills:0 }); d.bet = cents((d.bet || 0) + rec.w); d.hands = (d.hands || 0) + 1;
+    d.lvl = Math.min(d.lvl == null ? Infinity : d.lvl, life().level); }   // rated against the lowest level you held today, so ranking up mid-day costs nothing
   history.push(rec);
   R.phase = 'done'; R.net = rec.n; R.msg = '';
   S.round = null;
@@ -1356,7 +1360,7 @@ function levelNote(i){
   const L = LIFE[i], nx = LEVELS[i + 1];
   const cost = L.room + L.ride + L.meals.reduce((a, b) => a + b, 0);
   const how = L.comped ? ' Your room, meals and car are comped.' : ' You stay in ' + L.stay + ', eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat + ' and get around by ' + L.go.replace(/^(a|an) /, '') + ': ' + money(cost) + ' a day before savings.';
-  return ' Minimum bet ' + money(L.minBet) + '.' + how + (nx ? ' Next level: ' + nx.name + ' at ' + money(nx.at) + ' prestige.' : ' This is the top level.');
+  return how + (nx ? ' Next level: ' + nx.name + ' at ' + money(nx.at) + ' prestige.' : ' This is the top level.');
 }
 function checkLevel(){
   const i = levelOf(prestige());
@@ -1944,9 +1948,7 @@ function sitDown(){
 }
 
 /* ---------- tables: 8 decks up to 1 deck (the counts Vegas uses) ---------- */
-const bigEnough = i => TABLES[i].max >= life().minBet;   // a table whose maximum is under your rank's minimum is too small for you
-const sitMin = i => Math.max(TABLES[i].min, life().minBet);   // what you'd have to bet there: the table's minimum or your rank's
-function canSit(i){ return bigEnough(i) && S.bankroll + S.bet >= sitMin(i); }
+function canSit(i){ return S.bankroll + S.bet >= TABLES[i].min; }
 function moveTo(i){
   if (S.round || i === tableNo()) return;
   S.table = i; S.settings.decks = TABLES[i].d;
@@ -1972,7 +1974,7 @@ function renderTables(){
     row.append(st);
     if (i !== here){
       const ok = canSit(i) && !S.round;
-      const bt = btn(ok ? 'Move to this table' : !bigEnough(i) ? 'Too small for a ' + LEVELS[rankNo()].name + ' (' + money(life().minBet) + ' minimum)' : S.round ? 'Finish this hand first' : 'You need ' + money(sitMin(i)) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
+      const bt = btn(ok ? 'Move to this table' : S.round ? 'Finish this hand first' : 'You need ' + money(t.min) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
       row.append(bt);
     }
     list.append(row);
@@ -1990,17 +1992,6 @@ function tablesAfterHand(){
     later(() => { guyOffer = false; fenceSheet('Moved down', '🎩', 'You can’t cover the ' + money(from.min) + ' minimum at the ' + deckTable(from.d) + '. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
     return true;
   }
-  // your rank's minimum is above this table's maximum: up to the smallest table that fits it, once the shoe is done
-  // (until then you bet this table's maximum)
-  if (!bigEnough(tableNo()) && needShuffle()){
-    let to = -1; for (let i = tableNo() + 1; i < TABLES.length; i++) if (bigEnough(i)){ to = i; break; }
-    if (to >= 0){
-      const from = tbl(), rk = LEVELS[rankNo()].name;
-      moveTo(to); render();
-      later(() => { guyOffer = false; fenceSheet('New table', '🥂', rk + 's bet at least ' + money(life().minBet) + ' a hand. The <span style="white-space:nowrap">' + deckTable(from.d) + '</span> only goes up to ' + money(from.max) + ', so you’re now at the <b style="white-space:nowrap">' + deckTable(TABLES[to].d) + '</b>.', [btn('OK', () => hideSheets(), { primary:true })]); });
-      return true;
-    }
-  }
   return false;
   function later(fn){ queueSheet(fn); }
 }
@@ -2015,7 +2006,7 @@ function nextGoal(){
 // Who you are: your rank and the life you're living at it, with whatever you own or have paid ahead counted in.
 function whoYouAre(){
   const i = rankNo(), L = LIFE[i], nx = LEVELS[i + 1], pres = prestige();
-  let t = 'You’re a <b>' + LEVELS[i].name + '</b>, prestige ' + money(pres) + (nx ? ', ' + money(nx.at - pres) + ' to go to ' + nx.name : '') + '. Minimum bet ' + money(L.minBet) + '.';
+  let t = 'You’re a <b>' + LEVELS[i].name + '</b>, prestige ' + money(pres) + (nx ? ', ' + money(nx.at - pres) + ' to go to ' + nx.name : '') + '.';
   let life_;
   if (L.comped) life_ = 'You live in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
   else {
@@ -2136,7 +2127,9 @@ function stayBill(i, day){
   const title = room ? 'End of day ' + day : cap1(MEAL_NAMES[i]);
   const art = room ? '🛏️' : MEAL_ART[i];
   if (L.comped){
-    cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'comp', what: room ? 'the penthouse and your car' : MEAL_NAMES[i], amt: 0, whale: 1 });
+    const worth = room ? L.room + L.ride : L.meals[i];
+    d.comped = cents((d.comped || 0) + worth);
+    cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'comp', what: room ? 'the penthouse and your car' : MEAL_NAMES[i], amt: worth, whale: 1 });
     touch(); saveLocal(); saveCloudState();
     fenceSheet(title, art, (room ? 'The penthouse and your private car and driver' : cap1(MEAL_NAMES[i]) + ', anywhere you like') + ': <b>comped</b>. The casino looks after its Super Whales.', [btn('OK', () => hideSheets(), { primary:true })]);
     return;
@@ -2150,6 +2143,7 @@ function stayBill(i, day){
   const lines = parts.map(x => x[0] + ': ' + (x[2] ? '<b>free</b> (' + esc(x[2]) + ')' : '<b>' + money(x[1]) + '</b>'));
   if (!due){ fenceSheet(title, art, lines.join('<br>'), [btn('OK', () => hideSheets(), { primary:true })]); return; }
   if (rankNo() <= 1 && ownChips() < START){   // new players who are struggling get their bills comped
+    d.comped = cents((d.comped || 0) + due);
     cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'comp', what: room ? 'the room' : MEAL_NAMES[i], amt: due });
     touch(); saveLocal(); saveCloudState();
     fenceSheet(title, art, lines.join('<br>') + '<br><br><b>Comped</b> (' + money(due) + '), because your own chips are under ' + money(START) + '.', [btn('OK', () => hideSheets(), { primary:true })]);
@@ -2166,7 +2160,10 @@ function stayBill(i, day){
 function sponsorDay(day){
   const d = S.day || { ok:0, all:0, bills:0 }; S.day = { ok:0, all:0, bills:0 };
   const L = life(); touch(); saveLocal();
-  if (L.comped || !L.sponsor || !d.bills || S.dead) return pumpSheets(0);
+  if (S.dead) return pumpSheets(0);
+  const avg = d.hands ? cents(d.bet / d.hands) : 0, need = d.lvl != null && isFinite(d.lvl) ? d.lvl : L.level;
+  if (d.hands && avg < need) return lowDay(d, avg, need);
+  if (L.comped || !L.sponsor || !d.bills) return pumpSheets(0);
   const share = d.all ? d.ok / d.all : 0, good = d.all >= 10 && share >= SPONSOR_GOOD, pay = cents(d.bills * SPONSOR_SHARE);
   guyOffer = false;
   if (good){
@@ -2177,6 +2174,29 @@ function sponsorDay(day){
     cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'nosponsor', what: L.sponsor, amt: pay });
     fenceSheet('Your sponsor', '🤝', 'You made the right move on ' + Math.round(share * 100) + '% of your hands today. Your sponsor, ' + esc(L.sponsor) + ', pays only at ' + pct(SPONSOR_GOOD) + ' or better, so nothing today (' + money(pay) + ' missed). The “Are you sure?” warnings in Rules show the right move.', [btn('OK', () => hideSheets(), { primary:true })]);
   }
+}
+
+// A day whose average bet fell under what the casino expects at your rank: the sponsor pays nothing, comps are taken back,
+// and eye candy and the entourage leave. Nobody is warned beforehand; this message is how the player finds out.
+function lowDay(d, avg, need){
+  guyOffer = false;
+  const L = life(), who = LEVELS[Math.max(0, LIFE.findIndex(x => x.level === need))].name;
+  const out = ['Your average bet today was <b>' + money(avg) + '</b>, under what the casino expects from a ' + who + ' (' + money(need) + ').'];
+  if (L.sponsor && d.bills){
+    const pay = cents(d.bills * SPONSOR_SHARE);
+    cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'nosponsor', what: L.sponsor, amt: pay });
+    out.push('Your sponsor, ' + esc(L.sponsor) + ', paid nothing (' + money(pay) + ' missed).');
+  }
+  if (d.comped > 0){
+    const before = moneyMove(-d.comped, 'room', { what: 'comps taken back' });
+    render(); flyChips($('bankAmt'), $('top'), d.comped, { fade: true });
+    if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+    out.push('The casino stopped comping you: <b>' + money(d.comped) + '</b> for today’s room, meals and travel, taken from your chips.');
+  }
+  const p = people(), gone = [p.candy ? 'eye candy' : '', p.crew ? 'entourage' : ''].filter(Boolean);
+  if (gone.length){ delete p.candy; delete p.crew; out.push('Your ' + gone.join(' and ') + ' left.'); }
+  touch(); saveLocal(); saveCloudState(); render();
+  fenceSheet('Low bets today', '📉', out.join('<br><br>'), [btn('OK', () => hideSheets(), { primary:true })]);
 }
 
 /* ---------- offers: one at a time, matched to your rank ---------- */
