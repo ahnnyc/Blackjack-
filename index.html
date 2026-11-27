@@ -473,7 +473,7 @@ body.still .card.flip{animation:none}
 // Four tables. Fewer decks, bigger bets, better odds. You open a table with enough chips (borrowed or not)
 // or by betting enough at the table below; once open it stays open for that game. Tables can be skipped.
 const TABLES = [
-  { d: 8, min: 5,   max: 1000,   chips: [5, 25, 100, 500, 1000] },
+  { d: 8, min: 5,   max: 500,    chips: [5, 25, 100, 500] },
   { d: 6, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000],      chipsNeed: 1250,    betNeed: 150 },      // quick, so you learn tables exist
   { d: 2, min: 100, max: 25000,  chips: [100, 500, 1000, 5000, 25000],   chipsNeed: 7500,    betNeed: 5000 },
   { d: 1, min: 500, max: 100000, chips: [500, 1000, 5000, 25000, 100000], chipsNeed: 100000,  betNeed: 200000 },  // the hard one
@@ -498,9 +498,9 @@ const LIFE = [
   { stay:'a hotel room',  eat:'the coffee shop',    go:'the city bus',                room:99,   meals:[12, 18, 30],   ride:10,  minBet:10,   sponsor:'a pawn shop' },
   { stay:'a scenic room', eat:'a café',             go:'taxis',                       room:249,  meals:[30, 45, 75],   ride:60,  minBet:25,   sponsor:'a sports bar chain' },
   { stay:'a suite',       eat:'the steakhouse',     go:'a rental car',                room:499,  meals:[60, 90, 150],  ride:120, minBet:50,   sponsor:'a sports-betting app' },
-  { stay:'a tower suite', eat:'fine dining',        go:'a car service',               room:799,  meals:[100, 150, 250],ride:300, minBet:100,  sponsor:'an energy drink' },
-  { stay:'a villa',       eat:'the chef’s table',   go:'a limo with a driver',        room:1500, meals:[200, 300, 500],ride:800, minBet:500,  sponsor:'a watch brand' },
-  { stay:'the penthouse', eat:'anywhere you like',  go:'your private car and driver', room:0,    meals:[0, 0, 0],      ride:0,   minBet:1000, sponsor:null, comped:true },
+  { stay:'a tower suite', eat:'fine dining',        go:'a car service',               room:799,  meals:[100, 150, 250],ride:300, minBet:250,  sponsor:'an energy drink' },
+  { stay:'a villa',       eat:'the chef’s table',   go:'a limo with a driver',        room:1500, meals:[200, 300, 500],ride:800, minBet:2500, sponsor:'a watch brand' },
+  { stay:'the penthouse', eat:'anywhere you like',  go:'your private car and driver', room:0,    meals:[0, 0, 0],      ride:0,   minBet:10000, sponsor:null, comped:true },
 ];
 // Prestige: earned from play (every $4 you bet earns $1), plus what you paid for your things (counted once your debts
 // are cleared, so nothing bought on credit counts until it's paid for), plus the people with you.
@@ -536,7 +536,7 @@ const OFFERS = [
   { id:'penthouse', rank:5, kind:'save',   art:'🌆', name:'a penthouse',                price:100000,  covers:'room', keep:true },
   { id:'limo',      rank:5, kind:'save',   art:'🚘', name:'your own limo and driver',   price:250000,  covers:'ride', keep:true },
   { id:'crew',      rank:5, kind:'people' },
-  { id:'marker2',   rank:5, kind:'credit', art:'📜', name:'a bigger casino marker',     limit:250000,  rate:0.03 },
+  { id:'marker2',   rank:5, kind:'credit', art:'📜', name:'a bigger casino marker',     limit:1000000, rate:0.03 },
   { id:'jet',       rank:6, kind:'rank',   art:'🛩️', name:'a private jet',              price:5000000 },
   { id:'openmarker',rank:6, kind:'credit', art:'📜', name:'an open marker',             limit:1e12,    rate:0.02 },
 ];
@@ -548,8 +548,8 @@ const LEVELS = [
   { name:'Barracuda',   at:5000 },
   { name:'Swordfish',   at:10000 },
   { name:'Marlin',      at:25000 },
-  { name:'Whale',       at:100000 },
-  { name:'Super Whale', at:1000000 },
+  { name:'Whale',       at:250000 },
+  { name:'Super Whale', at:5000000 },
 ];
 const levelOf = v => LEVELS.reduce((a, l, i) => v >= l.at ? i : a, 0);
 const DEFAULT_RULES = { h17:true, bj32:true, peek:true, insurance:true, evenMoney:true, doubleAny:true, das:true,
@@ -719,6 +719,7 @@ function migrate(){
   const st = S.settings; if (!st) return;
   if (!(st.fix >= 1)){ st.rules.resplitAces = true; st.fix = 1; }
   if (!(st.fix >= 2)){ S.table = 0; S.open = [true, false, false, false]; S.betAt = [0, 0, 0, 0]; st.fix = 2; }
+  if (S.line && S.line.id === 'marker2' && S.line.limit < 1000000) S.line.limit = 1000000;   // the Whale marker grew to $1,000,000
   if (S.line === undefined){ S.line = S.card > 0 ? { id:'card', name:'a credit card', limit: Math.max(10000, S.card), rate: 0.05 } : null; }   // the old credit card becomes a line
   if (!S.deals) S.deals = {};
   if (!S.day) S.day = { ok:0, all:0, bills:0 };
@@ -1937,7 +1938,8 @@ function sitDown(){
 }
 
 /* ---------- tables: 8 decks up to 1 deck (the counts Vegas uses) ---------- */
-function canSit(i){ return openList()[i] && S.bankroll + S.bet >= TABLES[i].min; }
+const bigEnough = i => TABLES[i].max >= life().minBet;   // a table whose maximum is under your rank's minimum is too small for you
+function canSit(i){ return openList()[i] && bigEnough(i) && S.bankroll + S.bet >= TABLES[i].min; }
 function moveTo(i){
   if (S.round || i === tableNo()) return;
   S.table = i; S.settings.decks = TABLES[i].d;
@@ -1967,7 +1969,7 @@ function renderTables(){
       row.append(need);
     } else if (i !== here){
       const ok = canSit(i) && !S.round;
-      const bt = btn(ok ? 'Move to this table' : S.round ? 'Finish this hand first' : 'You need ' + money(t.min) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
+      const bt = btn(ok ? 'Move to this table' : !bigEnough(i) ? 'Too small for a ' + LEVELS[rankNo()].name + ' (' + money(life().minBet) + ' minimum)' : S.round ? 'Finish this hand first' : 'You need ' + money(t.min) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
       row.append(bt);
     }
     list.append(row);
@@ -1979,10 +1981,21 @@ function tablesAfterHand(){
   // can't cover the minimum here: down to the best open table you can afford
   if (tableNo() > 0 && S.bankroll + S.bet < tableMin()){
     const from = tbl();
-    let to = 0; for (let i = tableNo() - 1; i >= 0; i--) if (canSit(i)){ to = i; break; }
+    let to = -1; for (let i = tableNo() - 1; i >= 0; i--) if (canSit(i)){ to = i; break; }
+    if (to < 0) return false;   // nowhere smaller fits your rank: the out-of-chips choices take over
     moveTo(to); render();
     later(() => { guyOffer = false; fenceSheet('Moved down', '🎩', 'You can’t cover the ' + money(from.min) + ' minimum at the ' + deckTable(from.d) + '. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
     return true;
+  }
+  // your rank's minimum is above this table's maximum: up to the smallest table that fits it
+  if (!bigEnough(tableNo())){
+    let to = -1; for (let i = tableNo() + 1; i < TABLES.length; i++) if (bigEnough(i)){ to = i; break; }
+    if (to >= 0){
+      const from = tbl(), rk = LEVELS[rankNo()].name;
+      openList()[to] = true; moveTo(to); render();
+      later(() => { guyOffer = false; fenceSheet('Moved up', '🥂', 'A ' + rk + '’s minimum bet is ' + money(life().minBet) + ', above the ' + money(from.max) + ' maximum at the ' + deckTable(from.d) + '. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: your bets ' + money(minBet()) + ' to ' + money(maxBet()) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
+      return true;
+    }
   }
   // newly opened tables
   let opened = -1;
