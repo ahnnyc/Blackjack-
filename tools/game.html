@@ -125,7 +125,7 @@ body.still :is(#levelBtn,.rankfish).lv6{animation:none}
 #limits{justify-self:start;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:16px;line-height:1.2;background:rgba(0,0,0,.15)}
 #limits .lt{letter-spacing:.08em;text-transform:uppercase}
 #limits #limitsV{font-weight:700;white-space:nowrap}
-#limits #oweV{font-weight:700;white-space:nowrap;border-top:1px dashed var(--gold);margin-top:2px;padding-top:1px}
+#oweV{font-size:17px;font-weight:700;white-space:nowrap;color:var(--gold);border:1.5px dashed var(--gold);border-radius:8px;padding:1px 7px}   /* what you owe, beside up/down */
 #shoeLabel{white-space:nowrap;text-align:center;font-size:16px;font-weight:600;color:var(--gold);line-height:1.1}
 #banner{position:absolute;left:50%;top:50%;z-index:4;transform:translate(-50%,-50%);pointer-events:none;
   width:max-content;max-width:98%;text-align:center;padding:6px 14px;border-radius:16px;
@@ -209,8 +209,8 @@ body.still #banner.pop{animation:none}
   padding:16px 18px 18px;
   display:flex;flex-direction:column;gap:14px
 }
-/* rank-up fireworks: a canvas under the message, which waits until the first bursts have gone up */
-#fwCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+/* rank-up fireworks: a canvas over the message, which waits until the first bursts have gone up */
+#fwCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}   /* over the message */
 #fenceSheet .panel{position:relative;z-index:1;transition:transform .45s cubic-bezier(.2,1.4,.4,1),opacity .3s}
 #fenceSheet.fw-wait .panel{opacity:0;transform:scale(.6);pointer-events:none}
 .panel > *, #sharkCtl > *{flex-shrink:0}   /* a long sheet scrolls; nothing in it gets squashed */
@@ -309,7 +309,7 @@ body.still .card.flip{animation:none}
   <main id="table">
     <div id="banner" hidden role="status" aria-live="polite"><span class="big" id="bannerBig"></span><span class="amt num" id="bannerAmt"></span></div>
     <div id="topRow">
-      <div id="limits"><span class="lt">Limits</span><span class="num" id="limitsV"></span><span class="num" id="oweV" hidden></span></div>
+      <div id="limits"><span class="lt">Limits</span><span class="num" id="limitsV"></span></div>
       <div class="zlabel" id="dealerLabel">Dealer</div>
       <div id="shoeBox"><div id="shoe" aria-hidden="true"></div><div id="shoeLabel" class="num"></div></div>
     </div>
@@ -335,7 +335,7 @@ body.still .card.flip{animation:none}
   </main>
 
   <footer id="ctl">
-    <div id="bank"><span id="levelBox"><button type="button" id="levelBtn" aria-label="Rank"></button><span id="levelPct" class="num"></span></span><span class="amt num" id="bankAmt" aria-label="Bankroll">$1,000</span><span class="pl num" id="plTag"></span></div>
+    <div id="bank"><span id="levelBox"><button type="button" id="levelBtn" aria-label="Rank"></button><span id="levelPct" class="num"></span></span><span class="amt num" id="bankAmt" aria-label="Bankroll">$1,000</span><span class="pl num" id="plTag"></span><span class="num" id="oweV" hidden></span></div>
     <div id="countBox" hidden><span>Running count <b class="num" id="rcV">0</b></span><span>True count <b class="num" id="tcV">0</b></span><span class="num" id="decksV"></span></div>
     <div id="msg" role="status" aria-live="polite"></div>
     <div id="actions"></div>
@@ -1457,8 +1457,8 @@ function render(){
   const short = v => v >= 1000 ? '$' + (v / 1000) + 'K' : '$' + v;
   $('limitsV').textContent = shortMoney(minBet()) + '–' + shortMoney(maxBet());
   const owe = cents(S.card + S.shark);
-  $('oweV').hidden = !owe; $('oweV').textContent = 'Owe ' + shortMoney(owe);
-  $('limits').setAttribute('aria-label', deckWord(tbl().d) + ' table, bets ' + money(minBet()) + ' to ' + money(maxBet()) + (owe ? '. You owe ' + money(owe) : '') + '. Tap to change table.');
+  $('oweV').hidden = !owe; $('oweV').textContent = 'Owe ' + money(owe); $('oweV').setAttribute('aria-label', 'You owe ' + money(owe));
+  $('limits').setAttribute('aria-label', deckWord(tbl().d) + ' table, bets ' + money(minBet()) + ' to ' + money(maxBet()) + '. Tap to change table.');
   // the result, big
   const ban = $('banner');
   if (R && R.phase === 'done' && R.net !== undefined){
@@ -2024,7 +2024,7 @@ function nextGoal(){
 }
 
 /* ---------- rank-up fireworks: bigger and more colorful the higher the rank ---------- */
-// Played behind the new-rank message, which waits until the first bursts are up (a tap shows it at once).
+// Played over the new-rank message, which waits until the first bursts are up (a tap shows it at once).
 // Off when Animations is off in Rules.
 const FW = [null,
   { shells:3,  parts:46,  size:1.0,  colors:['#ffffff','#d8e2e6'], kinds:['peony'] },
