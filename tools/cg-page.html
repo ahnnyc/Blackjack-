@@ -237,7 +237,7 @@ body.still #banner.pop{animation:none}
 #fenceSheet .panel{position:relative;z-index:1;transition:transform .45s cubic-bezier(.2,1.4,.4,1),opacity .3s}
 #fenceSheet.fw-wait .panel{opacity:0;transform:scale(.6);pointer-events:none}
 .sheet.arming .panel button{pointer-events:none}   /* a tap already on its way can't answer a message that just appeared */
-.panel > *, #sharkCtl > *{flex-shrink:0}   /* a long sheet scrolls; nothing in it gets squashed */
+.panel > *, #sharkCtl > *, #cardCtl > *{flex-shrink:0}   /* a long sheet scrolls; nothing in it gets squashed */
 .phead{display:flex;align-items:center;gap:10px}
 .phead h2{flex:1;margin:0;font-family:var(--f-display);font-size:26px;font-weight:700;color:var(--gold);text-wrap:balance}
 .note{color:var(--muted);font-size:16px;margin:0}
@@ -278,7 +278,8 @@ body.still #banner.pop{animation:none}
 .amt-in span{font-size:24px;color:var(--gold)}
 .amt-in input{flex:1;min-width:0;background:none;border:0;color:var(--text);font:inherit;font-size:24px;font-weight:700;outline:none}
 .err{color:var(--bad);font-size:16px;margin:0}
-#sharkCtl{display:flex;flex-direction:column;gap:14px}
+#sharkCtl, #cardCtl{display:flex;flex-direction:column;gap:14px}
+#sharkCtl[hidden], #cardCtl[hidden], #sharkTap[hidden]{display:none}
 .amt-in .clr{flex:none;min-height:40px;padding:0 14px;border-radius:20px;border:1.5px solid var(--line);background:none;font-size:16px;color:var(--text)}
 .amt-in .clr:disabled,.seg button:disabled{opacity:.45;border-style:dashed;cursor:default}
 .empty{color:var(--muted);font-size:16px;padding:10px 0}
@@ -426,15 +427,18 @@ body.still .card.flip{animation:none}
     <div class="gtitle">Each day</div>
     <div class="exp" id="expList"></div>
     <div class="gtitle">Borrowing</div>
-    <p class="note">Tap amounts to add them up.</p>
     <div class="gtitle" id="cardH">Credit</div>
     <p class="note num" id="cardNote"></p>
-    <div class="seg" id="cardPresets"></div>
-    <div class="amt-in"><span>$</span><input id="cardInput" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="Dollars, credit card"><button class="clr" type="button" id="cardClear">Clear</button></div>
-    <div class="row"><button class="btn" type="button" id="cardPay">Pay back</button><button class="btn primary" type="button" id="cardBorrow">Borrow</button></div>
+    <div id="cardCtl">
+      <p class="note">Tap amounts to add them up.</p>
+      <div class="seg" id="cardPresets"></div>
+      <div class="amt-in"><span>$</span><input id="cardInput" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="Dollars, credit card"><button class="clr" type="button" id="cardClear">Clear</button></div>
+      <div class="row"><button class="btn" type="button" id="cardPay">Pay back</button><button class="btn primary" type="button" id="cardBorrow">Borrow</button></div>
+    </div>
     <div class="gtitle">Juice man</div>
     <p class="note num" id="sharkNote"></p>
     <div id="sharkCtl">
+      <p class="note" id="sharkTap">Tap amounts to add them up.</p>
       <div class="seg" id="sharkPresets"></div>
       <div class="amt-in"><span>$</span><input id="sharkInput" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="Dollars, juice man"><button class="clr" type="button" id="sharkClear">Clear</button></div>
       <div class="row"><button class="btn" type="button" id="sharkPay">Pay back</button><button class="btn primary" type="button" id="sharkBorrow">Borrow</button></div>
@@ -1960,10 +1964,12 @@ function cashierLabels(){
   const cb = Math.min(cv, maxCash(cardLeft())), cp = Math.min(cv, S.card, S.bankroll);
   $('cardBorrow').textContent = cb > 0 ? 'Borrow ' + money(cb) + ' (+' + money(cashFee(cb)) + ' fee)' : 'Borrow';
   $('cardPay').textContent = cp > 0 ? 'Pay back ' + money(cp) : 'Pay back';
+  $('cardCtl').hidden = !S.line;   // no credit line: no amount box or buttons that can't be used
   $('cardBorrow').disabled = cb <= 0; $('cardPay').disabled = cp <= 0; $('cardClear').disabled = cv <= 0;
   // juice man
   const open = cardMaxed() || S.shark > 0;
   $('sharkCtl').hidden = !open;
+  $('sharkTap').hidden = !!S.line;   // the hint shows once, on the first set of amounts on screen
   if (!open) $('sharkNote').textContent = 'He only lends once you have no room left on your credit.';
   else if (S.shark > 0){
     const left = Math.max(0, S.sharkNext - n);
