@@ -1,5 +1,5 @@
 // The money side, after the rank rework: the $1,000 start, prestige from play, Guy's rank offers (a thing, a deal,
-// a home, a credit line), borrowing on a line, interest once a day, the daily bills and the sponsor, the moneylender
+// a home, a credit line), borrowing on a line, interest once a day, the daily bills and the sponsor, the juice man
 // (cut, taking stuff, the grave), out of chips, leaving town, the Stuff cards, and the books adding up.
 // Usage: node tools/cg-test.js   (reads tools/game.html)
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
@@ -96,7 +96,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await p.evaluate(() => { __bj.S.card = 0; __bj.S.playPres = 5000; __bj.render(); }); await closeAll();
   check('rankMinimum', (await p.evaluate(() => [__bj.rankNo(), __bj.minBet()])).join() === '2,5', await p.evaluate(() => [__bj.rankNo(), __bj.minBet()]));
   check('limitsSign', /\$5–\$500/.test(await p.textContent('#limitsV')), await p.textContent('#limitsV'));
-  // 8) the moneylender: takes stuff when you can't pay, the grave when stuff can't cover it
+  // 8) the juice man: takes stuff when you can't pay, the grave when stuff can't cover it
   await p.evaluate(() => { const S = __bj.S; S.card = S.line.limit; S.shark = 2000; S.sharkNext = __bj.history.filter(x => x.s === S.session).length + 1; S.bankroll = 60; S.stash.push({ id: 'z', oid: 'watch', item: 'a gold watch', art: '⌚', paid: 2500 }); __bj.render(); });
   await playHand(); await p.waitForTimeout(500);
   check('sharkTookStuff', /took .*gold watch/.test(await sheet() || ''), await sheet()); await closeAll();

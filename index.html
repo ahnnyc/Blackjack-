@@ -422,11 +422,11 @@ body.still .card.flip{animation:none}
     <div class="seg" id="cardPresets"></div>
     <div class="amt-in"><span>$</span><input id="cardInput" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="Dollars, credit card"><button class="clr" type="button" id="cardClear">Clear</button></div>
     <div class="row"><button class="btn" type="button" id="cardPay">Pay back</button><button class="btn primary" type="button" id="cardBorrow">Borrow</button></div>
-    <div class="gtitle">Moneylender</div>
+    <div class="gtitle">Juice man</div>
     <p class="note num" id="sharkNote"></p>
     <div id="sharkCtl">
       <div class="seg" id="sharkPresets"></div>
-      <div class="amt-in"><span>$</span><input id="sharkInput" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="Dollars, moneylender"><button class="clr" type="button" id="sharkClear">Clear</button></div>
+      <div class="amt-in"><span>$</span><input id="sharkInput" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="Dollars, juice man"><button class="clr" type="button" id="sharkClear">Clear</button></div>
       <div class="row"><button class="btn" type="button" id="sharkPay">Pay back</button><button class="btn primary" type="button" id="sharkBorrow">Borrow</button></div>
     </div>
     <p class="err" id="cashErr" hidden></p>
@@ -495,7 +495,7 @@ const chipLabel = v => v >= 1000 ? (v / 1000) + 'K' : String(v);
 const deckWord = d => d + (d === 1 ? ' deck' : ' decks');
 const deckTable = d => d + '-deck table';
 // Money: you walk in with $1,000. Credit only comes as one of Offers (a line with interest once a day);
-// when there is no room left on it, the moneylender.
+// when there is no room left on it, the juice man.
 const START = 1000;
 const SHARK_RATE = 0.20, SHARK_EVERY = 5, SHARK_MAX = 250000;     // he takes 20% of what you owe every 5 hands
 const pct = r => Math.round(r * 100) + '%';
@@ -1679,8 +1679,8 @@ function renderRecord(){
   const mealsPaid = sum('meal'), roomsPaid = sum('room'), sponsorPaid = sum('sponsor'), interestPaid = cents(cs.filter(c => c.k === 'cardint').reduce((a, c) => a + (c.amt || 0), 0)), comped = cents(cs.filter(c => c.k === 'comp').reduce((a, c) => a + (c.amt || 0), 0));
   const died = cs.filter(c => c.k === 'dead').length;
   $('sessionNote').textContent = scope === 'session'
-    ? 'Game ' + S.session + ', started ' + new Date(sess ? sess.at : Date.now()).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) + ' with ' + money(sess ? sess.start : START) + '. Now ' + money(S.bankroll) + (S.card + S.shark ? ', owing ' + money(cents(S.card + S.shark)) : '') + '.' + (S.dead ? ' The moneylender killed you.' : '')
-    : S.sessions.length + (S.sessions.length === 1 ? ' game' : ' games') + ' so far, ' + history.length + ' hands in all.' + (died ? ' The moneylender got you ' + (died === 1 ? 'once.' : died + ' times.') : '');
+    ? 'Game ' + S.session + ', started ' + new Date(sess ? sess.at : Date.now()).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' }) + ' with ' + money(sess ? sess.start : START) + '. Now ' + money(S.bankroll) + (S.card + S.shark ? ', owing ' + money(cents(S.card + S.shark)) : '') + '.' + (S.dead ? ' The juice man killed you.' : '')
+    : S.sessions.length + (S.sessions.length === 1 ? ' game' : ' games') + ' so far, ' + history.length + ' hands in all.' + (died ? ' The juice man got you ' + (died === 1 ? 'once.' : died + ' times.') : '');
   drawChart(history.filter(r => r.s === S.session), 'session', '1', cashList().filter(c => c.s === S.session));
   drawChart(history, 'all', '2', cashList());
   const s = stats(list);
@@ -1704,7 +1704,7 @@ function renderRecord(){
       const c = it.c;
       const title = { buy:'Bought ' + c.item, sell:'Sold ' + c.item, seized:'Security took ' + c.item,
         card:'Borrowed on your credit', cardpay:'Paid back your credit', cardint:'Interest on your credit',
-        shark:'Borrowed from the moneylender', sharkpay:'Paid the moneylender', vig:'The moneylender’s cut', dead:'Killed by the moneylender', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), cardfee:'Cash advance fee', gift:'Welcome gift for reaching ' + (c.what || 'a new rank'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left', sharktook:'The moneylender took ' + (c.item || 'something'), sponsor:'Paid by your sponsor, ' + (c.what || ''), nosponsor:'No sponsor pay: under 95% right moves', line:'New credit: ' + (c.what || '') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
+        shark:'Borrowed from the juice man', sharkpay:'Paid the juice man', vig:'The juice man’s cut', dead:'Killed by the juice man', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), cardfee:'Cash advance fee', gift:'Welcome gift for reaching ' + (c.what || 'a new rank'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left', sharktook:'The juice man took ' + (c.item || 'something'), sponsor:'Paid by your sponsor, ' + (c.what || ''), nosponsor:'No sponsor pay: under 95% right moves', line:'New credit: ' + (c.what || '') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
       when.textContent = title + ' · ' + stamp(c.t);
       const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
       const what = document.createElement('div'); what.className = 'what num';
@@ -1809,7 +1809,7 @@ function drawChart(list, scope, n, cash){
 const cashList = () => S.cash || (S.cash = []);
 function inPlay(){ return S.round && R ? cents(R.hands.reduce((a, h) => a + h.bet, 0) + (R.ins || 0)) : 0; }
 const handsThisGame = () => history.reduce((a, r) => a + (r.s === S.session ? 1 : 0), 0);
-// Credit comes only from a line offered to you; prestige still loosens the moneylender.
+// Credit comes only from a line offered to you; prestige still loosens the juice man.
 const lineName = () => S.line ? S.line.name.replace(/^(a|an) /, 'your ') : 'credit';
 const cardLimit = () => S.line ? S.line.limit : 0;
 const cardRate = () => S.line ? S.line.rate : 0;
@@ -1837,7 +1837,7 @@ function showMove(before, from, to){
   if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
 }
 
-/* ---------- cashier: the credit card and the moneylender ---------- */
+/* ---------- cashier: the credit card and the juice man ---------- */
 function openCashier(){
   if (S.dead) return;
   hideSheets();
@@ -1879,7 +1879,7 @@ function cashierLabels(){
   $('cardBorrow').textContent = cb > 0 ? 'Borrow ' + money(cb) + ' (+' + money(cashFee(cb)) + ' fee)' : 'Borrow';
   $('cardPay').textContent = cp > 0 ? 'Pay back ' + money(cp) : 'Pay back';
   $('cardBorrow').disabled = cb <= 0; $('cardPay').disabled = cp <= 0; $('cardClear').disabled = cv <= 0;
-  // moneylender
+  // juice man
   const open = cardMaxed() || S.shark > 0;
   $('sharkCtl').hidden = !open;
   if (!open) $('sharkNote').textContent = 'He only lends once you have no room left on your credit.';
@@ -1905,7 +1905,7 @@ function borrow(who){
   const before = moneyMove(amt, who);
   hideSheets(); render();
   showMove(before, $('openCashier'), $('bankAmt'));
-  say('Borrowed ' + money(amt) + (who === 'card' ? ' on ' + lineName() + ', plus a ' + money(fee) + ' fee.' : ' from the moneylender.'));
+  say('Borrowed ' + money(amt) + (who === 'card' ? ' on ' + lineName() + ', plus a ' + money(fee) + ' fee.' : ' from the juice man.'));
   tablesAfterHand();   // borrowed chips count toward opening a table
 }
 function payBack(who){
@@ -1918,7 +1918,7 @@ function payBack(who){
   const before = moneyMove(-amt, who + 'pay');
   hideSheets(); render();
   showMove(before, $('bankAmt'), $('openCashier'));
-  say('Paid back ' + money(amt) + (who === 'shark' && !S.shark ? '. The moneylender is paid off.' : '.'));
+  say('Paid back ' + money(amt) + (who === 'shark' && !S.shark ? '. The juice man is paid off.' : '.'));
   tablesAfterHand();
 }
 
@@ -1935,7 +1935,7 @@ function debtsAfterHand(){
       const before = moneyMove(-cut, 'vig');
       S.sharkNext = n + SHARK_EVERY;
       render(); showMove(before, $('bankAmt'), $('openCashier'));
-      say('The moneylender took his cut: ' + money(cut) + '.');
+      say('The juice man took his cut: ' + money(cut) + '.');
     } else if (stashList().reduce((a, x) => a + (x.paid || 0), 0) >= cut){
       // he takes stuff instead, the most valuable first, until it covers his cut (he keeps any extra)
       const list = stashList().slice().sort((a, b) => (b.paid || 0) - (a.paid || 0)), took = [];
@@ -1945,7 +1945,7 @@ function debtsAfterHand(){
       took.forEach(x => cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'sharktook', item: x.item, paid: x.paid }));
       S.sharkNext = n + SHARK_EVERY;
       touch(); saveLocal(); saveCloudState(); render();
-      queueSheet(() => { guyOffer = false; fenceSheet('The moneylender', '🕴️', 'You couldn’t pay his <b>' + money(cut) + '</b> cut, so he took ' + took.map(x => '<b>' + esc(x.item) + '</b>').join(', ').replace(/, ([^,]*)$/, ' and $1') + ' instead (worth ' + money(got) + ').', [btn('OK', () => hideSheets(), { primary:true })]); });
+      queueSheet(() => { guyOffer = false; fenceSheet('The juice man', '🕴️', 'You couldn’t pay his <b>' + money(cut) + '</b> cut, so he took ' + took.map(x => '<b>' + esc(x.item) + '</b>').join(', ').replace(/, ([^,]*)$/, ' and $1') + ' instead (worth ' + money(got) + ').', [btn('OK', () => hideSheets(), { primary:true })]); });
     } else {
       S.dead = { t: Date.now(), cut, chips: S.bankroll, owed: cents(S.shark + S.card), hands: n, stuff: stashList().length, game: S.session };
       cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'dead', amt: cut });
@@ -1959,7 +1959,7 @@ function debtsAfterHand(){
     queueSheet(() => {
       if (!(S.shark > 0 && S.sharkNext - handsThisGame() === 1 && S.bankroll < sharkCut())) return pumpSheets(0);   // no longer true
       guyOffer = false;
-      fenceSheet('The moneylender', '🕴️', 'After your next hand the moneylender takes <b>' + money(sharkCut()) + '</b>. You have ' + money(S.bankroll) + '. If you can’t pay, he takes your stuff. With nothing to take, the game is over.',
+      fenceSheet('The juice man', '🕴️', 'After your next hand the juice man takes <b>' + money(sharkCut()) + '</b>. You have ' + money(S.bankroll) + '. If you can’t pay, he takes your stuff. With nothing to take, the game is over.',
         [btn('Sell stuff', () => openStuff()), btn('OK', () => hideSheets(), { primary:true })]);
     });
     return true;
@@ -1970,7 +1970,7 @@ function showDead(){
   if (!S.dead) return;
   const d = S.dead;
   hideSheets();
-  $('deadText').innerHTML = 'You couldn’t pay the moneylender his <b>' + money(d.cut) + '</b> cut, and your stuff wasn’t worth enough to cover it. You end up in a shallow grave in the desert.<br><br>' +
+  $('deadText').innerHTML = 'You couldn’t pay the juice man his <b>' + money(d.cut) + '</b> cut, and your stuff wasn’t worth enough to cover it. You end up in a shallow grave in the desert.<br><br>' +
     'You lasted ' + d.hands + (d.hands === 1 ? ' hand' : ' hands') + ' and owed ' + money(d.owed) + '.';
   $('deadSheet').hidden = false;
 }
@@ -2200,7 +2200,7 @@ function openBank(first, leave){
 }
 
 /* ---------- out of chips: what you can borrow ---------- */
-// Shown each time the chips run out, so the credit card and the moneylender come up when they're needed.
+// Shown each time the chips run out, so the credit card and the juice man come up when they're needed.
 function brokeAfterHand(){
   if (S.dead || S.round || S.bet || S.bankroll >= minBet()) return;
   queueSheet(() => {
@@ -2208,7 +2208,7 @@ function brokeAfterHand(){
     guyOffer = false;
     let text;
     if (!cardMaxed()) text = 'Borrow, or leave town and start over from the beginning. You can borrow up to ' + money(cardLeft()) + ' on ' + lineName() + ', at ' + pct(cardRate()) + ' interest a day.';
-    else if (sharkLeft() >= 1) text = (S.line ? 'No room left on your credit. ' : 'You have no credit yet. ') + 'A moneylender will lend up to ' + money(sharkLeft()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of what you owe from your chips. If you can’t pay, he takes your stuff; with nothing to take, the game is over.';
+    else if (sharkLeft() >= 1) text = (S.line ? 'No room left on your credit. ' : 'You have no credit yet. ') + 'A juice man will lend up to ' + money(sharkLeft()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of what you owe from your chips. If you can’t pay, he takes your stuff; with nothing to take, the game is over.';
     else text = 'You can’t borrow any more. Sell your stuff, or leave town and start over from the beginning.';
     fenceSheet('Out of chips', '💸', text, [btn('Leave town', () => openBank(false, true)), btn('Borrow', () => { hideSheets(); openCashier(); }, { primary:true, disabled: !canBorrow() })]);
   });
@@ -2389,7 +2389,7 @@ function saveLines(o){
 function creditLines(o){
   const out = ['Borrow up to ' + (o.limit >= 1e11 ? 'any amount' : money(o.limit)) + ', at ' + pct(o.rate) + ' interest a day on what you owe.', 'Each cash withdrawal costs ' + pct(CASH_FEE) + ' (at least ' + money(CASH_FEE_MIN) + '), added to what you owe.'];
   if (S.line) out.push('Replaces ' + esc(S.line.name) + ' (' + (S.line.limit >= 1e11 ? 'no limit' : money(S.line.limit)) + ' at ' + pct(S.line.rate) + ' a day). What you owe carries over.');
-  else out.push('Your first credit. Without it, only the moneylender lends.');
+  else out.push('Your first credit. Without it, only the juice man lends.');
   return out;
 }
 // the offers you could get now: your rank's first, then any you skipped at lower ranks
@@ -2560,7 +2560,7 @@ function cardFly(x){
 }
 
 function hideSheets(){ fwStop(); document.querySelectorAll('.sheet').forEach(s => s.hidden = true); pumpSheets(300); }
-// Things that pop up between hands (offers, bills, sponsors, a new table, the moneylender's warning)
+// Things that pop up between hands (offers, bills, sponsors, a new table, the juice man's warning)
 // wait in line here. Each shows at the next pause; if you've already started the next hand, it waits for
 // the end of that one. Nothing is thrown away.
 const sheetQueue = [];
