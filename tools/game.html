@@ -516,7 +516,10 @@ const PEOPLE = {
   candy: { name:'eye candy', fee:300,  prestige:5000,  art:'💃🕺' },
   crew:  { name:'entourage', fee:2500, prestige:25000, art:'👯' },
 };
-// Offers, by rank. rank: raises your prestige; save: cuts a daily cost (homes, cars and the chef for good,
+// Offers, by rank. Below Whale, homes, cars and a chef are rentals for a set number of days (anywhere:true: they keep
+// working if you change rank, and don't count toward your rank); at Whale a penthouse and a limo are real purchases at
+// real prices, which count toward your rank. retired: no longer offered, but still works for anyone who already has it.
+// rank: raises your prestige; save: cuts a daily cost (homes, cars and the chef for good,
 // deals for a set number of days); credit: a line of credit; people: eye candy or an entourage.
 const OFFERS = [
   { id:'mealdeal',  rank:0, kind:'save',   art:'🍔', name:'a weekly meal deal',         price:120,     covers:'meals', days:7 },
@@ -526,20 +529,25 @@ const OFFERS = [
   { id:'buspass',   rank:1, kind:'save',   art:'🚌', name:'a monthly bus pass',         price:60,      covers:'ride', days:30 },
   { id:'suit',      rank:1, kind:'rank',   art:'👔', name:'a tailored suit',            price:600 },
   { id:'card',      rank:1, kind:'credit', art:'💳', name:'a credit card',              limit:10000,   rate:0.05 },
-  { id:'apartment', rank:2, kind:'save',   art:'🏢', name:'an apartment',               price:2500,    covers:'room', keep:true },
-  { id:'usedcar',   rank:2, kind:'save',   art:'🚗', name:'a used car',                 price:4000,    covers:'ride', keep:true },
+  { id:'dinerplan', rank:2, kind:'save',   art:'🍽️', name:'a weekly meal plan at the diner', price:250, covers:'meals', days:7 },
+  { id:'apartment', rank:2, retired:true, kind:'save',   art:'🏢', name:'an apartment',               price:2500,    covers:'room', keep:true },
+  { id:'usedcar',   rank:2, retired:true, kind:'save',   art:'🚗', name:'a used car',                 price:4000,    covers:'ride', keep:true },
   { id:'watch',     rank:2, kind:'rank',   art:'⌚', name:'a gold watch',               price:2500 },
   { id:'card2',     rank:2, kind:'credit', art:'💳', name:'a bigger credit card',       limit:25000,   rate:0.05 },
-  { id:'condo',     rank:3, kind:'save',   art:'🏙️', name:'a condo',                    price:8000,    covers:'room', keep:true },
-  { id:'newcar',    rank:3, kind:'save',   art:'🚙', name:'a new car',                  price:30000,   covers:'ride', keep:true },
+  { id:'carrental', rank:3, kind:'save',   art:'🚗', name:'a rental car', title:'Rent a car for a month', price:900, covers:'ride', days:30, anywhere:true },
+  { id:'condo',     rank:3, retired:true, kind:'save',   art:'🏙️', name:'a condo',                    price:8000,    covers:'room', keep:true },
+  { id:'newcar',    rank:3, retired:true, kind:'save',   art:'🚙', name:'a new car',                  price:30000,   covers:'ride', keep:true },
   { id:'ring',      rank:3, kind:'rank',   art:'💍', name:'a diamond ring',             price:8000 },
   { id:'gold',      rank:3, kind:'credit', art:'💳', name:'a gold card',                limit:50000,   rate:0.04 },
-  { id:'chef',      rank:4, kind:'save',   art:'🧑‍🍳', name:'a personal chef',           price:15000,   covers:'meals', keep:true },
-  { id:'luxcar',    rank:4, kind:'save',   art:'🏎️', name:'a luxury car',               price:90000,   covers:'ride', keep:true },
+  { id:'condorent', rank:4, kind:'save',   art:'🏙️', name:'a rented condo', title:'Rent a condo for a month', price:15000, covers:'room', days:30, anywhere:true },
+  { id:'carlease',  rank:4, kind:'save',   art:'🏎️', name:'a leased luxury car', title:'Lease a luxury car for a month', price:6000, covers:'ride', days:30, anywhere:true },
+  { id:'chefhire',  rank:4, kind:'save',   art:'🧑‍🍳', name:'a hired chef', title:'Hire a personal chef for a month', price:9000, covers:'meals', days:30, anywhere:true },
+  { id:'chef',      rank:4, retired:true, kind:'save',   art:'🧑‍🍳', name:'a personal chef',           price:15000,   covers:'meals', keep:true },
+  { id:'luxcar',    rank:4, retired:true, kind:'save',   art:'🏎️', name:'a luxury car',               price:90000,   covers:'ride', keep:true },
   { id:'candy',     rank:4, kind:'people' },
   { id:'marker',    rank:4, kind:'credit', art:'📜', name:'a casino marker',            limit:100000,  rate:0.03 },
-  { id:'penthouse', rank:5, kind:'save',   art:'🌆', name:'a penthouse',                price:100000,  covers:'room', keep:true },
-  { id:'limo',      rank:5, kind:'save',   art:'🚘', name:'your own limo and driver',   price:250000,  covers:'ride', keep:true },
+  { id:'penthouse', rank:5, kind:'save',   art:'🌆', name:'a penthouse', title:'Buy a penthouse', price:3000000,  covers:'room', keep:true },
+  { id:'limo',      rank:5, kind:'save',   art:'🚘', name:'your own limo', title:'Buy your own limo', price:400000,  covers:'ride', keep:true },
   { id:'crew',      rank:5, kind:'people' },
   { id:'marker2',   rank:5, kind:'credit', art:'📜', name:'a bigger casino marker',     limit:1000000, rate:0.03 },
   { id:'jet',       rank:6, kind:'rank',   art:'🛩️', name:'a private jet',              price:5000000 },
@@ -807,9 +815,9 @@ function rankPct(p = prestige()){
 }
 function rankStand(p = prestige()){ const nx = LEVELS[levelOf(p) + 1]; return nx ? rankPct(p) + '% of the way to ' + nx.name : 'the top rank'; }
 // What reaching each rank gets you (its offers and its life), said in offers so a purchase has a reason.
-const RANK_GETS = ['', '$100 in free chips, breakfast comped every day and a $10,000 credit card', '$500 in free chips, your room at half price, your own apartment, a used car and a $25,000 credit card',
-  '$1,000 in free chips, your room comped, a new car and a $50,000 gold card', 'a sponsor who pays most of your bills, a personal chef, eye candy and a $100,000 casino marker',
-  'a penthouse, your own limo, an entourage and a $1,000,000 casino marker', 'everything comped: the penthouse, your meals and a private car and driver'];
+const RANK_GETS = ['', '$100 in free chips, breakfast comped every day and a $10,000 credit card', '$500 in free chips, your room at half price and a $25,000 credit card',
+  '$1,000 in free chips, your room comped and a $50,000 gold card', 'a sponsor who pays most of your bills, eye candy, a condo, car and chef to rent by the month, and a $100,000 casino marker',
+  'a penthouse and a limo of your own to buy, an entourage and a $1,000,000 casino marker', 'everything comped: the penthouse, your meals and a private car and driver'];
 function debtCost(){
   const things = (S.stash || []).reduce((a, x) => a + (x.paid || 0), 0);
   return Math.floor(DEBT_WEIGHT * Math.max(0, cents((S.card || 0) + (S.shark || 0)) - things));
@@ -819,13 +827,15 @@ const owns = id => (S.stash || []).some(x => x.oid === id);
 const dealOn = id => S.deals && S.deals[id] > handsThisGame();
 // a deal covers only the place it was bought for: the hostel rate pays for the hostel, not a room at the casino
 const COVER_FIELD = { room:'stay', ride:'go', meals:'eat' };
-const dealHere = o => dealOn(o.id) && LIFE[o.rank][COVER_FIELD[o.covers]] === life()[COVER_FIELD[o.covers]];
+const dealHere = o => dealOn(o.id) && (o.anywhere || LIFE[o.rank][COVER_FIELD[o.covers]] === life()[COVER_FIELD[o.covers]]);
 const coversNow = o => o.keep ? owns(o.id) : dealHere(o);
 function covered(what){
   return OFFERS.some(o => o.covers === what && coversNow(o));
 }
+const coverOffer = what => OFFERS.find(o => o.covers === what && coversNow(o));
+const yourOwn = what => { const o = coverOffer(what); return !!o && (o.keep || o.anywhere); };   // a home, car or chef of your own, bought or rented
 function coverName(what){
-  const o = OFFERS.find(o => o.covers === what && coversNow(o));
+  const o = coverOffer(what);
   return o ? o.name.replace(/^(a|an) /, 'your ') : '';
 }
 const cur = () => R && R.hands[R.active];
@@ -2119,10 +2129,9 @@ function lifeLine(i){
   const L = LIFE[i];
   if (L.comped) return 'You live in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
   {
-    const homeOwned = covered('room') && OFFERS.some(o => o.covers === 'room' && o.keep && owns(o.id));
-    const carOwned = covered('ride') && OFFERS.some(o => o.covers === 'ride' && o.keep && owns(o.id));
+    const homeOwned = yourOwn('room'), carOwned = yourOwn('ride');
     const stay = homeOwned ? 'live in ' + coverName('room') : 'stay ' + stayAt(L) + (covered('room') ? ' on ' + coverName('room') : L.roomComp ? ' (comped)' : L.roomRate ? ' (half price)' : '');
-    const chef = covered('meals') && OFFERS.some(o => o.covers === 'meals' && o.keep && owns(o.id));
+    const chef = yourOwn('meals');
     const eat = chef ? 'have ' + coverName('meals') + ' cook for you' : 'eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat + (covered('meals') ? ' on ' + coverName('meals') : L.freeMeal === 0 ? ' (breakfast comped)' : '');
     const go = carOwned ? 'get around in ' + coverName('ride') : L.ride <= 0 ? 'walk everywhere' : 'get around by ' + L.go.replace(/^(a|an) /, '') + (covered('ride') ? ' on ' + coverName('ride') : '');
     const cost = (covered('room') ? 0 : roomPrice(L)) + (covered('ride') ? 0 : L.ride) + (covered('meals') ? 0 : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0));
@@ -2340,7 +2349,7 @@ function saveLines(o){
   if (covered(o.covers)) out.push('You already pay nothing for ' + what + '.');
   else if (per <= 0) out.push('You pay nothing for ' + what + ' at this rank' + (o.keep ? ', but it keeps working when you rank up.' : '.'));
   else if (o.days){ const worth = per * o.days; out.push('Covers ' + what + ' for ' + o.days + ' days: ' + money(worth) + ' of bills for ' + money(o.price) + (worth > o.price ? ', saving ' + money(worth - o.price) : '') + '.'); }
-  else out.push('No more paying for ' + what + ' (now ' + money(per) + ' a day). Pays for itself in ' + Math.ceil(o.price / per) + ' days, and keeps working when you rank up.');
+  else out.push('No more paying for ' + what + ' (now ' + money(per) + ' a day). Pays for itself in ' + Math.ceil(o.price / per).toLocaleString('en-US') + ' days, and keeps working when you rank up.');
   if (o.keep) out.push(...prestigeLines(o.price));
   return out;
 }
@@ -2354,7 +2363,7 @@ function creditLines(o){
 function availableOffers(){
   const r = rankNo();
   return OFFERS.filter(o => {
-    if (o.rank > r) return false;
+    if (o.rank > r || o.retired) return false;
     if (o.kind === 'people') return rules().host && !people()[o.id];
     if (o.kind === 'credit') return !S.line || o.limit > S.line.limit;
     if (o.kind === 'save' && !o.keep) return !covered(o.covers) && o.price <= S.bankroll && o.rank === r;   // deals only at their own rank
@@ -2394,7 +2403,7 @@ function fenceOffer(o){
   if (o.kind === 'credit') return fenceSheet(cap1(o.name.replace(/^(a|an) /, '')), o.art, 'A line of credit.' + bullets(creditLines(o)),
     [btn('No thanks', () => guyDecline()), btn('Take it', () => takeLine(o), { primary:true })]);
   const lines = o.kind === 'save' ? saveLines(o) : prestigeLines(o.price);
-  fenceSheet(cap1(o.name.replace(/^(a|an) /, '')), o.art, 'Price: <b>' + money(o.price) + '</b>' + (o.days ? ' for ' + o.days + ' days' : '') + '.' + bullets(lines),
+  fenceSheet(o.title || cap1(o.name.replace(/^(a|an) /, '')), o.art, 'Price: <b>' + money(o.price) + '</b>' + (o.days ? ' for ' + o.days + ' days' : '') + '.' + bullets(lines),
     [btn('No thanks', () => guyDecline()), btn('Buy for ' + money(o.price), () => fenceBuy(o), { primary:true })]);
 }
 function guyDecline(){ guyOffer = false; hideSheets(); }
