@@ -131,7 +131,14 @@ body.still :is(#levelBtn,.rankfish).lv6{animation:none}
 #limits{justify-self:start;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:16px;line-height:1.2;background:rgba(0,0,0,.15)}
 #limits .lt{letter-spacing:.08em;text-transform:uppercase}
 #limits #limitsV{font-weight:700;white-space:nowrap}
-/* the Expenses screen: what each day costs, line by line */
+/* the Expenses screen: what each day costs, line by line; a line you can change is a button with an arrow */
+.exp button.er{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:17px;cursor:pointer;width:100%}
+.exp button.er:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.exp button.er .amt{color:var(--gold)}
+.opt{display:flex;flex-direction:column;gap:8px}
+.opt .btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:10px 14px;min-height:56px;font-size:17px}
+.opt .btn small{font-size:16px;font-weight:400;color:var(--muted)}
+.eff{margin:10px 0 0;font-size:17px;line-height:1.4}
 .exp{display:flex;flex-direction:column;gap:2px}
 .exp .er{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:17px}
 .exp .er .what{min-width:0}
@@ -760,7 +767,7 @@ function migrate(){
 function freshState(amount = START){
   return { v:2, settings:{ decks:8, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
-    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, level:0, gifted:0, line:null, playPres:0, deals:{}, day:{ ok:0, all:0, bills:0 }, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
+    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, level:0, gifted:0, choice:{}, line:null, playPres:0, deals:{}, day:{ ok:0, all:0, bills:0 }, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
 const rules = () => S.settings.rules;
 
@@ -1866,8 +1873,8 @@ function openCashier(){
   $('cashSheet').hidden = false;
 }
 function expenseRows(){
-  const L = life(), rows = [];
-  const add = (what, note, amt) => rows.push({ what, note, amt });
+  const L = livingL(), rows = [];
+  const add = (what, note, amt, tap) => rows.push({ what, note, amt, tap });
   // what you have for each daily need: something you own, a rental, a deal, or the rank's own
   const has = (w, place) => { const o = coverOffer(w); if (!o) return ''; const bare = o.name.replace(/^(a|an|your own) /, '');
     return o.keep ? 'The ' + bare + ' you own' : o.anywhere ? cap1(o.name) : cap1(place) + ', on ' + coverName(w); };
@@ -1875,13 +1882,13 @@ function expenseRows(){
   else {
     const mealCost = [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0);
     add('Room', has('room', L.stay) || cap1(L.stay) + (L.roomComp ? ', comped by the casino' : L.roomRate ? ', half price' : ''),
-      covered('room') || L.room <= 0 ? 'free' : L.roomComp ? 'comped' : money(roomPrice(L)));
-    add('Meals', has('meals', L.eat) || cap1(L.eat) + (L.freeMeal === 0 ? ', breakfast comped' : ''), covered('meals') ? 'free' : money(mealCost));
-    add('Getting around', has('ride', L.go) || cap1(L.go), covered('ride') || L.ride <= 0 ? 'free' : money(L.ride));
+      covered('room') || L.room <= 0 ? 'free' : L.roomComp ? 'comped' : money(roomPrice(L)), !covered('room') && choicesFor('room').length > 1 ? 'room' : '');
+    add('Meals', has('meals', L.eat) || cap1(L.eat) + (L.freeMeal === 0 ? ', breakfast comped' : ''), covered('meals') ? 'free' : money(mealCost), !covered('meals') && choicesFor('meals').length > 1 ? 'meals' : '');
+    add('Getting around', has('ride', L.go) || cap1(L.go), covered('ride') || L.ride <= 0 ? 'free' : money(L.ride), !covered('ride') && choicesFor('ride').length > 1 ? 'ride' : '');
   }
   const p = people();
-  if (p.candy) add('Eye candy', 'with you', money(PEOPLE.candy.fee));
-  if (p.crew) add('Entourage', 'with you', money(PEOPLE.crew.fee));
+  if (p.candy) add('Eye candy', 'with you', money(PEOPLE.candy.fee), 'candy');
+  if (p.crew) add('Entourage', 'with you', money(PEOPLE.crew.fee), 'crew');
   if (S.card > 0 && S.line) add('Interest', pct(cardRate()) + ' a day on the ' + money(S.card) + ' you owe on ' + lineName(), money(cardInterest()));
   const total = cents((L.comped ? 0 : (covered('room') ? 0 : roomPrice(L)) + (covered('meals') ? 0 : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0)) + (covered('ride') ? 0 : L.ride))
     + (p.candy ? PEOPLE.candy.fee : 0) + (p.crew ? PEOPLE.crew.fee : 0) + (S.card > 0 && S.line ? cardInterest() : 0));
@@ -1892,12 +1899,40 @@ function expenseRows(){
 function renderExpenses(){
   const box = $('expList'); box.replaceChildren();
   for (const x of expenseRows()){
-    const row = document.createElement('div'); row.className = 'er' + (x.total ? ' total' : '');
+    const row = document.createElement(x.tap ? 'button' : 'div'); row.className = 'er' + (x.total ? ' total' : '') + (x.tap ? ' tap' : '');
+    if (x.tap){ row.type = 'button'; row.addEventListener('click', () => openChoice(x.tap)); row.setAttribute('aria-label', x.what + ', ' + x.amt + '. Tap to change.'); }
     const w = document.createElement('div'); w.className = 'what'; w.textContent = x.what;
     if (x.note){ const sm = document.createElement('small'); sm.textContent = x.note; w.append(sm); }
-    const a = document.createElement('div'); a.className = 'amt num'; a.textContent = x.amt;
+    const a = document.createElement('div'); a.className = 'amt num'; a.textContent = x.amt + (x.tap ? ' ›' : '');
     row.append(w, a); box.append(row);
   }
+}
+// Tapping a daily expense: pick what you want, from cheap up to your rank's own (so you can move back up), or send people home
+function openChoice(what){
+  if (what === 'candy' || what === 'crew'){
+    const x = PEOPLE[what], after = prestige(0, -x.prestige), r0 = levelOf(prestige()), r1 = levelOf(after);
+    fenceSheet(what === 'candy' ? 'Your eye candy' : 'Your entourage', x.art, 'They cost <b>' + money(x.fee) + '</b> a day.<br><br>Sending them home saves that, but you ' +
+      (r1 < r0 ? 'drop to <b>' + LEVELS[r1].name + '</b>.' : 'fall back to ' + rankStand(after) + '.') + ' They can come back later as an offer.',
+      [btn('Keep them', () => openCashier()), btn('Send home', () => { delete people()[what]; touch(); saveLocal(); saveCloudState(); render(); openCashier(); }, { primary:true })]);
+    return;
+  }
+  const L = LIFE[rankNo()], list = choicesFor(what), now = chosenRank(what);
+  const nowText = what === 'room' ? livingL().stay : what === 'meals' ? livingL().eat : livingL().go;
+  const unit = what === 'room' ? ' a night' : ' a day';
+  const box = document.createElement('div'); box.className = 'opt';
+  for (const c of list){
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn';
+    const here = c.text === nowText;
+    b.innerHTML = esc(cap1(c.text)) + (here ? ' <b>✓ Now</b>' : '') + '<small>' + money(c.price) + unit + (c.k === rankNo() ? ', a ' + esc(LEVELS[c.k].name) + '’s' : '') + '</small>';
+    b.addEventListener('click', () => { S.choice = S.choice || {}; if (c.k === rankNo()) delete S.choice[what]; else S.choice[what] = c.k; touch(); saveLocal(); saveCloudState(); render(); openCashier(); });
+    box.append(b);
+  }
+  const head = what === 'room' ? 'Your room' : what === 'meals' ? 'Your meals' : 'Getting around';
+  fenceSheet(head, what === 'room' ? '🛏️' : what === 'meals' ? '🍽️' : '🚕', '', [btn('Done', () => openCashier(), { primary:true })]);
+  const t = $('fenceText'); t.append(box);
+  const eff = document.createElement('p'); eff.className = 'eff';
+  eff.innerHTML = (L.sponsor ? 'Your sponsor pays back 75% of your bills on days you play well, so on those days you keep about a quarter of any saving. ' : '') + 'Your rank stays the same whatever you choose, and you can change back any time.';
+  t.append(eff);
 }
 function cashierLabels(){
   renderExpenses();
@@ -2218,7 +2253,7 @@ function whoYouAre(){
 // The life at a rank in one sentence, with that rank's perks and whatever you own or have paid ahead counted in, and what
 // it actually costs a day after all of that. The same sentence everywhere, so no two messages disagree about a price.
 function lifeLine(i){
-  const L = LIFE[i];
+  const L = i === rankNo() ? livingL() : LIFE[i];
   if (L.comped) return 'You stay in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
   const bare = o => o.name.replace(/^(a|an|your own) /, '');
   const left = o => '';   // days left on a rental or deal are not shown (Mike: leave them out)
@@ -2348,12 +2383,36 @@ const stayAt = L => (L.on ? 'on ' : 'in ') + L.stay;   // in a motel, on a frien
 const roomPrice = L => L.roomComp ? 0 : L.roomRate ? Math.round(L.room * L.roomRate) : L.room;
 const mealPrice = (L, i) => L.freeMeal === i ? 0 : L.meals[i];
 const dayCost = L => roomPrice(L) + L.ride + [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0);
+// Living below your rank: S.choice can set your room, meals or getting around to what a lower rank has, at that rank's
+// full price (a lower rank's perks don't come with it), never to something free. Your rank doesn't change; your sponsor
+// pays back 75% of smaller bills, so on good days you keep about a quarter of the saving. Comped Super Whales can't choose.
+const CHOICE_FIELDS = { room:['stay', 'on', 'room'], meals:['eat', 'meals'], ride:['go', 'ride'] };
+function chosenRank(what){ const r = rankNo(), c = (S.choice || {})[what]; return c != null && c < r && !LIFE[r].comped ? c : r; }
+function livingL(){
+  const r = rankNo(), L = Object.assign({}, LIFE[r]);
+  for (const what in CHOICE_FIELDS){
+    const k = chosenRank(what); if (k === r) continue;
+    for (const f of CHOICE_FIELDS[what]) L[f] = LIFE[k][f];
+    if (what === 'room'){ delete L.roomComp; delete L.roomRate; } if (what === 'meals') delete L.freeMeal;
+  }
+  return L;
+}
+function choicesFor(what){   // [{k, text, price}] from the cheapest up to your rank's own, no free ones below your rank
+  const r = rankNo(), out = [], seen = {};
+  for (let k = r; k >= 0; k--){
+    const L = LIFE[k], text = what === 'room' ? L.stay : what === 'meals' ? L.eat : L.go;
+    const price = k === r ? dailyCost(what, LIFE[r]) : what === 'room' ? L.room : what === 'meals' ? L.meals.reduce((a, b) => a + b, 0) : L.ride;
+    if (seen[text] || (k < r && price <= 0)) continue;
+    seen[text] = 1; out.push({ k, text, price, on: L.on });
+  }
+  return out.sort((a, b) => a.price - b.price);
+}
 const PERK_NOTE = ['', 'Your breakfast is comped from now on.', 'The casino gives you its room rate: half price.', 'Your room is comped from now on.'];
 // one bill: a meal, or the room and getting around at the end of the day
 function stayBill(i, day){
   if (!rules().stay || S.dead || S.round) return pumpSheets(0);
   guyOffer = false;
-  const L = life(), room = i === 3, d = S.day || (S.day = { ok:0, all:0, bills:0 });
+  const L = livingL(), room = i === 3, d = S.day || (S.day = { ok:0, all:0, bills:0 });
   const title = room ? 'End of day ' + day : cap1(MEAL_NAMES[i]);
   const art = room ? '🛏️' : MEAL_ART[i];
   if (L.comped){
@@ -2472,7 +2531,7 @@ function creditLines(o){
 // A rental skipped at its own rank comes back at higher ranks, re-priced for the rank you're at: it costs about two
 // thirds of what it covers there (a saving of a third), so a cheap low-rank rental is never a shortcut at the top.
 const RERENT_SHARE = 0.65;
-function dailyCost(what, L = life()){ return what === 'room' ? roomPrice(L) : what === 'ride' ? L.ride : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0); }
+function dailyCost(what, L = livingL()){ return what === 'room' ? roomPrice(L) : what === 'ride' ? L.ride : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0); }
 const niceRound = v => v >= 10000 ? Math.round(v / 500) * 500 : v >= 1000 ? Math.round(v / 50) * 50 : Math.round(v / 10) * 10;
 function offerAtRank(o, r){
   if (!(o.kind === 'save' && o.anywhere && o.rank < r)) return o;
