@@ -2422,16 +2422,31 @@ function creditLines(o){
   return out;
 }
 // the offers you could get now: your rank's first, then any you skipped at lower ranks
+// A rental skipped at its own rank comes back at higher ranks, re-priced for the rank you're at: it costs about two
+// thirds of what it covers there (a saving of a third), so a cheap low-rank rental is never a shortcut at the top.
+const RERENT_SHARE = 0.65;
+function dailyCost(what, L = life()){ return what === 'room' ? roomPrice(L) : what === 'ride' ? L.ride : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0); }
+const niceRound = v => v >= 10000 ? Math.round(v / 500) * 500 : v >= 1000 ? Math.round(v / 50) * 50 : Math.round(v / 10) * 10;
+function offerAtRank(o, r){
+  if (!(o.kind === 'save' && o.anywhere && o.rank < r)) return o;
+  return Object.assign({}, o, { price: niceRound(dailyCost(o.covers) * o.days * RERENT_SHARE), repriced: true });
+}
 function availableOffers(){
   const r = rankNo();
   return OFFERS.filter(o => {
     if (o.rank > r || o.retired) return false;
     if (o.kind === 'people') return rules().host && !people()[o.id];
     if (o.kind === 'credit') return !S.line || o.limit > S.line.limit;
-    if (o.kind === 'save' && !o.keep) return !covered(o.covers) && o.price <= S.bankroll && o.rank === r;   // deals only at their own rank
+    if (o.kind === 'save' && !o.keep){
+      if (covered(o.covers) || dealOn(o.id)) return false;
+      if (o.rank === r) return o.price <= S.bankroll;                 // deals and rentals at their own rank
+      if (!o.anywhere || life().comped || dailyCost(o.covers) <= 0) return false;   // place-bound deals stay at their rank; nothing to pay for, nothing to offer
+      if (OFFERS.some(x => x !== o && x.anywhere && !x.retired && x.covers === o.covers && x.rank > o.rank && x.rank <= r)) return false;   // a newer rental for the same thing takes its place
+      return offerAtRank(o, r).price <= S.bankroll;
+    }
     if (o.kind === 'save' || o.kind === 'rank') return !owns(o.id) && o.price <= S.bankroll;
     return false;
-  }).map(o => ({ o, w: o.rank === r ? 3 : 1 }));
+  }).map(o => ({ o: offerAtRank(o, r), w: o.rank === r ? 3 : 1 }));
 }
 function fenceAfterHand(){
   if (!rules().fence || !fenceFree() || sheetQueue.length) return;
