@@ -55,7 +55,8 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('shirtOffer', /^Sharp shirt \| Price: \$150/.test(await sheet() || '') && /Prestige \+\$150/.test(await sheet() || '') && /once your debts are paid/.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(500); await closeAll();
   const s3 = await p.evaluate(() => ({ prestige: __bj.prestige(), stash: __bj.S.stash.map(x => x.item) }));
-  check('shirtCountsLater', s3.prestige === 1 && s3.stash.includes('a sharp shirt'), s3);
+  check('shirtCountsLater', s3.prestige === 0 &&   // $1,000 owed: the $150 shirt cancels $150 of it, the other $850 costs $425, so 0
+    s3.stash.includes('a sharp shirt'), s3);
   await p.click('#openCashier'); await p.waitForTimeout(200); await p.click('#cardPresets button:text-is("+$1,000")'); await p.click('#cardPay'); await p.waitForTimeout(500); await closeAll();
   check('books', await books(), await books());   // start + hands + borrowing, paying back and buying (before the test sets any amounts by hand)
   check('shirtCountsWhenPaid', (await p.evaluate(() => __bj.prestige())) === 151, await p.evaluate(() => __bj.prestige()));
@@ -78,8 +79,8 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await p.evaluate(() => { const S = __bj.S, H = __bj.history; S.card = 1000; const last = H[H.length - 1]; while (H.filter(r => r.s === S.session).length < 149) H.push({ ...last, t: Date.now() }); S.staySeen = 149; S.settings.rules.stay = false; });
   await playHand(); await closeAll();
   check('dailyInterest', (await p.evaluate(() => __bj.S.card)) === 1050, await p.evaluate(() => __bj.S.card));
-  // 7) a rank's minimum bet: at Barracuda it's $25 even at the 8-deck table
-  await p.evaluate(() => { __bj.S.playPres = 5000; __bj.render(); }); await closeAll();
+  // 7) a rank's minimum bet: at Barracuda it's $25 even at the 8-deck table (debts cleared first, since they cost prestige)
+  await p.evaluate(() => { __bj.S.card = 0; __bj.S.playPres = 5000; __bj.render(); }); await closeAll();
   check('rankMinimum', (await p.evaluate(() => __bj.minBet())) === 25, await p.evaluate(() => __bj.minBet()));
   check('limitsSign', /\$25/.test(await p.textContent('#limitsV')), await p.textContent('#limitsV'));
   // 8) the loan shark: takes stuff when you can't pay, the grave when stuff can't cover it
