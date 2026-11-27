@@ -32,7 +32,7 @@ fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charse
   check('roomHalf', /A night in a standard room at the casino \(half price\): \$30/.test(await bill(3) || ''), await bill(3));
   // Swordfish: $1,000, room comped
   b0 = await bank();
-  const sw = await rankTo(10000);
+  const sw = await rankTo(10000, 'rank-swordfish');
   check('swordfishGift', /Welcome gift from the casino: \$1,000 in free chips\. Your room is comped from now on\. \/ You stay in a deluxe room at the casino \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(sw || '') && (await bank()) === b0 + 1000, [sw, await bank() - b0]);
   check('roomComped', /^End of day 1 \| A night in a deluxe room at the casino: comped by the casino \/ Getting around by taxis: \$36/.test(await bill(3) || ''), await bill(3));
   check('whoSwordfish', /You stay in a deluxe room at the casino \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
