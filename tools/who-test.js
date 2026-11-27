@@ -16,7 +16,7 @@ fs.writeFileSync(dir + '/who-page.html', '<!doctype html><html><head><meta chars
   const show = async (name, set) => { await p.evaluate(set); await p.evaluate(() => { __bj.hideSheets(); __bj.render(); __bj.welcomeBack(); }); await p.waitForTimeout(300);
     if (shots) await p.screenshot({ path: shots + '/who-' + name + '.png' });
     return (await p.textContent('#fenceH')) + ' | ' + (await p.innerText('#fenceText')).replace(/\n+/g, ' / '); };
-  check('guppy', /^Welcome back \| You’re a Guppy, prestige \$0, \$1,000 to go to Minnow\. Minimum bet \$5\. \/ You stay in a motel, eat fast food and walk everywhere: \$74 a day\. Your sponsor is a local bar\. \/ Chips: \$1,000 \//, await show('guppy', () => {}));
+  check('guppy', /^Welcome back \| You’re a Guppy, prestige \$0, \$1,000 to go to Minnow\. Minimum bet \$5\. \/ You stay in a motel, eat fast food and walk everywhere: \$74 a day\. Your sponsor is a local bar\. \/ Chips: \$1,000$/, await show('guppy', () => {}));
   check('barracuda', /You’re a Barracuda, prestige \$8,000.*You live in your apartment, eat at a café and get around in your used car: \$150 a day\. Your sponsor is a sports bar chain\. \/ Chips: \$20,000\. You owe \$3,000\./,
     await show('barracuda', () => { const S = __bj.S; S.playPres = 2000; S.bankroll = 20000; S.card = 3000; S.line = { id:'card2', name:'a gold card', limit:25000, rate:0.05 };
       S.stash = [{ item:'an apartment', paid:2500, oid:'apartment' }, { item:'a used car', paid:4000, oid:'usedcar' }, { item:'a gold watch', paid:2500, oid:'watch' }]; }));
