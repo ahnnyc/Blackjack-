@@ -2,7 +2,7 @@
 // once per game, and the new-rank message never contradicts itself about the price; breakfast comped at Minnow; the room at half price at Barracuda and comped at Swordfish.
 // Usage: node tools/perks-test.js [shotsdir]   (reads tools/game.html)
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname, shots = process.argv[2];
-const HOOK = "window.__bj = { get S(){ return S; }, prestige, rankNo, hideSheets, render, applyMotion, stayBill, whoYouAre };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, prestige, rankNo, hideSheets, render, applyMotion, stayBill, whoYouAre, welcomeBack };\n";
 fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 (async () => {
@@ -25,10 +25,15 @@ fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charse
   check('minnowGift', /^New rank \| You are now a Minnow\. \/ Welcome gift from the casino: \$100 in free chips\. Your breakfast is comped from now on\. \/ You stay in a hostel bed, eat fast food \(breakfast comped\) and get around by the city bus: \$44 a day\./.test(m || '') && (await bank()) === b0 + 100, [m, await bank() - b0]);
   check('breakfastComped', /^Breakfast \| Breakfast at fast food: comped by the players’ club$/.test(await bill(0) || ''), await bill(0));
   check('lunchCharged', /^Lunch \| Lunch at fast food: \$8, taken from your chips\.$/.test(await bill(1) || ''), await bill(1));
+  // a deal covers only its own place: the hostel rate pays for the hostel at Minnow, not the casino room at Barracuda
+  await p.evaluate(() => { __bj.S.deals = { extstay: 1e9 }; });
+  check('hostelDealAtHostel', /A night in a hostel bed: free \(your weekly hostel rate\)/.test(await bill(3) || ''), await bill(3));
   // Barracuda: $500, room half price
   b0 = await bank();
   const bc = await rankTo(5000, 'rank-barracuda');
   check('barracudaGift', /Welcome gift from the casino: \$500 in free chips\. The casino gives you its room rate: half price\. \/ You stay in a standard room at the casino \(half price\), eat at a diner and get around by the city bus: \$85 a day\./.test(bc || '') && (await bank()) === b0 + 500, [bc, await bank() - b0]);
+  check('hostelDealNotAtCasino', /A night in a standard room at the casino \(half price\): \$30/.test(await bill(3) || '') && !/hostel rate/.test(await p.evaluate(() => __bj.whoYouAre())), [await bill(3), await p.evaluate(() => __bj.whoYouAre())]);
+  await p.evaluate(() => { __bj.S.deals = {}; });
   check('roomHalf', /A night in a standard room at the casino \(half price\): \$30/.test(await bill(3) || ''), await bill(3));
   // Swordfish: $1,000, room comped
   b0 = await bank();
@@ -36,6 +41,15 @@ fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charse
   check('swordfishGift', /Welcome gift from the casino: \$1,000 in free chips\. Your room is comped from now on\. \/ You stay in a deluxe room at the casino \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(sw || '') && (await bank()) === b0 + 1000, [sw, await bank() - b0]);
   check('roomComped', /^End of day 1 \| A night in a deluxe room at the casino: comped by the casino \/ Getting around by taxis: \$36/.test(await bill(3) || ''), await bill(3));
   check('whoSwordfish', /You stay in a deluxe room at the casino \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
+  // the rank's fish badge, not a whale, on the new-rank message and on Welcome back
+  await p.evaluate(() => { __bj.S.playPres = 30000; __bj.render(); }); await p.waitForTimeout(700);
+  check('badgeOnNewRank', (await p.$eval('#fenceArt', e => e.querySelector('.rankfish') ? e.querySelector('.rankfish').className + ' ' + e.textContent : e.textContent)) === 'rankfish lv4 Marlin', await p.$eval('#fenceArt', e => e.innerHTML));
+  if (shots) await p.screenshot({ path: shots + '/badge-marlin.png' });
+  await p.evaluate(() => { __bj.hideSheets(); __bj.welcomeBack(); }); await p.waitForTimeout(300);
+  check('badgeOnWelcome', (await p.$eval('#fenceArt', e => e.textContent)) === 'Marlin' && !!(await p.$('#fenceArt .rankfish.lv4')), await p.$eval('#fenceArt', e => e.innerHTML));
+  if (shots) await p.screenshot({ path: shots + '/badge-welcome.png' });
+  await p.evaluate(() => __bj.hideSheets());
+  await p.evaluate(() => { __bj.S.playPres = 10000; __bj.render(); }); await p.waitForTimeout(700); await p.evaluate(() => __bj.hideSheets());
   // dropping back and climbing again gives no second gift
   await rankTo(5000); b0 = await bank();
   const again = await rankTo(10000);

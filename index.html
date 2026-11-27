@@ -68,21 +68,24 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #levelBtn{flex:none;min-height:36px;padding:0 10px;border-radius:18px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;font-weight:700;white-space:nowrap}
 /* each prestige level has its own badge color, getting richer as you climb (the name always says the level) */
 /* every level badge is a fish: a body that stretches to fit the name, and a fixed tail, so the name sits centered in the body */
-#levelBtn.lv0{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='none' stroke='%23b8bdb9' stroke-width='1.6' stroke-dasharray='4 3' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='none' stroke='%23b8bdb9' stroke-width='1.6' stroke-dasharray='4 3' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23b8bdb9'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#eeeeee;text-align:center}   /* Guppy: dashed outline */
-#levelBtn.lv1{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%23f4f4f4' stroke='%23ffffff' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%23f4f4f4' stroke='%23ffffff' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23111111'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#111111;text-align:center}   /* Minnow: white */
-#levelBtn.lv2{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%231d58a3' stroke='%237fb1f0' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%231d58a3' stroke='%237fb1f0' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23ffffff'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#ffffff;text-align:center}   /* Barracuda: dark blue */
-#levelBtn.lv3{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%238fd3ff' stroke='%23d6f0ff' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%238fd3ff' stroke='%23d6f0ff' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%2306263d'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#06263d;text-align:center}   /* Swordfish: light blue */
-#levelBtn.lv4{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%23a8420f' stroke='%23f0a070' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%23a8420f' stroke='%23f0a070' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23ffffff'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#ffffff;text-align:center}   /* Marlin: burnt orange */
-#levelBtn.lv5{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='none' stroke='%23e0e0e0' stroke-width='5' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='none' stroke='%23000000' stroke-width='2.4' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%23000000' stroke='%23e0e0e0' stroke-width='1.4' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='none' stroke='%23e0e0e0' stroke-width='5' vector-effect='non-scaling-stroke'/><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='none' stroke='%23000000' stroke-width='2.4' vector-effect='non-scaling-stroke'/><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%23000000' stroke='%23e0e0e0' stroke-width='1.4' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23ffffff'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#ffffff;text-align:center}   /* Whale: black, double silver outline */
-#levelBtn.lv6{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%23c9a347' stroke='%23fff6dc' stroke-width='2' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23fff1c9'/><stop offset='.45' stop-color='%23e4c57e'/><stop offset='1' stop-color='%23c9a347'/></linearGradient></defs><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='url(%23g)' stroke='%23fff6dc' stroke-width='2' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%2322180c'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#22180c;text-align:center}   /* Super Whale: gold, glowing */
+:is(#levelBtn,.rankfish).lv0{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='none' stroke='%23b8bdb9' stroke-width='1.6' stroke-dasharray='4 3' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='none' stroke='%23b8bdb9' stroke-width='1.6' stroke-dasharray='4 3' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23b8bdb9'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#eeeeee;text-align:center}   /* Guppy: dashed outline */
+:is(#levelBtn,.rankfish).lv1{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%23f4f4f4' stroke='%23ffffff' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%23f4f4f4' stroke='%23ffffff' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23111111'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#111111;text-align:center}   /* Minnow: white */
+:is(#levelBtn,.rankfish).lv2{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%231d58a3' stroke='%237fb1f0' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%231d58a3' stroke='%237fb1f0' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23ffffff'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#ffffff;text-align:center}   /* Barracuda: dark blue */
+:is(#levelBtn,.rankfish).lv3{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%238fd3ff' stroke='%23d6f0ff' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%238fd3ff' stroke='%23d6f0ff' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%2306263d'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#06263d;text-align:center}   /* Swordfish: light blue */
+:is(#levelBtn,.rankfish).lv4{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%23a8420f' stroke='%23f0a070' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%23a8420f' stroke='%23f0a070' stroke-width='1.6' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23ffffff'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#ffffff;text-align:center}   /* Marlin: burnt orange */
+:is(#levelBtn,.rankfish).lv5{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='none' stroke='%23e0e0e0' stroke-width='5' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='none' stroke='%23000000' stroke-width='2.4' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%23000000' stroke='%23e0e0e0' stroke-width='1.4' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='none' stroke='%23e0e0e0' stroke-width='5' vector-effect='non-scaling-stroke'/><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='none' stroke='%23000000' stroke-width='2.4' vector-effect='non-scaling-stroke'/><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='%23000000' stroke='%23e0e0e0' stroke-width='1.4' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%23ffffff'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#ffffff;text-align:center}   /* Whale: black, double silver outline */
+:is(#levelBtn,.rankfish).lv6{background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 36' preserveAspectRatio='none'><path d='M0 18 L22 5 L17 18 L22 31 Z' fill='%23c9a347' stroke='%23fff6dc' stroke-width='2' vector-effect='non-scaling-stroke' stroke-linejoin='round'/></svg>") no-repeat right center/24px 100%, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 36' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23fff1c9'/><stop offset='.45' stop-color='%23e4c57e'/><stop offset='1' stop-color='%23c9a347'/></linearGradient></defs><path d='M2 18 C12 1 84 1 98 18 C84 35 12 35 2 18 Z' fill='url(%23g)' stroke='%23fff6dc' stroke-width='2' vector-effect='non-scaling-stroke' stroke-linejoin='round'/><circle cx='7' cy='14' r='1.5' fill='%2322180c'/></svg>") no-repeat left center/calc(100% - 21px) 100%;border:0;border-radius:0;padding:0 41px 0 20px;min-height:40px;color:#22180c;text-align:center}   /* Super Whale: gold, glowing */
 /* the whales blow a little spout; its stem meets the top of the body a fifth of the way back from the nose */
-#levelBtn.lv5, #levelBtn.lv6{position:relative;overflow:visible}
-#levelBtn.lv5::before, #levelBtn.lv6::before{content:'';position:absolute;left:calc((100% - 21px) * 0.22 - 10px);top:-5px;width:20px;height:15px;background:no-repeat center/contain;pointer-events:none}
-#levelBtn.lv5::before{background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 14'><g fill='none' stroke='%23e0e0e0' stroke-width='1.8' stroke-linecap='round'><path d='M10 14.5 L10 6'/><path d='M10 6 C7 1 3 1 1.5 4'/><path d='M10 6 C13 1 17 1 18.5 4'/></g><circle cx='2' cy='7' r='1' fill='%23e0e0e0'/><circle cx='18' cy='7' r='1' fill='%23e0e0e0'/><circle cx='10' cy='2' r='1' fill='%23e0e0e0'/></svg>")}
-#levelBtn.lv6::before{background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 14'><g fill='none' stroke='%23ffe39a' stroke-width='1.8' stroke-linecap='round'><path d='M10 14.5 L10 6'/><path d='M10 6 C7 1 3 1 1.5 4'/><path d='M10 6 C13 1 17 1 18.5 4'/></g><circle cx='2' cy='7' r='1' fill='%23ffe39a'/><circle cx='18' cy='7' r='1' fill='%23ffe39a'/><circle cx='10' cy='2' r='1' fill='%23ffe39a'/></svg>")}
-#levelBtn.lv6{letter-spacing:.03em;filter:drop-shadow(0 0 6px rgba(255,220,140,.8));animation:swGlow 2.4s ease-in-out infinite}
+:is(#levelBtn,.rankfish).lv5, :is(#levelBtn,.rankfish).lv6{position:relative;overflow:visible}
+:is(#levelBtn,.rankfish).lv5::before, :is(#levelBtn,.rankfish).lv6::before{content:'';position:absolute;left:calc((100% - 21px) * 0.22 - 10px);top:-5px;width:20px;height:15px;background:no-repeat center/contain;pointer-events:none}
+:is(#levelBtn,.rankfish).lv5::before{background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 14'><g fill='none' stroke='%23e0e0e0' stroke-width='1.8' stroke-linecap='round'><path d='M10 14.5 L10 6'/><path d='M10 6 C7 1 3 1 1.5 4'/><path d='M10 6 C13 1 17 1 18.5 4'/></g><circle cx='2' cy='7' r='1' fill='%23e0e0e0'/><circle cx='18' cy='7' r='1' fill='%23e0e0e0'/><circle cx='10' cy='2' r='1' fill='%23e0e0e0'/></svg>")}
+:is(#levelBtn,.rankfish).lv6::before{background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 14'><g fill='none' stroke='%23ffe39a' stroke-width='1.8' stroke-linecap='round'><path d='M10 14.5 L10 6'/><path d='M10 6 C7 1 3 1 1.5 4'/><path d='M10 6 C13 1 17 1 18.5 4'/></g><circle cx='2' cy='7' r='1' fill='%23ffe39a'/><circle cx='18' cy='7' r='1' fill='%23ffe39a'/><circle cx='10' cy='2' r='1' fill='%23ffe39a'/></svg>")}
+:is(#levelBtn,.rankfish).lv6{letter-spacing:.03em;filter:drop-shadow(0 0 6px rgba(255,220,140,.8));animation:swGlow 2.4s ease-in-out infinite}
 @keyframes swGlow{50%{filter:drop-shadow(0 0 12px rgba(255,220,140,1))}}
-body.still #levelBtn.lv6{animation:none}
+body.still :is(#levelBtn,.rankfish).lv6{animation:none}
+.rankfish{display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;white-space:nowrap;box-sizing:border-box}
+#fenceArt .rankfish{font-size:22px;min-height:54px;padding:0 54px 0 28px}
+#fenceArt .rankfish.lv5::before, #fenceArt .rankfish.lv6::before{top:-1px}
 #plTag{font-size:17px;font-weight:700;white-space:nowrap;color:var(--muted)}
 #plTag.up{color:var(--good)} #plTag.down{color:var(--bad)}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
@@ -489,6 +492,10 @@ const deckTable = d => d + '-deck table';
 const START = 1000;
 const SHARK_RATE = 0.20, SHARK_EVERY = 5, SHARK_MAX = 250000;     // he takes 20% of what you owe every 5 hands
 const pct = r => Math.round(r * 100) + '%';
+// Borrowing cash on a credit line costs a cash-advance fee, added to what you owe, so moving money in and out isn't free.
+const CASH_FEE = 0.05, CASH_FEE_MIN = 10;
+const cashFee = a => a > 0 ? Math.max(CASH_FEE_MIN, Math.round(a * CASH_FEE)) : 0;
+const maxCash = room => room >= CASH_FEE_MIN / CASH_FEE * (1 + CASH_FEE) ? Math.floor(room / (1 + CASH_FEE)) : Math.max(0, Math.floor(room - CASH_FEE_MIN));
 // The day: every DAY hands is a day (about an hour of play). Breakfast after hand 25, lunch after 75, dinner after 125;
 // the room and getting around are paid at the end of the day. What you pay follows your rank, not your table.
 const DAY = 150;
@@ -819,11 +826,15 @@ function debtCost(){
 // what covers a daily cost: a home or car you own, a chef, or a deal still running
 const owns = id => (S.stash || []).some(x => x.oid === id);
 const dealOn = id => S.deals && S.deals[id] > handsThisGame();
+// a deal covers only the place it was bought for: the hostel rate pays for the hostel, not a room at the casino
+const COVER_FIELD = { room:'stay', ride:'go', meals:'eat' };
+const dealHere = o => dealOn(o.id) && LIFE[o.rank][COVER_FIELD[o.covers]] === life()[COVER_FIELD[o.covers]];
+const coversNow = o => o.keep ? owns(o.id) : dealHere(o);
 function covered(what){
-  return OFFERS.some(o => o.covers === what && (o.keep ? owns(o.id) : dealOn(o.id)));
+  return OFFERS.some(o => o.covers === what && coversNow(o));
 }
 function coverName(what){
-  const o = OFFERS.find(o => o.covers === what && (o.keep ? owns(o.id) : dealOn(o.id)));
+  const o = OFFERS.find(o => o.covers === what && coversNow(o));
   return o ? o.name.replace(/^(a|an) /, 'your ') : '';
 }
 const cur = () => R && R.hands[R.active];
@@ -1384,14 +1395,14 @@ function checkLevel(){
   if (up && i > (S.gifted || 0)) S.gifted = i;
   if (gift){ const before = moneyMove(gift, 'gift', { what: LEVELS[i].name }); showMove(before, $('levelBtn'), $('bankAmt')); }
   touch(); saveLocal();
-  queueSheet(() => { guyOffer = false; fenceSheet(up ? 'New rank' : 'Rank down', '🐋',
+  queueSheet(() => { guyOffer = false; fenceSheet(up ? 'New rank' : 'Rank down', { rank: i },
     ['You are now a <b>' + LEVELS[i].name + '</b>.' + (!up && debtCost() > 0 ? ' What you owe is holding you back. Pay it back to climb again.' : ''),
      ((gift ? 'Welcome gift from the casino: <b>' + money(gift) + '</b> in free chips. ' : '') + (up && PERK_NOTE[i] ? PERK_NOTE[i] : '')).trim(),
      levelNote(i).trim()].filter(Boolean).join('<br><br>'), [btn('OK', () => hideSheets(), { primary:true })]); });
 }
 function render(){
   applyMotion();
-  { const li = levelOf(prestige()), nx = LEVELS[li + 1]; $('levelBtn').textContent = LEVELS[li].name; $('levelBtn').className = 'lv' + li;
+  { const li = levelOf(prestige()), nx = LEVELS[li + 1]; $('levelBtn').textContent = LEVELS[li].name; $('levelBtn').className = 'rankfish lv' + li;
     $('levelPct').textContent = nx ? rankPct() + '% to ' + nx.name : ''; $('levelBtn').setAttribute('aria-label', 'Rank: ' + LEVELS[li].name + (nx ? ', ' + rankStand() : '')); }
   checkLevel();
   const root = document.documentElement; for (let i = 0; i < 4; i++) root.classList.toggle('t' + i, i === tableNo());
@@ -1676,11 +1687,11 @@ function renderRecord(){
       const c = it.c;
       const title = { buy:'Bought ' + c.item, sell:'Sold ' + c.item, seized:'Security took ' + c.item,
         card:'Borrowed on your credit', cardpay:'Paid back your credit', cardint:'Interest on your credit',
-        shark:'Borrowed from the loan shark', sharkpay:'Paid the loan shark', vig:'The loan shark’s cut', dead:'Killed by the loan shark', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), gift:'Welcome gift for reaching ' + (c.what || 'a new rank'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left', sharktook:'The loan shark took ' + (c.item || 'something'), sponsor:'Paid by your sponsor, ' + (c.what || ''), nosponsor:'No sponsor pay: under 95% right moves', line:'New credit: ' + (c.what || '') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
+        shark:'Borrowed from the loan shark', sharkpay:'Paid the loan shark', vig:'The loan shark’s cut', dead:'Killed by the loan shark', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), cardfee:'Cash advance fee', gift:'Welcome gift for reaching ' + (c.what || 'a new rank'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left', sharktook:'The loan shark took ' + (c.item || 'something'), sponsor:'Paid by your sponsor, ' + (c.what || ''), nosponsor:'No sponsor pay: under 95% right moves', line:'New credit: ' + (c.what || '') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
       when.textContent = title + ' · ' + stamp(c.t);
       const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
       const what = document.createElement('div'); what.className = 'what num';
-      what.textContent = ({ seized:'You had paid ' + money(c.paid || 0), cardint: money(c.amt || 0) + ' added to what you owe', dead:'Couldn’t cover his ' + money(c.amt || 0) + ' cut', comp: c.whale ? 'Comped for high rollers' : 'Comped' + (c.pres ? ' for your rank' : '') + ', worth ' + money(c.amt || 0) }[c.k] ||
+      what.textContent = ({ seized:'You had paid ' + money(c.paid || 0), cardint: money(c.amt || 0) + ' added to what you owe', cardfee: money(c.amt || 0) + ' added to what you owe', dead:'Couldn’t cover his ' + money(c.amt || 0) + ' cut', comp: c.whale ? 'Comped for high rollers' : 'Comped' + (c.pres ? ' for your rank' : '') + ', worth ' + money(c.amt || 0) }[c.k] ||
         (c.a > 0 ? 'Added to your chips' : 'Taken from your chips')) + ' · Chips ' + money(c.b);
       e.append(when, amt, what); log.append(e); return;
     }
@@ -1788,7 +1799,7 @@ const cardRate = () => S.line ? S.line.rate : 0;
 const sharkMax = () => cents(SHARK_MAX + prestige());
 const sharkRate = () => prestige() >= 100000 ? 0.10 : prestige() >= 25000 ? 0.15 : SHARK_RATE;
 const cardLeft = () => Math.max(0, cents(cardLimit() - S.card));
-const cardMaxed = () => cardLeft() < 1;
+const cardMaxed = () => maxCash(cardLeft()) < 1;   // a few dollars left can't cover the fee
 const sharkLeft = () => Math.max(0, cents(sharkMax() - S.shark));
 const sharkCut = () => cents(S.shark * sharkRate());
 const cardInterest = () => cents(S.card * cardRate());
@@ -1829,7 +1840,7 @@ function openCashier(){
       seg.append(all);
     }
   };
-  fill('cardPresets', [1000, 5000, 10000, 25000, 100000], 'cardInput', Math.min(cardLeft(), 1000000), S.card);   // an open marker offers up to $1,000,000 at a time
+  fill('cardPresets', [1000, 5000, 10000, 25000, 100000], 'cardInput', Math.min(maxCash(cardLeft()), 1000000), S.card);   // an open marker offers up to $1,000,000 at a time
   fill('sharkPresets', [5000, 10000, 25000, 50000], 'sharkInput', cardMaxed() ? sharkLeft() : 0, S.shark);
   $('cardInput').value = 0; $('sharkInput').value = 0;
   cashierLabels();
@@ -1844,11 +1855,11 @@ function cashierLabels(){
   $('cardH').textContent = S.line ? S.line.name.replace(/^(a|an) /, '').replace(/^./, c => c.toUpperCase()) : 'Credit';
   $('cardNote').textContent = !S.line ? 'No credit yet. Lines of credit are offered between hands as you rank up.'
     : S.card > 0
-      ? 'You owe ' + money(S.card) + '. ' + (cardMaxed() ? 'No room left on it.' : money(cardLeft()) + ' left to borrow.') +
-        ' Interest is ' + pct(cardRate()) + ' a day: ' + money(cardInterest()) + ' at the end of the day (after hand ' + nextDay + ').' + (debtCost() > 0 ? ' Owing money holds your rank back.' : '')
-      : 'You owe nothing. The limit is ' + (S.line.limit >= 1e11 ? 'unlimited' : money(cardLimit())) + '. Interest is ' + pct(cardRate()) + ' a day on what you owe. Owing money holds your rank back.';
-  const cb = Math.min(cv, cardLeft()), cp = Math.min(cv, S.card, S.bankroll);
-  $('cardBorrow').textContent = cb > 0 ? 'Borrow ' + money(cb) : 'Borrow';
+      ? 'You owe ' + money(S.card) + '. ' + (cardMaxed() ? 'No room left on it.' : money(maxCash(cardLeft())) + ' left to borrow.') +
+        ' Interest is ' + pct(cardRate()) + ' a day: ' + money(cardInterest()) + ' at the end of the day (after hand ' + nextDay + '). Each cash withdrawal costs ' + pct(CASH_FEE) + ' (at least ' + money(CASH_FEE_MIN) + '), added to what you owe.' + (debtCost() > 0 ? ' Owing money holds your rank back.' : '')
+      : 'You owe nothing. The limit is ' + (S.line.limit >= 1e11 ? 'unlimited' : money(cardLimit())) + '. Interest is ' + pct(cardRate()) + ' a day on what you owe. Each cash withdrawal costs ' + pct(CASH_FEE) + ' (at least ' + money(CASH_FEE_MIN) + '), added to what you owe. Owing money holds your rank back.';
+  const cb = Math.min(cv, maxCash(cardLeft())), cp = Math.min(cv, S.card, S.bankroll);
+  $('cardBorrow').textContent = cb > 0 ? 'Borrow ' + money(cb) + ' (+' + money(cashFee(cb)) + ' fee)' : 'Borrow';
   $('cardPay').textContent = cp > 0 ? 'Pay back ' + money(cp) : 'Pay back';
   $('cardBorrow').disabled = cb <= 0; $('cardPay').disabled = cp <= 0; $('cardClear').disabled = cv <= 0;
   // loan shark
@@ -1869,15 +1880,15 @@ function cashierLabels(){
 function cashErr(t){ $('cashErr').textContent = t; $('cashErr').hidden = false; }
 function borrow(who){
   const input = $(who + 'Input'), v = Math.floor(Number(input.value) || 0);
-  const room = who === 'card' ? cardLeft() : (cardMaxed() ? sharkLeft() : 0);
-  const amt = Math.min(v, room);
+  const room = who === 'card' ? maxCash(cardLeft()) : (cardMaxed() ? sharkLeft() : 0);
+  const amt = Math.min(v, room), fee = who === 'card' ? cashFee(amt) : 0;
   if (amt <= 0) return cashErr(who === 'card' ? (S.line ? 'No room left on your credit.' : 'You have no credit yet.') : 'He won’t lend you any more.');
-  if (who === 'card') S.card = cents(S.card + amt);
+  if (who === 'card'){ S.card = cents(S.card + amt + fee); cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'cardfee', amt: fee }); }
   else { if (!S.shark) S.sharkNext = handsThisGame() + SHARK_EVERY; S.shark = cents(S.shark + amt); }
   const before = moneyMove(amt, who);
   hideSheets(); render();
   showMove(before, $('openCashier'), $('bankAmt'));
-  say('Borrowed ' + money(amt) + (who === 'card' ? ' on ' + lineName() + '.' : ' from the loan shark.'));
+  say('Borrowed ' + money(amt) + (who === 'card' ? ' on ' + lineName() + ', plus a ' + money(fee) + ' fee.' : ' from the loan shark.'));
   tablesAfterHand();   // borrowed chips count toward opening a table
 }
 function payBack(who){
@@ -2056,7 +2067,7 @@ function welcomeBack(){
   const owed = cents((S.card || 0) + (S.shark || 0));
   lines.push('Chips: <b>' + money(S.bankroll) + '</b>' + (owed > 0 ? '. You owe ' + money(owed) + '.' : ''));
   guyOffer = false;
-  fenceSheet('Welcome back', '🐋', lines.join('<br><br>'), [btn('Play', () => hideSheets(), { primary:true })]);
+  fenceSheet('Welcome back', { rank: rankNo() }, lines.join('<br><br>'), [btn('Play', () => hideSheets(), { primary:true })]);
 }
 let hiddenAt = 0;
 addEventListener('visibilitychange', () => {
@@ -2265,7 +2276,7 @@ function saveLines(o){
   return out;
 }
 function creditLines(o){
-  const out = ['Borrow up to ' + (o.limit >= 1e11 ? 'any amount' : money(o.limit)) + ', at ' + pct(o.rate) + ' interest a day on what you owe.'];
+  const out = ['Borrow up to ' + (o.limit >= 1e11 ? 'any amount' : money(o.limit)) + ', at ' + pct(o.rate) + ' interest a day on what you owe.', 'Each cash withdrawal costs ' + pct(CASH_FEE) + ' (at least ' + money(CASH_FEE_MIN) + '), added to what you owe.'];
   if (S.line) out.push('Replaces ' + esc(S.line.name) + ' (' + (S.line.limit >= 1e11 ? 'no limit' : money(S.line.limit)) + ' at ' + pct(S.line.rate) + ' a day). What you owe carries over.');
   else out.push('Your first credit. Without it, only the loan shark lends.');
   return out;
@@ -2296,7 +2307,11 @@ function fenceAfterHand(){
 }
 function fenceSheet(title, art, html, buttons){
   hideSheets();
-  $('fenceH').textContent = title; $('fenceArt').textContent = art; $('fenceText').innerHTML = html;
+  $('fenceH').textContent = title; $('fenceText').innerHTML = html;
+  if (typeof art === 'object' && art && art.rank != null){   // your rank's fish badge instead of a picture
+    const f = document.createElement('span'); f.className = 'rankfish lv' + art.rank; f.textContent = LEVELS[art.rank].name;
+    $('fenceArt').replaceChildren(f);
+  } else $('fenceArt').textContent = art;
   $('fenceBtns').replaceChildren(...buttons);
   $('fenceSheet').hidden = false;
 }
@@ -2320,7 +2335,7 @@ function takeLine(o){
   cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'line', what: o.name, amt: o.limit >= 1e11 ? 0 : o.limit });
   touch(); saveLocal(); saveCloudState(); hideSheets(); render();
   openCashier();   // straight to borrowing, with everything that's left on the line filled in
-  $('cardInput').value = Math.floor(Math.min(cardLeft(), 1000000)); cashierLabels();
+  $('cardInput').value = Math.floor(Math.min(maxCash(cardLeft()), 1000000)); cashierLabels();
 }
 function fenceBuy(o){
   guyOffer = false;
