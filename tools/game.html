@@ -2016,11 +2016,32 @@ function nextGoal(){
 }
 
 /* ---------- welcome back: where you stand, each time the app is opened again ---------- */
+// Who you are: your rank and the life you're living at it, with whatever you own or have paid ahead counted in.
+function whoYouAre(){
+  const i = rankNo(), L = LIFE[i], nx = LEVELS[i + 1], pres = prestige();
+  let t = 'You’re a <b>' + LEVELS[i].name + '</b>, prestige ' + money(pres) + (nx ? ', ' + money(nx.at - pres) + ' to go to ' + nx.name : '') + '. Minimum bet ' + money(L.minBet) + '.';
+  let life_;
+  if (L.comped) life_ = 'You live in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
+  else {
+    const homeOwned = covered('room') && OFFERS.some(o => o.covers === 'room' && o.keep && owns(o.id));
+    const carOwned = covered('ride') && OFFERS.some(o => o.covers === 'ride' && o.keep && owns(o.id));
+    const stay = homeOwned ? 'live in ' + coverName('room') : 'stay in ' + L.stay + (covered('room') ? ' on ' + coverName('room') : '');
+    const eat = covered('meals') ? 'have ' + coverName('meals') + ' cook for you' : 'eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat;
+    const go = carOwned ? 'get around in ' + coverName('ride') : L.ride <= 0 ? 'walk everywhere' : 'get around by ' + L.go.replace(/^(a|an) /, '') + (covered('ride') ? ' on ' + coverName('ride') : '');
+    const cost = (covered('room') ? 0 : L.room) + (covered('ride') ? 0 : L.ride) + (covered('meals') ? 0 : L.meals.reduce((a, b) => a + b, 0));
+    life_ = 'You ' + stay + ', ' + eat + ' and ' + go + ': ' + (cost > 0 ? money(cost) + ' a day.' : 'nothing to pay each day.');
+    if (L.sponsor) life_ += ' Your sponsor is ' + L.sponsor + '.';
+  }
+  const pp = people(), with_ = [pp.candy ? 'eye candy' : '', pp.crew ? 'an entourage' : ''].filter(Boolean).join(' and ');
+  if (with_) life_ += ' With you: ' + with_ + '.';
+  return t + '<br><br>' + life_;
+}
 const AWAY_MS = 10 * 60 * 1000;   // back after 10 minutes or more away also counts as reopening
 function welcomeBack(){
   if (firstVisit || S.dead) return;
-  const lines = [];
-  lines.push('Chips: <b>' + money(S.bankroll) + '</b>');
+  const lines = [whoYouAre()];
+  const owed = cents((S.card || 0) + (S.shark || 0));
+  lines.push('Chips: <b>' + money(S.bankroll) + '</b>' + (owed > 0 ? '. You owe ' + money(owed) + '.' : ''));
   // a better table already open to you comes first, so the goal never skips past the table you could move to now
   const up = openList().findIndex((o, k) => k > tableNo() && o);
   if (up > 0) lines.push('The <b>' + deckTable(TABLES[up].d) + '</b> is open to you. Tap the Limits sign to move up.');
