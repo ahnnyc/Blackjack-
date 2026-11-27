@@ -60,12 +60,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 #ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:var(--rail-line)}
 #topgap{flex:1}
-#bank{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}   /* rank and chips on top, centered; progress, up/down and debt under them */
+#bank{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding-top:5px}   /* room for fins and spouts above the badge */   /* rank and chips on top, centered; progress, up/down and debt under them */
 #bank .bank-top{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;max-width:100%}
 #bank .bank-sub{display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:2px 14px;max-width:100%;font-size:16px}
 @media (max-width:599px){ #top{gap:4px} #top .topbtn, #top #countBtn{padding:0 7px;font-size:15px} }
 @media (max-width:359px){ #top{gap:3px} #top .topbtn, #top #countBtn{padding:0 5px;font-size:14px} }
 #levelPct{font-size:16px;color:var(--gold);white-space:nowrap}
+#levelBtn.fishbtn{background:none;border:0;border-radius:0;padding:0;min-height:0;line-height:0}
+.fishbtn svg, .fishsvg svg{display:block}
+.fishsvg{display:inline-block;line-height:0}
+.fl6 svg{animation:swGlow 2.4s ease-in-out infinite}
+body.still .fl6 svg{animation:none}
 #levelBtn{flex:none;min-height:36px;padding:0 10px;border-radius:18px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;font-weight:700;white-space:nowrap}
 /* each prestige level has its own badge color, getting richer as you climb (the name always says the level) */
 /* every level badge is a fish: a body that stretches to fit the name, and a fixed tail, so the name sits centered in the body */
@@ -1419,7 +1424,7 @@ function checkLevel(){
 }
 function render(){
   applyMotion();
-  { const li = levelOf(prestige()), nx = LEVELS[li + 1]; $('levelBtn').textContent = LEVELS[li].name; $('levelBtn').className = 'rankfish lv' + li;
+  { const li = levelOf(prestige()), nx = LEVELS[li + 1]; if ($('levelBtn').dataset.fish !== String(li) || !$('levelBtn').firstChild || !fishCache[li + ':1']){ $('levelBtn').innerHTML = fishSVG(li, 1); $('levelBtn').dataset.fish = li; } $('levelBtn').className = 'fishbtn fl' + li;
     $('levelPct').textContent = nx ? rankPct() + '% to ' + nx.name : ''; $('levelBtn').setAttribute('aria-label', 'Rank: ' + LEVELS[li].name + (nx ? ', ' + rankStand() : '')); }
   checkLevel();
   const root = document.documentElement; for (let i = 0; i < 4; i++) root.classList.toggle('t' + i, i === tableNo());
@@ -2050,6 +2055,45 @@ function nextGoal(){
   return nx ? 'Next goal: become a ' + nx.name + '. The more you bet, the closer you get.' : 'You’re at the top: Super Whale.';
 }
 
+/* ---------- rank badges: each rank drawn as its own fish, with the name inside ---------- */
+// Today's simple badge plus one feature per fish: guppy fan tail, minnow fin, barracuda jaw, swordfish sword and fin,
+// shark triangle fin, whale flukes and spout. Fins and spouts rise above the badge without taking up height.
+const FISH_FONT = "'IBM Plex Sans Condensed', 'Arial Narrow', sans-serif";
+const FISH_ST=[{f:'none',s:'#b8bdb9',t:'#eeeeee',dash:'4 3',eye:'#b8bdb9'},{f:'#f4f4f4',s:'#ffffff',t:'#111111',eye:'#111'},{f:'#1d58a3',s:'#7fb1f0',t:'#ffffff',eye:'#fff'},
+ {f:'#8fd3ff',s:'#d6f0ff',t:'#06263d',eye:'#06263d'},{f:'#a8420f',s:'#f0a070',t:'#ffffff',eye:'#fff'},{f:'#000',s:'#e0e0e0',t:'#ffffff',dbl:1,eye:'#fff'},{f:'url(#fishgold)',s:'#fff6dc',t:'#22180c',glow:1,eye:'#22180c'}];
+const FISH_NOSE=[0,0,7,18,0,0,0];
+function fishSVGRaw(i, scale){
+  const st=FISH_ST[i], T=8, H=36;                           // T: room above for fins and spouts
+  const meas=document.createElementNS('http://www.w3.org/2000/svg','svg'); document.body.append(meas);
+  const tt=document.createElementNS('http://www.w3.org/2000/svg','text'); tt.setAttribute('font-size','16'); tt.setAttribute('font-weight','700'); tt.setAttribute('font-family', FISH_FONT); tt.textContent=LEVELS[i].name; meas.append(tt);
+  const tw=tt.getComputedTextLength(); meas.remove();
+  const x0=FISH_NOSE[i]+2, W=tw+40, x1=x0+W, y=T+18, top=T+1, bot=T+35;
+  const P=[];
+  P.push(`M${x0} ${y} C${x0+.1*W} ${top}, ${x1-.15*W} ${top}, ${x1} ${y} C${x1-.15*W} ${bot}, ${x0+.1*W} ${bot}, ${x0} ${y} Z`);   // the same body as today
+  if (i===0) P.push(`M${x1-2} ${y} C${x1+6} ${T+4}, ${x1+20} ${T+1}, ${x1+24} ${T+7} C${x1+19} ${y-4}, ${x1+19} ${y+4}, ${x1+24} ${T+29} C${x1+20} ${T+35}, ${x1+6} ${T+32}, ${x1-2} ${y} Z`);   // guppy: a fan tail
+  else if (i>=5) P.push(`M${x1-3} ${y-3} C${x1+5} ${y-6}, ${x1+10} ${T+3}, ${x1+11} ${T-4} C${x1+14} ${T+1}, ${x1+19} ${T+2}, ${x1+24} ${T} C${x1+20} ${y-2}, ${x1+10} ${y+5}, ${x1-3} ${y+4} Z`);   // whale: flukes
+  else P.push(`M${x1-2} ${y} L${x1+20} ${T+5} L${x1+15} ${y} L${x1+20} ${T+31} Z`);   // today's tail
+  if (i===1) P.push(`M${x0+.45*W} ${top+2} L${x0+.55*W} ${T-3} L${x0+.62*W} ${top+2.5} Z`);   // minnow: a little fin
+  if (i===2) P.push(`M${x0+3} ${y+2} L${x0-7} ${y+5} L${x0+6} ${y+6} Z`);   // barracuda: jutting jaw
+  if (i===3){ P.push(`M${x0+3} ${y-1.5} L${x0-18} ${y} L${x0+3} ${y+1.5} Z`); P.push(`M${x0+.42*W} ${top+2} C${x0+.44*W} ${T-4}, ${x0+.5*W} ${T-7}, ${x0+.56*W} ${T-7} C${x0+.52*W} ${T-3}, ${x0+.51*W} ${top}, ${x0+.54*W} ${top+2} Z`); }   // swordfish: sword + crescent fin
+  if (i===4){ P.push(`M${x0+.38*W} ${top+6} L${x0+.56*W} ${T-9} L${x0+.62*W} ${top+4} Z`); P.push(`M${x0} ${y} C${x0+.1*W} ${top}, ${x1-.15*W} ${top}, ${x1} ${y} C${x1-.15*W} ${bot}, ${x0+.1*W} ${bot}, ${x0} ${y} Z`); }   // shark: a tall triangle fin
+  const w=x1+25, h=T+38;
+  let g='';
+  for (const d of P){
+    if (st.dbl) g+=`<path d="${d}" fill="none" stroke="${st.s}" stroke-width="5" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#000" stroke-width="2.4" stroke-linejoin="round"/>`;
+    g+=`<path d="${d}" fill="${st.f}" stroke="${st.s}" stroke-width="${st.dbl?1.4:1.6}" stroke-linejoin="round"${st.dash?` stroke-dasharray="${st.dash}"`:''}/>`;
+  }
+  g+=`<circle cx="${x0+7}" cy="${y-4}" r="1.6" fill="${st.eye}"/>`;
+  if (i>=5){ const sx=x0+.25*W, sy=T-1, c=i===5?'#e0e0e0':'#c9a347';
+    g+=`<path d="M${sx} ${top+1} L${sx} ${sy-4} M${sx} ${sy-2} C${sx-4} ${sy-7},${sx-8} ${sy-5},${sx-8} ${sy-1} M${sx} ${sy-2} C${sx+4} ${sy-7},${sx+8} ${sy-5},${sx+8} ${sy-1}" fill="none" stroke="${c}" stroke-width="1.6" stroke-linecap="round"/>`; }
+  g+=`<text x="${x0+W/2+4}" y="${y+5.5}" text-anchor="middle" font-size="16" font-weight="700" font-family="${FISH_FONT}" fill="${st.t}">${LEVELS[i].name}</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 ${T-1} ${w+2} 38" width="${(w+2)*scale}" height="${38*scale}" style="overflow:visible${st.glow?';filter:drop-shadow(0 0 6px rgba(255,220,140,.8))':''}"><defs><linearGradient id="fishgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1c9"/><stop offset=".45" stop-color="#e4c57e"/><stop offset="1" stop-color="#c9a347"/></linearGradient></defs>${g}</svg>`;
+}
+
+const fishCache = {};
+function fishSVG(i, scale = 1){ const k = i + ':' + scale; return fishCache[k] || (fishCache[k] = fishSVGRaw(i, scale)); }
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { for (const k in fishCache) delete fishCache[k]; if (typeof render === 'function') try { render(); } catch (e) {} });   // measure again once the real font is in
+
 /* ---------- rank-up fireworks: bigger and more colorful the higher the rank ---------- */
 // Played over the new-rank message, which waits until the first bursts are up (a tap shows it at once).
 // Off when Animations is off in Rules.
@@ -2420,7 +2464,7 @@ function fenceSheet(title, art, html, buttons){
   hideSheets();
   $('fenceH').textContent = title; $('fenceText').innerHTML = html;
   if (typeof art === 'object' && art && art.rank != null){   // your rank's fish badge instead of a picture
-    const f = document.createElement('span'); f.className = 'rankfish lv' + art.rank; f.textContent = LEVELS[art.rank].name;
+    const f = document.createElement('span'); f.className = 'fishsvg fl' + art.rank; f.innerHTML = fishSVG(art.rank, 1.4);
     $('fenceArt').replaceChildren(f);
   } else $('fenceArt').textContent = art;
   $('fenceBtns').replaceChildren(...buttons);
