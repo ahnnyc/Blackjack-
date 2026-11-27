@@ -2145,7 +2145,7 @@ function lifeLine(i){
   const L = LIFE[i];
   if (L.comped) return 'You stay in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
   const bare = o => o.name.replace(/^(a|an|your own) /, '');
-  const left = o => { const d = Math.max(1, Math.ceil(((S.deals || {})[o.id] - handsThisGame()) / DAY)); return ' (' + d + (d === 1 ? ' day' : ' days') + ' left)'; };
+  const left = o => '';   // days left on a rental or deal are not shown (Mike: leave them out)
   const at = e => (/^(a |the )/.test(e) ? 'at ' : '') + e;
   // where you sleep: owned, rented, on a deal, free, comped, or paid by the night
   const ro = coverOffer('room');
