@@ -31,7 +31,7 @@ fs.writeFileSync(dir + '/fw-page.html', '<!doctype html><html><head><meta charse
     // a tap during the fireworks shows the message at once
     await p.evaluate(() => { __bj.S.playPres = 25000; __bj.render(); }); await p.waitForTimeout(500);
     await p.mouse.click(10, 10); await p.waitForTimeout(100);
-    check('tapShowsMessage' + w, !(await p.evaluate(() => document.getElementById('fenceSheet').classList.contains('fw-wait'))) && /Marlin/.test(await p.textContent('#fenceText')), await p.textContent('#fenceText'));
+    check('tapShowsMessage' + w, !(await p.evaluate(() => document.getElementById('fenceSheet').classList.contains('fw-wait'))) && /Shark/.test(await p.textContent('#fenceText')), await p.textContent('#fenceText'));
     await p.evaluate(() => __bj.hideSheets());
     // every other box centered and on screen
     for (const [name, fn] of [['cashier', '__bj.openCashier()'], ['tables', '__bj.openTables()'], ['stuff', '__bj.openStuff()'], ['welcome', '__bj.welcomeBack()']]) {

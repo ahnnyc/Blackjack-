@@ -58,7 +58,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await playHand(2500);
   const good = await sheets();
   check('ratedDay', good.some(s => /^Your sponsor \| .*pays/.test(s)) && !good.some(s => /^Low bets/.test(s)), good);
-  // ranked up to Whale this afternoon, after a morning as a Marlin at $250: rated against the Marlin's $250
+  // ranked up to Whale this afternoon, after a morning as a Shark at $250: rated against the Shark's $250
   await endOfDay({ ok:149, all:149, bills:1000, bet:149 * 260, hands:149, lvl:250 });
   await playHand(2500);
   const up = await sheets();

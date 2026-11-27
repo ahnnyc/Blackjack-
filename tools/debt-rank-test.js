@@ -1,5 +1,5 @@
 // Debt costs prestige: after what your things are worth, every $2 owed costs $1. A Whale who borrows $100,000
-// with nothing to their name drops to Marlin and is told why; paying it back brings Whale back. Things still
+// with nothing to their name drops to Shark and is told why; paying it back brings Whale back. Things still
 // cancel debt first. Usage: node tools/debt-rank-test.js   (reads tools/game.html)
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
 const HOOK = "window.__bj = { get S(){ return S; }, prestige, rankNo, hideSheets, render, applyMotion, openCashier };\n";
@@ -25,14 +25,14 @@ fs.writeFileSync(dir + '/dr-page.html', '<!doctype html><html><head><meta charse
   check('cashierSays', /Owing money holds your rank back\./.test(await p.textContent('#cardNote')), await p.textContent('#cardNote'));
   await p.evaluate(() => __bj.hideSheets());
   check('levelDown', (await p.evaluate(() => [__bj.prestige(), __bj.rankNo()])).join() === '250000,5', await p.evaluate(() => [__bj.prestige(), __bj.rankNo()]));
-  // $200,000 owed: prestige 200,000, Marlin, and the message says why
+  // $200,000 owed: prestige 200,000, Shark, and the message says why
   await p.evaluate(() => __bj.hideSheets());
   await p.evaluate(() => __bj.openCashier()); await p.waitForTimeout(200);
   await p.fill('#cardInput', '95238'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardBorrow'); await p.waitForTimeout(400);
   await p.waitForTimeout(700);
   const d2 = await sheet();
   check('marlin', (await p.evaluate(() => [__bj.prestige(), __bj.rankNo()])).join() === '200000,4', await p.evaluate(() => [__bj.prestige(), __bj.rankNo()]));
-  check('downMessage', /^Rank down \| You are now a Marlin\. What you owe is holding you back\. Pay it back to climb again\./.test(d2 || ''), d2);
+  check('downMessage', /^Rank down \| You are now a Shark\. What you owe is holding you back\. Pay it back to climb again\./.test(d2 || ''), d2);
   await p.evaluate(() => __bj.hideSheets());
   // things cancel debt first: $150,000 of things against $200,000 owed costs only $25,000
   await p.evaluate(() => { __bj.S.stash = [{ item:'a penthouse', paid:150000, oid:'penthouse' }]; __bj.render(); }); await p.waitForTimeout(300);
