@@ -201,13 +201,18 @@ body.still #banner.pop{animation:none}
 .chip.long{font-size:14px} .stack i.long{font-size:12px}
 
 /* sheets */
-.sheet{position:fixed;inset:0;background:rgba(3,14,10,.72);display:flex;align-items:flex-end;justify-content:center;z-index:20}
-.panel{
-  box-sizing:border-box;width:100%;max-width:560px;max-height:calc(100% - env(safe-area-inset-top, 0px) - 56px);overflow-y:auto;background:var(--panel);border-radius:18px 18px 0 0;
-  border-top:2px solid var(--gold);
-  padding:16px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+.sheet{position:fixed;inset:0;background:rgba(3,14,10,.72);display:flex;align-items:center;justify-content:center;z-index:20;box-sizing:border-box;
+  padding:calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))}
+.panel{   /* centered on the screen, never taller than it: a long one scrolls inside */
+  box-sizing:border-box;width:100%;max-width:560px;max-height:100%;overflow-y:auto;background:var(--panel);border-radius:18px;
+  border:2px solid var(--gold);
+  padding:16px 18px 18px;
   display:flex;flex-direction:column;gap:14px
 }
+/* rank-up fireworks: a canvas under the message, which waits until the first bursts have gone up */
+#fwCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#fenceSheet .panel{position:relative;z-index:1;transition:transform .45s cubic-bezier(.2,1.4,.4,1),opacity .3s}
+#fenceSheet.fw-wait .panel{opacity:0;transform:scale(.6);pointer-events:none}
 .panel > *, #sharkCtl > *{flex-shrink:0}   /* a long sheet scrolls; nothing in it gets squashed */
 .phead{display:flex;align-items:center;gap:10px}
 .phead h2{flex:1;margin:0;font-family:var(--f-display);font-size:26px;font-weight:700;color:var(--gold);text-wrap:balance}
@@ -412,6 +417,7 @@ body.still .card.flip{animation:none}
 </div>
 
 <div class="sheet" id="fenceSheet" hidden>
+  <canvas id="fwCanvas" aria-hidden="true"></canvas>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="fenceH" aria-describedby="fenceText">
     <div class="phead"><h2 id="fenceH">Offer</h2></div>
     <div class="fence-art" id="fenceArt" aria-hidden="true"></div>
@@ -1382,7 +1388,7 @@ function checkLevel(){
   queueSheet(() => { guyOffer = false; fenceSheet(up ? 'New rank' : 'Rank down', { rank: i },
     ['You are now a <b>' + LEVELS[i].name + '</b>.' + (!up && debtCost() > 0 ? ' What you owe is holding you back. Pay it back to climb again.' : ''),
      ((gift ? 'Welcome gift from the casino: <b>' + money(gift) + '</b> in free chips. ' : '') + (up && PERK_NOTE[i] ? PERK_NOTE[i] : '')).trim(),
-     levelNote(i).trim()].filter(Boolean).join('<br><br>'), [btn('OK', () => hideSheets(), { primary:true })]); });
+     levelNote(i).trim()].filter(Boolean).join('<br><br>'), [btn('OK', () => hideSheets(), { primary:true })]); if (up) fireworks(i); });
 }
 function render(){
   applyMotion();
@@ -2017,6 +2023,84 @@ function nextGoal(){
   return nx ? 'Next goal: become a ' + nx.name + '. The more you bet, the closer you get.' : 'You’re at the top: Super Whale.';
 }
 
+/* ---------- rank-up fireworks: bigger and more colorful the higher the rank ---------- */
+// Played behind the new-rank message, which waits until the first bursts are up (a tap shows it at once).
+// Off when Animations is off in Rules.
+const FW = [null,
+  { shells:3,  parts:46,  size:1.0,  colors:['#ffffff','#d8e2e6'], kinds:['peony'] },
+  { shells:4,  parts:58,  size:1.12, colors:['#ffffff','#6fb1ff','#2f74d0'], kinds:['peony'] },
+  { shells:6,  parts:70,  size:1.25, colors:['#8fd3ff','#ffffff','#5ce1e6','#b3f0ff'], kinds:['peony','ring'] },
+  { shells:8,  parts:88,  size:1.4,  colors:['#ff8a3d','#ffd166','#ff4d4d','#ffffff','#ffb347'], kinds:['peony','ring','crackle'] },
+  { shells:12, parts:110, size:1.6,  colors:['#ff4d6d','#ffd166','#4dd2ff','#b388ff','#7cfc9a','#ffffff','#ff9f43'], kinds:['peony','ring','crackle','willow'] },
+  { shells:18, parts:140, size:1.85, colors:['#ff4d6d','#ffd166','#4dd2ff','#b388ff','#7cfc9a','#ffffff','#ff9f43','#ff6ad5','#f6e27a'], kinds:['peony','ring','crackle','willow','double'], finale:true },
+];
+let fwParts = [], fwRockets = [], fwTimers = [], fwRaf = 0, fwW = 0, fwH = 0, fwShow = null;
+const fwRnd = (a, b) => a + Math.random() * (b - a), fwPick = a => a[Math.floor(Math.random() * a.length)];
+function fwStop(){
+  fwTimers.forEach(clearTimeout); fwTimers = []; fwParts = []; fwRockets = [];
+  if (fwRaf){ cancelAnimationFrame(fwRaf); fwRaf = 0; }
+  const c = $('fwCanvas'); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
+  const sh = $('fenceSheet'); sh.classList.remove('fw-wait'); if (fwShow){ sh.removeEventListener('pointerdown', fwShow); fwShow = null; }
+}
+function fwLaunch(R, o = {}){
+  const x = o.x != null ? o.x : fwRnd(fwW * 0.12, fwW * 0.88), ty = o.y != null ? o.y : fwRnd(fwH * 0.12, fwH * 0.55);
+  fwRockets.push({ x, y: fwH + 6, tx: x + fwRnd(-30, 30), ty, vy: -fwRnd(9, 12) * Math.sqrt(fwH / 800), R, kind: o.kind || fwPick(R.kinds), color: o.color });
+}
+function fwBurst(rk){
+  const R = rk.R, k = rk.kind, n = Math.round(R.parts * (k === 'ring' ? 0.7 : 1)), c1 = rk.color || fwPick(R.colors), c2 = fwPick(R.colors);
+  const sp = 3.6 * R.size * Math.sqrt(fwW / 390);
+  const add = (vx, vy, color, extra) => fwParts.push(Object.assign({ x: rk.x, y: rk.y, px: rk.x, py: rk.y, vx, vy, color, life: 1, decay: fwRnd(0.009, 0.015), g: 0.04, drag: 0.985, w: 1.7 * R.size }, extra || {}));
+  if (k === 'ring' || k === 'double'){
+    for (let i = 0; i < n; i++){ const a = i / n * Math.PI * 2; add(Math.cos(a) * sp * 1.05, Math.sin(a) * sp * 1.05, c1); }
+    if (k === 'double') for (let i = 0; i < n; i++){ const a = i / n * Math.PI * 2 + 0.1; add(Math.cos(a) * sp * 0.6, Math.sin(a) * sp * 0.6, c2); }
+  } else if (k === 'willow'){
+    for (let i = 0; i < n; i++){ const a = fwRnd(0, Math.PI * 2), v = sp * Math.sqrt(Math.random()) * 1.1; add(Math.cos(a) * v, Math.sin(a) * v, '#f6d27a', { decay: fwRnd(0.006, 0.009), g: 0.06, drag: 0.975, w: 1.8 * R.size }); }
+  } else {
+    for (let i = 0; i < n; i++){ const a = fwRnd(0, Math.PI * 2), v = sp * Math.sqrt(Math.random()); add(Math.cos(a) * v, Math.sin(a) * v, Math.random() < 0.75 ? c1 : c2, k === 'crackle' ? { crackle: true } : null); }
+  }
+  fwParts.push({ x: rk.x, y: rk.y, px: rk.x, py: rk.y, vx: 0, vy: 0, color: '#ffffff', life: 1, decay: 0.09, g: 0, drag: 1, w: 26 * R.size, flash: true });
+}
+function fwFrame(){
+  const cx = $('fwCanvas').getContext('2d');
+  cx.clearRect(0, 0, fwW, fwH); cx.globalCompositeOperation = 'lighter';
+  for (let i = fwRockets.length - 1; i >= 0; i--){
+    const r = fwRockets[i], py = r.y; r.y += r.vy; r.vy *= 0.995; r.x += (r.tx - r.x) * 0.02;
+    cx.strokeStyle = 'rgba(255,230,180,.9)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(r.x, py + 14); cx.lineTo(r.x, r.y); cx.stroke();
+    if (r.y <= r.ty){ fwBurst(r); fwRockets.splice(i, 1); }
+  }
+  for (let i = fwParts.length - 1; i >= 0; i--){
+    const p = fwParts[i];
+    p.px = p.x; p.py = p.y; p.vx *= p.drag; p.vy = p.vy * p.drag + p.g; p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+    if (p.life <= 0){ fwParts.splice(i, 1); continue; }
+    if (p.flash){ const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.w); g.addColorStop(0, 'rgba(255,255,255,' + (p.life * 0.9) + ')'); g.addColorStop(1, 'rgba(255,255,255,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(p.x, p.y, p.w, 0, Math.PI * 2); cx.fill(); continue; }
+    let a = Math.min(1, p.life * 1.4); if (p.crackle && p.life < 0.55) a *= Math.random() < 0.5 ? 1 : 0.15;
+    cx.globalAlpha = a; cx.strokeStyle = p.color; cx.lineWidth = p.w * Math.max(0.4, p.life); cx.lineCap = 'round';
+    cx.beginPath(); cx.moveTo(p.px - p.vx * 1.2, p.py - p.vy * 1.2); cx.lineTo(p.x, p.y); cx.stroke();
+    if (p.life > 0.6){ cx.fillStyle = p.color; cx.beginPath(); cx.arc(p.x, p.y, p.w * 0.9, 0, Math.PI * 2); cx.fill(); }
+  }
+  cx.globalAlpha = 1; cx.globalCompositeOperation = 'source-over';
+  fwRaf = fwParts.length || fwRockets.length ? requestAnimationFrame(fwFrame) : 0;
+}
+function fireworks(rank){
+  const R = FW[rank], sheet = $('fenceSheet'), c = $('fwCanvas');
+  if (!R || !rules().motion || sheet.hidden) return;
+  fwStop();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  fwW = sheet.clientWidth; fwH = sheet.clientHeight; c.width = fwW * dpr; c.height = fwH * dpr; c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  sheet.classList.add('fw-wait');
+  const go = () => { if (!fwRaf) fwRaf = requestAnimationFrame(fwFrame); };
+  const later = (ms, fn) => fwTimers.push(setTimeout(fn, ms));
+  const span = 900 + R.shells * 160;            // higher ranks keep the sky busy for longer
+  for (let i = 0; i < R.shells; i++) later(i * span / R.shells + fwRnd(0, 120), () => { fwLaunch(R); go(); });
+  if (R.finale){                                 // Super Whale: a gold finale across the whole sky
+    later(span + 200, () => { for (let i = 0; i < 7; i++) fwLaunch(R, { x: fwW * (0.1 + i * 0.13), y: fwH * fwRnd(0.12, 0.3), kind: i % 2 ? 'willow' : 'double', color: '#f6d27a' }); go(); });
+    later(span + 900, () => { for (let i = 0; i < 6; i++) fwLaunch(R, { x: fwW * (0.15 + i * 0.14), y: fwH * fwRnd(0.15, 0.4), kind: 'crackle' }); go(); });
+  }
+  fwShow = () => { sheet.classList.remove('fw-wait'); sheet.removeEventListener('pointerdown', fwShow); fwShow = null; };
+  later(Math.min(2800, 1300 + R.shells * 90), () => fwShow && fwShow());   // the fireworks get the screen first, then the message
+  sheet.addEventListener('pointerdown', fwShow);   // a tap shows the message at once
+}
+
 /* ---------- welcome back: where you stand, each time the app is opened again ---------- */
 // Who you are: your rank and the life you're living at it, with whatever you own or have paid ahead counted in.
 function whoYouAre(){
@@ -2432,7 +2516,7 @@ function cardFly(x){
   ], { duration: 2000, easing: 'ease-in-out' }).finished.then(() => el.remove(), () => el.remove());
 }
 
-function hideSheets(){ document.querySelectorAll('.sheet').forEach(s => s.hidden = true); pumpSheets(300); }
+function hideSheets(){ fwStop(); document.querySelectorAll('.sheet').forEach(s => s.hidden = true); pumpSheets(300); }
 // Things that pop up between hands (offers, bills, sponsors, a new table, the loan shark's warning)
 // wait in line here. Each shows at the next pause; if you've already started the next hand, it waits for
 // the end of that one. Nothing is thrown away.
