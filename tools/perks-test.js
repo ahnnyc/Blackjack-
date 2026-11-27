@@ -28,14 +28,14 @@ fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charse
   // Barracuda: $500, room half price
   b0 = await bank();
   const bc = await rankTo(5000, 'rank-barracuda');
-  check('barracudaGift', /Welcome gift from the casino: \$500 in free chips\. The casino gives you its room rate: half price\. \/ You stay in a budget hotel \(half price\), eat at a diner and get around by the city bus: \$85 a day\./.test(bc || '') && (await bank()) === b0 + 500, [bc, await bank() - b0]);
-  check('roomHalf', /A night in a budget hotel \(casino rate, half price\): \$30/.test(await bill(3) || ''), await bill(3));
+  check('barracudaGift', /Welcome gift from the casino: \$500 in free chips\. The casino gives you its room rate: half price\. \/ You stay in a standard room at the casino \(half price\), eat at a diner and get around by the city bus: \$85 a day\./.test(bc || '') && (await bank()) === b0 + 500, [bc, await bank() - b0]);
+  check('roomHalf', /A night in a standard room at the casino \(half price\): \$30/.test(await bill(3) || ''), await bill(3));
   // Swordfish: $1,000, room comped
   b0 = await bank();
   const sw = await rankTo(10000);
-  check('swordfishGift', /Welcome gift from the casino: \$1,000 in free chips\. Your room is comped from now on\. \/ You stay in a hotel room \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(sw || '') && (await bank()) === b0 + 1000, [sw, await bank() - b0]);
-  check('roomComped', /^End of day 1 \| A night in a hotel room: comped by the casino \/ Getting around by taxis: \$36/.test(await bill(3) || ''), await bill(3));
-  check('whoSwordfish', /You stay in a hotel room \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
+  check('swordfishGift', /Welcome gift from the casino: \$1,000 in free chips\. Your room is comped from now on\. \/ You stay in a deluxe room at the casino \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(sw || '') && (await bank()) === b0 + 1000, [sw, await bank() - b0]);
+  check('roomComped', /^End of day 1 \| A night in a deluxe room at the casino: comped by the casino \/ Getting around by taxis: \$36/.test(await bill(3) || ''), await bill(3));
+  check('whoSwordfish', /You stay in a deluxe room at the casino \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
   // dropping back and climbing again gives no second gift
   await rankTo(5000); b0 = await bank();
   const again = await rankTo(10000);
