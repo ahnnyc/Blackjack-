@@ -22,7 +22,7 @@ fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charse
   // Minnow: $100, breakfast comped
   let b0 = await bank();
   const m = await rankTo(1000, 'rank-minnow');
-  check('minnowGift', /^New rank \| You are now a Minnow\. \/ Welcome gift from the casino: \$100 in free chips\. Your breakfast is comped from now on\. \/ You stay in a hostel bed, eat fast food \(breakfast comped\) and get around by the city bus: \$44 a day\./.test(m || '') && (await bank()) === b0 + 100, [m, await bank() - b0]);
+  check('minnowGift', /^New rank \| You are now a Minnow\. \/ Welcome gift from the casino: \$100 in free chips\. Your breakfast is comped from now on\. \/ You pay \$22 a night for a hostel bed, eat fast food \(breakfast comped\) and get around by the city bus: \$44 a day in all\./.test(m || '') && (await bank()) === b0 + 100, [m, await bank() - b0]);
   check('breakfastComped', /^Breakfast \| Breakfast at fast food: comped by the players’ club$/.test(await bill(0) || ''), await bill(0));
   check('lunchCharged', /^Lunch \| Lunch at fast food: \$8, taken from your chips\.$/.test(await bill(1) || ''), await bill(1));
   // a deal covers only its own place: the hostel rate pays for the hostel at Minnow, not the casino room at Barracuda
@@ -31,16 +31,16 @@ fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charse
   // Barracuda: $500, room half price
   b0 = await bank();
   const bc = await rankTo(5000, 'rank-barracuda');
-  check('barracudaGift', /Welcome gift from the casino: \$500 in free chips\. The casino gives you its room rate: half price\. \/ You stay in a standard room at the casino \(half price\), eat at a diner and get around by the city bus: \$85 a day\./.test(bc || '') && (await bank()) === b0 + 500, [bc, await bank() - b0]);
+  check('barracudaGift', /Welcome gift from the casino: \$500 in free chips\. The casino gives you its room rate: half price\. \/ You pay \$30 a night for a standard room at the casino \(half price\), eat at a diner and get around by the city bus: \$85 a day in all\./.test(bc || '') && (await bank()) === b0 + 500, [bc, await bank() - b0]);
   check('hostelDealNotAtCasino', /A night in a standard room at the casino \(half price\): \$30/.test(await bill(3) || '') && !/hostel rate/.test(await p.evaluate(() => __bj.whoYouAre())), [await bill(3), await p.evaluate(() => __bj.whoYouAre())]);
   await p.evaluate(() => { __bj.S.deals = {}; });
   check('roomHalf', /A night in a standard room at the casino \(half price\): \$30/.test(await bill(3) || ''), await bill(3));
   // Swordfish: $1,000, room comped
   b0 = await bank();
   const sw = await rankTo(10000, 'rank-swordfish');
-  check('swordfishGift', /Welcome gift from the casino: \$1,000 in free chips\. Your room is comped from now on\. \/ You stay in a deluxe room at the casino \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(sw || '') && (await bank()) === b0 + 1000, [sw, await bank() - b0]);
+  check('swordfishGift', /Welcome gift from the casino: \$1,000 in free chips\. Your room is comped from now on\. \/ You stay in a deluxe room at the casino, comped, eat at a café and get around by taxis: \$131 a day in all\./.test(sw || '') && (await bank()) === b0 + 1000, [sw, await bank() - b0]);
   check('roomComped', /^End of day 1 \| A night in a deluxe room at the casino: comped by the casino \/ Getting around by taxis: \$36/.test(await bill(3) || ''), await bill(3));
-  check('whoSwordfish', /You stay in a deluxe room at the casino \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
+  check('whoSwordfish', /You stay in a deluxe room at the casino, comped, eat at a café and get around by taxis: \$131 a day in all\./.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
   // the rank's fish badge, not a whale, on the new-rank message and on Welcome back
   await p.evaluate(() => { __bj.S.playPres = 30000; __bj.render(); }); await p.waitForTimeout(700);
   check('badgeOnNewRank', (await p.$eval('#fenceArt', e => e.querySelector('.rankfish') ? e.querySelector('.rankfish').className + ' ' + e.textContent : e.textContent)) === 'rankfish lv4 Marlin', await p.$eval('#fenceArt', e => e.innerHTML));
