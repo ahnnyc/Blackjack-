@@ -42,7 +42,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await p.evaluate(() => __bj.hideSheets());
   await playHand(); await sheets();
   // a Whale may sit at the 8-deck table and bet $5
-  await p.evaluate(() => { const S = __bj.S; S.playPres = 300000; S.bankroll = 200000; S.people = { candy:'a woman', crew:true }; __bj.render(); });
+  await p.evaluate(() => { const S = __bj.S; S.playPres = 300000; S.bankroll = 200000; S.people = { candy:true, crew:true }; __bj.render(); });
   check('whaleAnyBet', (await p.evaluate(() => [__bj.rankNo(), __bj.tableNo(), __bj.minBet(), __bj.maxBet()])).join() === '5,0,5,500', await p.evaluate(() => [__bj.rankNo(), __bj.tableNo(), __bj.minBet(), __bj.maxBet()]));
   // a low day: averaging $500 as a Whale
   await endOfDay({ ok:149, all:149, bills:1000, bet:149 * 500, hands:149, lvl:2500 });

@@ -38,7 +38,7 @@ fs.writeFileSync(dir + '/ch-page.html', '<!doctype html><html><head><meta charse
   await p.locator('#expList button.er', { hasText: 'Entourage' }).click(); await p.waitForTimeout(900);
   if (shots) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/choice-3-crew.png' });
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
-  check('sentHome', !(await p.evaluate(() => !!__bj.S.people.crew)) && (await rows()).some(x => /^\[tap\] Entourage \| sent home \| Bring back ›$/.test(x)), await rows());
+  check('sentHome', !(await p.evaluate(() => !!__bj.S.people.crew)) && (await rows()).some(x => /^\[tap\] Entourage \| sent home \| \$0 ›$/.test(x)), await rows());
   if (shots) await p.locator('#cashSheet .panel').screenshot({ path: shots + '/choice-4-gone.png' });
   // bring them back: costs the first day now
   const chips0 = await p.evaluate(() => __bj.S.bankroll);
@@ -55,6 +55,7 @@ fs.writeFileSync(dir + '/ch-page.html', '<!doctype html><html><head><meta charse
   await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.bankroll = 50000; S.playPres = 30000; __bj.render(); __bj.hideSheets(); __bj.openCashier(); }); await p.waitForTimeout(300);
   check('belowRankHidden', !(await rows()).some(x => /Entourage/.test(x)), await rows());
   // neutral pictures
+  check('noManWoman', !/A man|A woman|a man|a woman/.test(require('fs').readFileSync(dir + '/game.html', 'utf8')), '');
   check('neutralArt', await p.evaluate(() => !/[💃🕺👯]/u.test(JSON.stringify(__bj.PEOPLE))), '');
   await p.evaluate(() => { __bj.S.people = {}; __bj.S.gone = {}; });
   // Super Whale: nothing to change
