@@ -2,9 +2,9 @@
 
 Casino blackjack for the phone, installable to the iPhone home screen and playable with no internet connection.
 
-You walk in with $1,000. Everything you do feeds one ranking: your prestige rank, from Guppy to Super Whale, which sets how you live, what you must bet, and what Guy offers you. A typical player who plays well reaches Super Whale in about 100 hours, counting restarts (modelled before building: prestige from play, sponsors paying 75% of the bills, credit lines up to $250,000 at Whale).
+You walk in with $1,000. Everything you do feeds one ranking: your prestige rank, from Guppy to Super Whale, which sets how you live, what you must bet, and which offers you get. A typical player who plays well reaches Super Whale in about 100 hours, counting restarts (modelled before building: prestige from play, sponsors paying 75% of the bills, credit lines up to $1,000,000 at Whale; a Whale has bet about $1 million to get there and a Super Whale about $20 million).
 
-There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $1,000), 6 decks ($25 to $5,000), 2 decks ($100 to $25,000) and 1 deck ($500 to $100,000). You start at 8 decks; a table opens when your chips plus prestige reach $1,250 / $7,500 / $100,000 (tables can be skipped), or once you have bet enough at the table below ($150 / $5,000 / $200,000); the offer to move up comes when your shoe is due for a shuffle, so a move always starts with a fresh shoe; the message also says what the next goal is. Each table has its own felt: worn gray-green, blue, black, and red with gold trim. If you can't cover a table's minimum you're moved down. Every other casino rule is an on/off switch, and every bet, win, loss and money move is recorded, with charts of how far up or down you are this game and over all games.
+There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $500), 6 decks ($25 to $5,000), 2 decks ($100 to $25,000) and 1 deck ($500 to $100,000). You start at 8 decks; a table opens when your chips plus prestige reach $1,250 / $7,500 / $100,000 (tables can be skipped), or once you have bet enough at the table below ($150 / $5,000 / $200,000); the offer to move up comes when your shoe is due for a shuffle, so a move always starts with a fresh shoe; the message also says what the next goal is. Each table has its own felt: worn gray-green, blue, black, and red with gold trim. If you can't cover a table's minimum you're moved down. A table whose maximum is under your rank's minimum bet is too small for you: a Whale can't play 8 decks, a Super Whale can't play 8 or 6, and ranking up moves you to the smallest table that fits. Every other casino rule is an on/off switch, and every bet, win, loss and money move is recorded, with charts of how far up or down you are this game and over all games.
 
 ## Ranks
 
@@ -14,9 +14,9 @@ There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $1,000),
 | Minnow | $1,000 | $10 | hotel room $99 | coffee shop $60 | city bus $10 | $169 | a pawn shop |
 | Barracuda | $5,000 | $25 | scenic room $249 | café $150 | taxis $60 | $459 | a sports bar chain |
 | Swordfish | $10,000 | $50 | suite $499 | steakhouse $300 | rental car $120 | $919 | a sports-betting app |
-| Marlin | $25,000 | $100 | tower suite $799 | fine dining $500 | car service $300 | $1,599 | an energy drink |
-| Whale | $100,000 | $500 | villa $1,500 | chef's table $1,000 | limo with driver $800 | $3,300 | a watch brand |
-| Super Whale | $1,000,000 | $1,000 | penthouse | anywhere | private car and driver | comped | none |
+| Marlin | $25,000 | $250 | tower suite $799 | fine dining $500 | car service $300 | $1,599 | an energy drink |
+| Whale | $250,000 | $2,500 | villa $1,500 | chef's table $1,000 | limo with driver $800 | $3,300 | a watch brand |
+| Super Whale | $5,000,000 | $10,000 | penthouse | anywhere | private car and driver | comped | none |
 
 - **Prestige** = prestige from play (every $4 bet earns $1) + what you paid for things (counted only once your debts are paid, so nothing bought on credit counts until it's paid off) + eye candy ($5,000) and an entourage ($25,000). It also counts with chips toward opening tables.
 - **Minimum bet** is your rank's minimum or the table's, whichever is higher.
@@ -34,7 +34,7 @@ Between hands (about every 14) you get one offer matched to your rank, saying wh
 | Barracuda | apartment $2,500, used car $4,000 | gold watch $2,500 | bigger card $25,000 |
 | Swordfish | condo $8,000, new car $30,000 | diamond ring $8,000 | gold card $50,000 |
 | Marlin | personal chef $15,000, luxury car $90,000 | eye candy $300 a day | casino marker $100,000 |
-| Whale | penthouse $100,000, own limo $250,000 | entourage $2,500 a day | bigger marker $250,000 |
+| Whale | penthouse $100,000, own limo $250,000 | entourage $2,500 a day | bigger marker $1,000,000 |
 | Super Whale | | private jet $5,000,000 | open marker, no limit |
 
 Homes, cars and the chef work for good, at every higher rank too, and add their price to your prestige. Credit lines charge interest once a day (5%, down to 2% for the open marker); a new line replaces the old one and what you owe carries over. Things sell back for half what you paid.
