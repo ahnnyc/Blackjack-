@@ -534,14 +534,14 @@ const OFFERS = [
   { id:'usedcar',   rank:2, retired:true, kind:'save',   art:'🚗', name:'a used car',                 price:4000,    covers:'ride', keep:true },
   { id:'watch',     rank:2, kind:'rank',   art:'⌚', name:'a gold watch',               price:2500 },
   { id:'card2',     rank:2, kind:'credit', art:'💳', name:'a bigger credit card',       limit:25000,   rate:0.05 },
-  { id:'carrental', rank:3, kind:'save',   art:'🚗', name:'a rental car', title:'Rent a car for a month', price:900, covers:'ride', days:30, anywhere:true },
+  { id:'carrental', rank:3, kind:'save',   art:'🚗', name:'a rental car', title:'Rent a car for a month', verb:'Rent', thing:'a car', price:900, covers:'ride', days:30, anywhere:true },
   { id:'condo',     rank:3, retired:true, kind:'save',   art:'🏙️', name:'a condo',                    price:8000,    covers:'room', keep:true },
   { id:'newcar',    rank:3, retired:true, kind:'save',   art:'🚙', name:'a new car',                  price:30000,   covers:'ride', keep:true },
   { id:'ring',      rank:3, kind:'rank',   art:'💍', name:'a diamond ring',             price:8000 },
   { id:'gold',      rank:3, kind:'credit', art:'💳', name:'a gold card',                limit:50000,   rate:0.04 },
-  { id:'condorent', rank:4, kind:'save',   art:'🏙️', name:'a rented condo', title:'Rent a condo for a month', price:15000, covers:'room', days:30, anywhere:true },
-  { id:'carlease',  rank:4, kind:'save',   art:'🏎️', name:'a leased luxury car', title:'Lease a luxury car for a month', price:6000, covers:'ride', days:30, anywhere:true },
-  { id:'chefhire',  rank:4, kind:'save',   art:'🧑‍🍳', name:'a hired chef', title:'Hire a personal chef for a month', price:9000, covers:'meals', days:30, anywhere:true },
+  { id:'condorent', rank:4, kind:'save',   art:'🏙️', name:'a rented condo', title:'Rent a condo for a month', verb:'Rent', thing:'a condo', price:15000, covers:'room', days:30, anywhere:true },
+  { id:'carlease',  rank:4, kind:'save',   art:'🏎️', name:'a leased luxury car', title:'Lease a luxury car for a month', verb:'Lease', thing:'a luxury car', price:6000, covers:'ride', days:30, anywhere:true },
+  { id:'chefhire',  rank:4, kind:'save',   art:'🧑‍🍳', name:'a hired chef', title:'Hire a personal chef for a month', verb:'Hire', thing:'a personal chef', price:9000, covers:'meals', days:30, anywhere:true },
   { id:'chef',      rank:4, retired:true, kind:'save',   art:'🧑‍🍳', name:'a personal chef',           price:15000,   covers:'meals', keep:true },
   { id:'luxcar',    rank:4, retired:true, kind:'save',   art:'🏎️', name:'a luxury car',               price:90000,   covers:'ride', keep:true },
   { id:'candy',     rank:4, kind:'people' },
@@ -2345,12 +2345,12 @@ function prestigeLines(add, person){
 function saveLines(o){
   const L = life(), per = o.covers === 'room' ? roomPrice(L) : o.covers === 'ride' ? L.ride : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0);
   const what = o.covers === 'room' ? 'your room' : o.covers === 'ride' ? 'getting around' : 'your meals';
-  const out = [];
+  const out = o.keep ? prestigeLines(o.price) : [];   // a purchase: what it does for your rank comes first
+  if (o.keep){ out.push(covered(o.covers) || per <= 0 ? 'You pay nothing for ' + what + ' at the moment.' : 'Also: no more paying for ' + what + ' (' + money(per) + ' a day now).'); return out; }
   if (covered(o.covers)) out.push('You already pay nothing for ' + what + '.');
   else if (per <= 0) out.push('You pay nothing for ' + what + ' at this rank' + (o.keep ? ', but it keeps working when you rank up.' : '.'));
   else if (o.days){ const worth = per * o.days; out.push('Covers ' + what + ' for ' + o.days + ' days: ' + money(worth) + ' of bills for ' + money(o.price) + (worth > o.price ? ', saving ' + money(worth - o.price) : '') + '.'); }
   else out.push('No more paying for ' + what + ' (now ' + money(per) + ' a day). Pays for itself in ' + Math.ceil(o.price / per).toLocaleString('en-US') + ' days, and keeps working when you rank up.');
-  if (o.keep) out.push(...prestigeLines(o.price));
   return out;
 }
 function creditLines(o){
@@ -2404,7 +2404,7 @@ function fenceOffer(o){
     [btn('No thanks', () => guyDecline()), btn('Take it', () => takeLine(o), { primary:true })]);
   const lines = o.kind === 'save' ? saveLines(o) : prestigeLines(o.price);
   fenceSheet(o.title || cap1(o.name.replace(/^(a|an) /, '')), o.art, 'Price: <b>' + money(o.price) + '</b>' + (o.days ? ' for ' + o.days + ' days' : '') + '.' + bullets(lines),
-    [btn('No thanks', () => guyDecline()), btn('Buy for ' + money(o.price), () => fenceBuy(o), { primary:true })]);
+    [btn('No thanks', () => guyDecline()), btn((o.verb || 'Buy') + ' for ' + money(o.price), () => fenceBuy(o), { primary:true })]);
 }
 function guyDecline(){ guyOffer = false; hideSheets(); }
 function takeLine(o){
@@ -2424,7 +2424,7 @@ function fenceBuy(o){
     touch(); saveLocal(); saveCloudState(); hideSheets(); render();
     flyChips($('bankAmt'), $('top'), o.price, { fade: true });
     if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
-    say('You bought ' + o.name + ': it runs for ' + o.days + ' days.');
+    say(o.verb ? 'You ' + { Rent:'rented', Lease:'leased', Hire:'hired' }[o.verb] + ' ' + o.thing + ' for ' + o.days + ' days.' : 'You bought ' + o.name + ': it runs for ' + o.days + ' days.');
     return;
   }
   const x = { id: Date.now() + '' + Math.floor(Math.random() * 1000), oid: o.id, item: o.name, art: o.art, paid: o.price, t: Date.now(), game: S.session, hand: handsThisGame() };
