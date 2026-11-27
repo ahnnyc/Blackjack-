@@ -17,11 +17,13 @@ const url = process.argv[2];
 
   await ctx.setOffline(true);
   await p.reload();
+  await p.waitForTimeout(1200); if (await p.isVisible('#fenceSheet')) { await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300); }   // the Welcome back message
   const title = await p.title();
   const bank = await p.textContent('#bankAmt');
   // play three hands offline
   let played = 0;
   for (let i = 0; i < 400 && played < 3; i++) {
+    if (await p.isVisible('#fenceSheet')) { await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300); continue; }   // Welcome back, a bill or an offer
     const labels = await p.$$eval('#actions button:not([disabled])', bs => bs.map(x => x.textContent));
     if (!labels.length) { await p.waitForTimeout(80); continue; }
     if (labels.some(l => l.startsWith('Deal'))) { await p.click('#actions button:has-text("Deal")'); played++; continue; }

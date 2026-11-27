@@ -1,5 +1,5 @@
 // Resplitting aces up to four hands with a stacked shoe; an older saved game gets the switch turned on;
-// and Guy's odds rise as you get further up this game.
+// (Guy's visit odds were removed with the rank offers.)
 const { chromium } = require('playwright'); const dir = __dirname;
 (async () => { const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 797 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await ctx.route(/fonts/, r => r.abort()); const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
@@ -27,9 +27,5 @@ const { chromium } = require('playwright'); const dir = __dirname;
   await p.evaluate(() => { const st = JSON.parse(localStorage.getItem('cg.state.v2')); st.settings.rules.resplitAces = false; delete st.settings.fix; st.round = null; st.updatedAt = Date.now() + 99999; localStorage.setItem('cg.state.v2', JSON.stringify(st)); });
   const p2 = await ctx.newPage(); await p2.goto('file://' + dir + '/cg-page.html'); await p2.waitForTimeout(2200);
   out.oldGameSwitchTurnedOn = await p2.evaluate(() => [__bj.S.settings.rules.resplitAces, __bj.S.settings.fix]);
-  // Guy's odds as you get further up this game
-  out.guyByWinnings = await p2.evaluate(() => { const S = __bj.S, H = __bj.history, res = {};
-    for (const up of [0, 10000, 20000, 40000, 100000]) { H.push({ s: S.session, n: up, fake: 1 }); const o = __bj.guyOdds(); res['up $' + up] = { gapHands: o.gap, chance: +o.chance.toFixed(3) }; H.pop(); }
-    return res; });
   out.errors = errs;
   console.log(JSON.stringify(out, null, 1)); await b.close(); })();
