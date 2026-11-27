@@ -22,7 +22,7 @@ fs.writeFileSync(dir + '/dr-page.html', '<!doctype html><html><head><meta charse
   await p.evaluate(() => __bj.openCashier()); await p.waitForTimeout(200);
   await p.fill('#cardInput', '100000'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardBorrow'); await p.waitForTimeout(400);
   await p.waitForTimeout(500); await p.evaluate(() => __bj.openCashier()); await p.waitForTimeout(200);
-  check('cashierSays', /Your debts cost you \$50,000 of prestige\./.test(await p.textContent('#cardNote')), await p.textContent('#cardNote'));
+  check('cashierSays', /Owing money holds your rank back\./.test(await p.textContent('#cardNote')), await p.textContent('#cardNote'));
   await p.evaluate(() => __bj.hideSheets());
   check('levelDown', (await p.evaluate(() => [__bj.prestige(), __bj.rankNo()])).join() === '250000,5', await p.evaluate(() => [__bj.prestige(), __bj.rankNo()]));
   // $200,000 owed: prestige 200,000, Marlin, and the message says why
@@ -32,7 +32,7 @@ fs.writeFileSync(dir + '/dr-page.html', '<!doctype html><html><head><meta charse
   await p.waitForTimeout(700);
   const d2 = await sheet();
   check('marlin', (await p.evaluate(() => [__bj.prestige(), __bj.rankNo()])).join() === '200000,4', await p.evaluate(() => [__bj.prestige(), __bj.rankNo()]));
-  check('downMessage', /^Prestige level down \| You are now a Marlin \(prestige \$200,000\)\. What you owe costs you \$100,000 of prestige\. Pay it back to climb again\./.test(d2 || ''), d2);
+  check('downMessage', /^Rank down \| You are now a Marlin\. What you owe is holding you back\. Pay it back to climb again\./.test(d2 || ''), d2);
   await p.evaluate(() => __bj.hideSheets());
   // things cancel debt first: $150,000 of things against $200,000 owed costs only $25,000
   await p.evaluate(() => { __bj.S.stash = [{ item:'a penthouse', paid:150000, oid:'penthouse' }]; __bj.render(); }); await p.waitForTimeout(300);
@@ -43,7 +43,7 @@ fs.writeFileSync(dir + '/dr-page.html', '<!doctype html><html><head><meta charse
   await p.fill('#cardInput', '200000'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardPay'); await p.waitForTimeout(400);
   await p.waitForTimeout(700);
   const up = await sheet();
-  check('backUp', (await p.evaluate(() => [__bj.prestige(), __bj.rankNo(), __bj.S.card])).join() === '300000,5,0' && /^New prestige level \| You are now a Whale/.test(up || ''), [await p.evaluate(() => [__bj.prestige(), __bj.rankNo(), __bj.S.card]), up]);
+  check('backUp', (await p.evaluate(() => [__bj.prestige(), __bj.rankNo(), __bj.S.card])).join() === '300000,5,0' && /^New rank \| You are now a Whale/.test(up || ''), [await p.evaluate(() => [__bj.prestige(), __bj.rankNo(), __bj.S.card]), up]);
   out.errors = errs; out.fails = fails; console.log(JSON.stringify(out, null, 1)); await b.close(); fs.unlinkSync(dir + '/dr-page.html');
   process.exit(fails.length || errs.length ? 1 : 0);
 })();

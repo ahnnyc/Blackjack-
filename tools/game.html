@@ -48,6 +48,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:4px 10px;min-width:0;white-space:nowrap}
 @media (max-width:599px){ #top{gap:4px} #top .topbtn, #top #countBtn{padding:0 7px;font-size:15px} }
 @media (max-width:359px){ #top{gap:3px} #top .topbtn, #top #countBtn{padding:0 5px;font-size:14px} }
+#levelBox{display:inline-flex;flex-direction:column;align-items:center;gap:1px;flex:none}
+#levelPct{font-size:16px;line-height:1.1;color:var(--gold);white-space:nowrap}
 #levelBtn{flex:none;min-height:36px;padding:0 10px;border-radius:18px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;font-weight:700;white-space:nowrap}
 /* each prestige level has its own badge color, getting richer as you climb (the name always says the level) */
 /* every level badge is a fish: a body that stretches to fit the name, and a fixed tail, so the name sits centered in the body */
@@ -325,7 +327,7 @@ body.still .card.flip{animation:none}
   </main>
 
   <footer id="ctl">
-    <div id="bank"><button type="button" id="levelBtn" aria-label="Prestige level"></button><span class="amt num" id="bankAmt" aria-label="Bankroll">$1,000</span><span class="pl num" id="plTag"></span></div>
+    <div id="bank"><span id="levelBox"><button type="button" id="levelBtn" aria-label="Rank"></button><span id="levelPct" class="num"></span></span><span class="amt num" id="bankAmt" aria-label="Bankroll">$1,000</span><span class="pl num" id="plTag"></span></div>
     <div id="countBox" hidden><span>Running count <b class="num" id="rcV">0</b></span><span>True count <b class="num" id="tcV">0</b></span><span class="num" id="decksV"></span></div>
     <div id="msg" role="status" aria-live="polite"></div>
     <div id="actions"></div>
@@ -564,7 +566,7 @@ const RULES = [
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
   { g:'Extras', k:'stay', label:'Daily costs and sponsors', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a friend’s couch, fast food and walking up to a villa, the chef’s table and a limo. Super Whales are comped. From Marlin up, a sponsor pays 75% of the day’s bills at the end of each day if you made the right move on at least 95% of your hands.' },
-  { g:'Extras', k:'host', label:'Eye candy and entourage', desc:'Offered from Marlin up: eye candy ($300 a day, $5,000 in prestige) and an entourage from Whale up ($2,500 a day, $25,000 in prestige). Fees are charged at the end of each day. If you can’t pay, they leave.' },
+  { g:'Extras', k:'host', label:'Eye candy and entourage', desc:'Offered from Marlin up: eye candy ($300 a day) and an entourage from Whale up ($2,500 a day). Both raise your rank. Fees are charged at the end of each day. If you can’t pay, they leave.' },
   { g:'Extras', k:'fence', label:'Offers', desc:'Between hands you get one offer at a time, matched to your rank: something to raise your rank, something that saves money over time (a home, a car, a chef, a deal), or a line of credit. Each offer says what it does for you. You can sell things back for half what you paid.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
@@ -774,13 +776,23 @@ const openList = () => [true, true, true, true];   // every table is open to any
 const betAtList = () => S.betAt || (S.betAt = [0, 0, 0, 0]);
 const ownChips = () => cents(S.bankroll - S.card - S.shark);
 const people = () => S.people || (S.people = {});
-function prestige(){
-  const things = (S.stash || []).reduce((a, x) => a + (x.paid || 0), 0);
+function prestige(extraThings = 0, extraPeople = 0){
+  const things = (S.stash || []).reduce((a, x) => a + (x.paid || 0), 0) + extraThings;
   const owed = cents((S.card || 0) + (S.shark || 0));
   const p = people();
   // debt first cancels what your things are worth; what's left over costs half its size (modelled: about 117 hours to Super Whale)
-  return Math.max(0, Math.floor((S.playPres || 0) + Math.max(0, things - owed) - DEBT_WEIGHT * Math.max(0, owed - things) + (p.candy ? PEOPLE.candy.prestige : 0) + (p.crew ? PEOPLE.crew.prestige : 0)));   // whole dollars
+  return Math.max(0, Math.floor((S.playPres || 0) + Math.max(0, things - owed) - DEBT_WEIGHT * Math.max(0, owed - things) + (p.candy ? PEOPLE.candy.prestige : 0) + (p.crew ? PEOPLE.crew.prestige : 0) + extraPeople));   // whole dollars
 }
+// Players never see prestige as a number: only their rank and how far along they are toward the next one.
+function rankPct(p = prestige()){
+  const i = levelOf(p), nx = LEVELS[i + 1];
+  return nx ? Math.max(0, Math.min(99, Math.floor((p - LEVELS[i].at) / (nx.at - LEVELS[i].at) * 100))) : 100;
+}
+function rankStand(p = prestige()){ const nx = LEVELS[levelOf(p) + 1]; return nx ? rankPct(p) + '% of the way to ' + nx.name : 'the top rank'; }
+// What reaching each rank gets you (its offers and its life), said in offers so a purchase has a reason.
+const RANK_GETS = ['', 'a $10,000 credit card', 'your own apartment, a used car and a $25,000 credit card',
+  'a condo, a new car and a $50,000 gold card', 'a sponsor who pays most of your bills, a personal chef, eye candy and a $100,000 casino marker',
+  'a penthouse, your own limo, an entourage and a $1,000,000 casino marker', 'everything comped: the penthouse, your meals and a private car and driver'];
 function debtCost(){
   const things = (S.stash || []).reduce((a, x) => a + (x.paid || 0), 0);
   return Math.floor(DEBT_WEIGHT * Math.max(0, cents((S.card || 0) + (S.shark || 0)) - things));
@@ -1344,19 +1356,20 @@ function levelNote(i){
   const L = LIFE[i], nx = LEVELS[i + 1];
   const cost = L.room + L.ride + L.meals.reduce((a, b) => a + b, 0);
   const how = L.comped ? ' Your room, meals and car are comped.' : ' You stay ' + stayAt(L) + ', eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat + ' and get around by ' + L.go.replace(/^(a|an) /, '') + ': ' + money(cost) + ' a day before savings.';
-  return how + (nx ? ' Next level: ' + nx.name + ' at ' + money(nx.at) + ' prestige.' : ' This is the top level.');
+  return how + (nx ? ' Next rank: ' + nx.name + '.' : ' This is the top rank.');
 }
 function checkLevel(){
   const i = levelOf(prestige());
   if (S.level == null){ S.level = i; return; }
   if (i === S.level) return;
   const up = i > S.level; S.level = i; touch(); saveLocal();
-  queueSheet(() => { guyOffer = false; fenceSheet(up ? 'New prestige level' : 'Prestige level down', '🐋',
-    'You are now a <b>' + LEVELS[i].name + '</b> (prestige ' + money(prestige()) + ').' + (!up && debtCost() > 0 ? ' What you owe costs you ' + money(debtCost()) + ' of prestige. Pay it back to climb again.' : '') + levelNote(i), [btn('OK', () => hideSheets(), { primary:true })]); });
+  queueSheet(() => { guyOffer = false; fenceSheet(up ? 'New rank' : 'Rank down', '🐋',
+    'You are now a <b>' + LEVELS[i].name + '</b>.' + (!up && debtCost() > 0 ? ' What you owe is holding you back. Pay it back to climb again.' : '') + levelNote(i), [btn('OK', () => hideSheets(), { primary:true })]); });
 }
 function render(){
   applyMotion();
-  { const li = levelOf(prestige()); $('levelBtn').textContent = LEVELS[li].name; $('levelBtn').className = 'lv' + li; }
+  { const li = levelOf(prestige()), nx = LEVELS[li + 1]; $('levelBtn').textContent = LEVELS[li].name; $('levelBtn').className = 'lv' + li;
+    $('levelPct').textContent = nx ? rankPct() + '% to ' + nx.name : ''; $('levelBtn').setAttribute('aria-label', 'Rank: ' + LEVELS[li].name + (nx ? ', ' + rankStand() : '')); }
   checkLevel();
   const root = document.documentElement; for (let i = 0; i < 4; i++) root.classList.toggle('t' + i, i === tableNo());
   if (S.round && !R) R = S.round;
@@ -1628,7 +1641,7 @@ function renderRecord(){
   add('Chips now', money(S.bankroll)); add('Credit owed', money(S.card)); add('Shark owed', money(S.shark));
   add('Shark’s cut paid', money(vigPaid)); add('Spent on offers', money(goodsSpent)); add('Sold back', money(goodsSold));
   add('Meals', money(mealsPaid)); add('Room and travel', money(roomsPaid)); add('Comped', money(comped));
-  add('Sponsors paid', money(sponsorPaid)); add('Credit interest', money(interestPaid)); add('Prestige', money(prestige()));
+  add('Sponsors paid', money(sponsorPaid)); add('Credit interest', money(interestPaid)); add('Rank', LEVELS[levelOf(prestige())].name + (LEVELS[levelOf(prestige()) + 1] ? ', ' + rankStand() : ''));
   const log = $('log'); log.replaceChildren();
   const items = list.map((r, i) => ({ t: r.t, r, num: i + 1 })).concat(cs.map(c => ({ t: c.t, c }))).sort((a, b) => b.t - a.t);
   if (!items.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No hands yet. Every bet you place will be listed here.'; log.append(e); }
@@ -1644,7 +1657,7 @@ function renderRecord(){
       when.textContent = title + ' · ' + stamp(c.t);
       const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
       const what = document.createElement('div'); what.className = 'what num';
-      what.textContent = ({ seized:'You had paid ' + money(c.paid || 0), cardint: money(c.amt || 0) + ' added to what you owe', dead:'Couldn’t cover his ' + money(c.amt || 0) + ' cut', comp: c.whale ? 'Comped for high rollers' : 'Comped' + (c.pres ? ' for prestige' : '') + ', worth ' + money(c.amt || 0) }[c.k] ||
+      what.textContent = ({ seized:'You had paid ' + money(c.paid || 0), cardint: money(c.amt || 0) + ' added to what you owe', dead:'Couldn’t cover his ' + money(c.amt || 0) + ' cut', comp: c.whale ? 'Comped for high rollers' : 'Comped' + (c.pres ? ' for your rank' : '') + ', worth ' + money(c.amt || 0) }[c.k] ||
         (c.a > 0 ? 'Added to your chips' : 'Taken from your chips')) + ' · Chips ' + money(c.b);
       e.append(when, amt, what); log.append(e); return;
     }
@@ -1809,8 +1822,8 @@ function cashierLabels(){
   $('cardNote').textContent = !S.line ? 'No credit yet. Lines of credit are offered between hands as you rank up.'
     : S.card > 0
       ? 'You owe ' + money(S.card) + '. ' + (cardMaxed() ? 'No room left on it.' : money(cardLeft()) + ' left to borrow.') +
-        ' Interest is ' + pct(cardRate()) + ' a day: ' + money(cardInterest()) + ' at the end of the day (after hand ' + nextDay + ').' + (debtCost() > 0 ? ' Your debts cost you ' + money(debtCost()) + ' of prestige.' : '')
-      : 'You owe nothing. The limit is ' + (S.line.limit >= 1e11 ? 'unlimited' : money(cardLimit())) + '. Interest is ' + pct(cardRate()) + ' a day on what you owe. Owing money lowers your prestige.';
+        ' Interest is ' + pct(cardRate()) + ' a day: ' + money(cardInterest()) + ' at the end of the day (after hand ' + nextDay + ').' + (debtCost() > 0 ? ' Owing money holds your rank back.' : '')
+      : 'You owe nothing. The limit is ' + (S.line.limit >= 1e11 ? 'unlimited' : money(cardLimit())) + '. Interest is ' + pct(cardRate()) + ' a day on what you owe. Owing money holds your rank back.';
   const cb = Math.min(cv, cardLeft()), cp = Math.min(cv, S.card, S.bankroll);
   $('cardBorrow').textContent = cb > 0 ? 'Borrow ' + money(cb) : 'Borrow';
   $('cardPay').textContent = cp > 0 ? 'Pay back ' + money(cp) : 'Pay back';
@@ -1823,7 +1836,7 @@ function cashierLabels(){
     const left = Math.max(0, S.sharkNext - n);
     $('sharkNote').textContent = 'You owe him ' + money(S.shark) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of it from your chips: ' + money(sharkCut()) +
       ', due after hand ' + S.sharkNext + ' (' + (left === 1 ? 'next hand' : left + ' hands from now') + '). If you can’t pay, he takes your stuff; with nothing to take, the game is over.';
-  } else $('sharkNote').textContent = (S.line ? 'No room left on your credit. ' : 'You have no credit. ') + 'He lends up to ' + money(sharkMax()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of what you owe from your chips. If you can’t pay, he takes your stuff; with nothing to take, the game is over. Owing money lowers your prestige.';
+  } else $('sharkNote').textContent = (S.line ? 'No room left on your credit. ' : 'You have no credit. ') + 'He lends up to ' + money(sharkMax()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of what you owe from your chips. If you can’t pay, he takes your stuff; with nothing to take, the game is over. Owing money holds your rank back.';
   const sv = Math.floor(Number($('sharkInput').value) || 0);
   const sb = Math.min(sv, sharkLeft()), sp = Math.min(sv, S.shark, S.bankroll);
   $('sharkBorrow').textContent = sb > 0 ? 'Borrow ' + money(sb) : 'Borrow';
@@ -1881,7 +1894,7 @@ function debtsAfterHand(){
       took.forEach(x => cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'sharktook', item: x.item, paid: x.paid }));
       S.sharkNext = n + SHARK_EVERY;
       touch(); saveLocal(); saveCloudState(); render();
-      queueSheet(() => { guyOffer = false; fenceSheet('The loan shark', '🦈', 'You couldn’t pay his <b>' + money(cut) + '</b> cut, so he took ' + took.map(x => '<b>' + esc(x.item) + '</b>').join(', ').replace(/, ([^,]*)$/, ' and $1') + ' instead (worth ' + money(got) + '). Prestige: ' + money(prestige()) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
+      queueSheet(() => { guyOffer = false; fenceSheet('The loan shark', '🦈', 'You couldn’t pay his <b>' + money(cut) + '</b> cut, so he took ' + took.map(x => '<b>' + esc(x.item) + '</b>').join(', ').replace(/, ([^,]*)$/, ' and $1') + ' instead (worth ' + money(got) + ').', [btn('OK', () => hideSheets(), { primary:true })]); });
     } else {
       S.dead = { t: Date.now(), cut, chips: S.bankroll, owed: cents(S.shark + S.card), hands: n, stuff: stashList().length, game: S.session };
       cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'dead', amt: cut });
@@ -1983,14 +1996,14 @@ function tablesAfterHand(){
 // The next rank and what it takes, in one line.
 function nextGoal(){
   const i = rankNo(), nx = LEVELS[i + 1];
-  return nx ? 'Next goal: ' + nx.name + ', at ' + money(nx.at) + ' prestige. Every $4 you bet earns $1 of prestige.' : 'You’re at the top: Super Whale.';
+  return nx ? 'Next goal: become a ' + nx.name + '. The more you bet, the closer you get.' : 'You’re at the top: Super Whale.';
 }
 
 /* ---------- welcome back: where you stand, each time the app is opened again ---------- */
 // Who you are: your rank and the life you're living at it, with whatever you own or have paid ahead counted in.
 function whoYouAre(){
   const i = rankNo(), L = LIFE[i], nx = LEVELS[i + 1], pres = prestige();
-  let t = 'You’re a <b>' + LEVELS[i].name + '</b>, prestige ' + money(pres) + (nx ? ', ' + money(nx.at - pres) + ' to go to ' + nx.name : '') + '.';
+  let t = 'You’re a <b>' + LEVELS[i].name + '</b>' + (nx ? ', ' + rankStand(pres) : '') + '.';
   let life_;
   if (L.comped) life_ = 'You live in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
   else {
@@ -2029,8 +2042,8 @@ function openBank(first, leave){
   $('bankH').textContent = first ? 'Vegas Whale' : leave ? 'Leave town?' : 'Start over?';
   $('bankNote').innerHTML = first
     ? 'You start with $1,000.<br><br>' + nextGoal() + '<br><br>Sit at any table whose minimum you can cover: tap the Limits sign.'
-    : leave ? 'Everything is wiped: chips, debts, stuff, people and prestige. You start again from the beginning with $1,000. Your record is kept.'
-    : 'You start again from the beginning with $1,000. Debts, stuff, people and prestige are cleared. Your record is kept.';
+    : leave ? 'Everything is wiped: chips, debts, stuff, people and rank. You start again from the beginning with $1,000. Your record is kept.'
+    : 'You start again from the beginning with $1,000. Debts, stuff, people and rank are cleared. Your record is kept.';
   $('bankStart').textContent = first ? 'Sit down with $1,000' : leave ? 'Leave town' : 'Start over with $1,000';
   $('bankCancel').hidden = !!first;
   hideSheets(); $('bankSheet').hidden = false;
@@ -2057,8 +2070,8 @@ function hostOffer(k){
   guyOffer = false;
   const x = PEOPLE[k];
   const hire = who => { people()[k] = who; touch(); saveLocal(); saveCloudState(); hideSheets(); render();
-    say((k === 'candy' ? 'Your eye candy (' + who + ') is at your side.' : 'Your entourage is with you.') + ' Prestige: ' + money(prestige()) + '.'); tablesAfterHand(); };
-  const lines = [money(x.fee) + ' a day, charged at the end of each day.'].concat(prestigeLines(x.prestige));
+    say((k === 'candy' ? 'Your eye candy (' + who + ') is at your side.' : 'Your entourage is with you.')); tablesAfterHand(); };
+  const lines = [money(x.fee) + ' a day, charged at the end of each day.'].concat(prestigeLines(x.prestige, true));
   if (k === 'candy') fenceSheet('Eye candy', x.art,
     'A companion at your side at the table.' + bullets(lines),
     [btn('No thanks', () => hideSheets()), btn('A man', () => hire('a man'), { primary:true }), btn('A woman', () => hire('a woman'), { primary:true })]);
@@ -2074,14 +2087,14 @@ function peopleFee(k, day){
   if (S.bankroll < x.fee){
     delete p[k]; touch(); saveLocal(); saveCloudState(); render();
     cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'left', what: x.name });
-    fenceSheet('End of day ' + day, x.art, label + '’s fee is ' + money(x.fee) + '. You can’t pay it, so they left. Prestige: ' + money(prestige()) + '.', [btn('OK', () => hideSheets(), { primary:true })]);
+    fenceSheet('End of day ' + day, x.art, label + '’s fee is ' + money(x.fee) + '. You can’t pay it, so they left.', [btn('OK', () => hideSheets(), { primary:true })]);
     return;
   }
   const before = moneyMove(-x.fee, 'fee', { what: x.name });
   render(); flyChips($('bankAmt'), $('top'), x.fee, { fade: true });
   if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
   fenceSheet('End of day ' + day, x.art, label + '’s fee for the day: <b>' + money(x.fee) + '</b>, taken from your chips.',
-    [btn('Send home', () => { delete people()[k]; touch(); saveLocal(); saveCloudState(); hideSheets(); render(); say((k === 'candy' ? 'Your eye candy went home.' : 'Your entourage went home.') + ' Prestige: ' + money(prestige()) + '.'); }),
+    [btn('Send home', () => { delete people()[k]; touch(); saveLocal(); saveCloudState(); hideSheets(); render(); say((k === 'candy' ? 'Your eye candy went home.' : 'Your entourage went home.')); }),
      btn('OK', () => hideSheets(), { primary:true })]);
 }
 
@@ -2192,13 +2205,17 @@ let guyOffer = false;
 function sheetOpen(){ return [...document.querySelectorAll('.sheet')].some(x => !x.hidden); }
 function fenceFree(){ return !busy && !S.round && !S.dead && !firstVisit; }
 const bullets = lines => '<br><br>' + lines.map(l => '• ' + l).join('<br>');
-// what extra prestige does for you: the rank it reaches, or how far that leaves you from the next
-function prestigeLines(add){
-  const now = prestige(), after = cents(now + add), r0 = levelOf(now), r1 = levelOf(after), out = ['Prestige +' + money(add) + '.'];
-  if (r1 > r0) out.push('You become a <b>' + LEVELS[r1].name + '</b>.' + esc(levelNote(r1)).replace(/ Next level:.*$/, ''));
-  else if (r1 < LEVELS.length - 1) out.push(money(LEVELS[r1 + 1].at - after) + ' to go to ' + LEVELS[r1 + 1].name + '.');
+// what something does for your rank, in words: the rank it makes you and what that rank gets you, or how much closer it
+// takes you to the next one and what that one gets you
+function prestigeLines(add, person){
+  const now = prestige(), after = person ? prestige(0, add) : prestige(add), r0 = levelOf(now), r1 = levelOf(after), out = [];
   const owed = cents((S.card || 0) + (S.shark || 0));
-  if (owed > 0) out.push('Things count toward prestige only once your debts are paid (you owe ' + money(owed) + ').');
+  if (after <= now) out.push('It won’t raise your rank until your debts are paid (you owe ' + money(owed) + ').');
+  else if (r1 > r0) out.push('Makes you a <b>' + LEVELS[r1].name + '</b>, where you can get ' + RANK_GETS[r1] + '.' + esc(levelNote(r1)).replace(/ Next rank:.*$/, ''));
+  else if (r1 < LEVELS.length - 1){
+    const d = rankPct(after) - rankPct(now);
+    out.push('Impresses the casino: gets you ' + (d > 0 ? d + '% closer' : 'a little closer') + ' to <b>' + LEVELS[r1 + 1].name + '</b>, where you can get ' + RANK_GETS[r1 + 1] + '.');
+  } else out.push('Impresses the casino.');
   return out;
 }
 // what a money-saving offer saves, in plain numbers
@@ -2289,16 +2306,21 @@ function fenceBuy(o){
   flyChips($('bankAmt'), $('openStuff'), o.price, { fade: true });
   if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
   cardFly(x);
-  say('You bought ' + o.name + ' for ' + money(o.price) + '. Prestige: ' + money(prestige()) + '.');
+  say('You bought ' + o.name + ' for ' + money(o.price) + '.');
   tablesAfterHand();
 }
 // Things sell back for half what you paid
+function sellRankLine(paid){
+  const now = prestige(), after = prestige(-paid), r0 = levelOf(now), r1 = levelOf(after);
+  if (after >= now) return '';
+  return r1 < r0 ? ' You drop to <b>' + LEVELS[r1].name + '</b>.' : ' You fall back to ' + rankStand(after) + '.';
+}
 function fenceSellOffer(x){
   x.offer = Math.max(1, Math.floor(x.paid / 2));
   const o = OFFERS.find(y => y.id === x.oid), loses = o && o.covers ? ' You’d start paying for ' + (o.covers === 'room' ? 'your room' : o.covers === 'ride' ? 'getting around' : 'your meals') + ' again, unless something else covers it.' : '';
   guyOffer = false;
   fenceSheet('Sell ' + esc(x.item.replace(/^(a|an) /, '')) + '?', x.art,
-    'You get <b>' + money(x.offer) + '</b>, half what you paid (' + money(x.paid) + '). Your prestige drops by ' + money(x.paid) + '.' + loses,
+    'You get <b>' + money(x.offer) + '</b>, half what you paid (' + money(x.paid) + ').' + sellRankLine(x.paid) + loses,
     [btn('Keep it', () => openStuff(x)), btn('Sell for ' + money(x.offer), () => fenceSell(x), { primary:true })]);
 }
 function fenceSell(x){
@@ -2328,7 +2350,7 @@ function fillCard(el, x){
   mk('art', x.art).setAttribute('aria-hidden', 'true');
   mk('nm', itemName(x));
   mk('pd num', 'Paid ' + money(x.paid));
-  mk('sd num', 'Prestige +' + money(x.paid));
+  mk('sd num', 'Counts toward your rank');
   mk('wh', 'Bought ' + new Date(x.t).toLocaleDateString(undefined, { month:'short', day:'numeric' }) + (x.hand ? ', hand ' + x.hand : ''));
 }
 function openStuff(x){
@@ -2343,7 +2365,7 @@ function renderStuff(){
   const list = stuffOrder(), x = list[stuffAt];
   const cost = list.reduce((a, y) => a + y.paid, 0);
   const pp = people(), with_ = [pp.candy ? 'eye candy (' + pp.candy + ')' : '', pp.crew ? 'an entourage' : ''].filter(Boolean).join(' and ');
-  $('stuffNote').textContent = 'Prestige: ' + money(prestige()) + ' (' + LEVELS[levelOf(prestige())].name + ').' + levelNote(levelOf(prestige())) + ' ' + (with_ ? 'With you: ' + with_ + '. ' : '') + (list.length ? list.length + (list.length === 1 ? ' thing' : ' things') + ', which cost you ' + money(cost) + '. Swipe or tap Next to flip through.' : 'Everything you buy lands here as a card.');
+  $('stuffNote').textContent = 'You’re a ' + LEVELS[levelOf(prestige())].name + (LEVELS[levelOf(prestige()) + 1] ? ', ' + rankStand() : '') + '.' + levelNote(levelOf(prestige())).replace(/ Next rank:.*$/, '') + ' ' + (with_ ? 'With you: ' + with_ + '. ' : '') + (list.length ? list.length + (list.length === 1 ? ' thing' : ' things') + ', which cost you ' + money(cost) + '. Swipe or tap Next to flip through.' : 'Everything you buy lands here as a card.');
   fillCard($('stuffCard'), x);
   $('stuffCard').setAttribute('aria-label', x ? itemName(x) + ', paid ' + money(x.paid) : 'No stuff yet');
   $('stuffPos').textContent = list.length ? (stuffAt + 1) + ' of ' + list.length : '';
