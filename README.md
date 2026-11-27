@@ -23,9 +23,9 @@ There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $1,000),
 - **A day** is 150 hands. Breakfast, lunch and dinner come after hands 25, 75 and 125; the room and getting around at the end of the day.
 - **Sponsors** pay 75% of the day's bills at the end of the day if you made the right move (basic strategy) on at least 95% of your hands. New players (Guppy, Minnow) whose own chips are under $1,000 get their bills comped.
 
-## Guy's offers
+## Offers
 
-Between hands (about every 14) Guy makes one offer matched to your rank, saying what it does for you: the prestige it adds and the rank it reaches, how much it saves and how fast it pays for itself, or the terms of a credit line. Offers from lower ranks you skipped can still come.
+Between hands (about every 14) you get one offer matched to your rank, saying what it does for you: the prestige it adds and the rank it reaches, how much it saves and how fast it pays for itself, or the terms of a credit line. Offers from lower ranks you skipped can still come.
 
 | Rank | Save money | Raise rank | Credit |
 |---|---|---|---|
@@ -37,11 +37,11 @@ Between hands (about every 14) Guy makes one offer matched to your rank, saying 
 | Whale | penthouse $100,000, own limo $250,000 | entourage $2,500 a day | bigger marker $250,000 |
 | Super Whale | | private jet $5,000,000 | open marker, no limit |
 
-Homes, cars and the chef work for good, at every higher rank too, and add their price to your prestige. Credit lines charge interest once a day (5%, down to 2% for the open marker); a new line replaces the old one and what you owe carries over. Guy buys things back for half what you paid.
+Homes, cars and the chef work for good, at every higher rank too, and add their price to your prestige. Credit lines charge interest once a day (5%, down to 2% for the open marker); a new line replaces the old one and what you owe carries over. Things sell back for half what you paid.
 
 ## Out of money, the loan shark
 
-If you can't cover your minimum bet: borrow on your credit line, then from the loan shark (who lends only when your credit is used up or you have none; every 5 hands he takes 20% of what you owe, less with prestige), sell things to Guy, or leave town, which wipes chips, debts, stuff, people and prestige and starts over (the record is kept). If you can't pay the loan shark's cut, he takes your things, most valuable first; if they aren't worth enough, you end up in a shallow grave in the desert.
+If you can't cover your minimum bet: borrow on your credit line, then from the loan shark (who lends only when your credit is used up or you have none; every 5 hands he takes 20% of what you owe, less with prestige), sell things, or leave town, which wipes chips, debts, stuff, people and prestige and starts over (the record is kept). If you can't pay the loan shark's cut, he takes your things, most valuable first; if they aren't worth enough, you end up in a shallow grave in the desert.
 
 ## Messages
 
@@ -57,7 +57,7 @@ Every message in the game is short and plain: what happened and the numbers, no 
 - `sw.js` — keeps a copy on the phone so it opens offline. **Change `VERSION` in it whenever `index.html` changes**, or phones keep the old copy.
 - `manifest.webmanifest`, `icon-*.png` — the home-screen name and icon (`node tools/icon.js` redraws the icons).
 - `tools/offline-test.js` — loads the game, cuts the connection, and plays three hands to prove it works offline.
-- `tools/cg-test.js` — the money side: the $1,000 start, prestige from play, Guy's offers, credit lines and daily interest, bills and sponsors, rank minimum bets, the loan shark, the grave, starting over.
+- `tools/cg-test.js` — the money side: the $1,000 start, prestige from play, offers, credit lines and daily interest, bills and sponsors, rank minimum bets, the loan shark, the grave, starting over.
 
 The record lives in the phone's own storage for this site. It is not synced anywhere.
 
