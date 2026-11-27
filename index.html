@@ -502,8 +502,8 @@ const MEAL_NAMES = ['breakfast', 'lunch', 'dinner'], MEAL_ART = ['🍳', '🥪',
 const LIFE = [
   { stay:'a friend’s couch', on:true, eat:'fast food', go:'walking',                  room:0,    meals:[6, 8, 11],     ride:0,   level:5,    sponsor:null },
   { stay:'a hostel bed',  eat:'fast food',          go:'the city bus',                room:22,   meals:[6, 8, 11],     ride:3,   level:10,   sponsor:null, freeMeal:0, gift:100 },
-  { stay:'a budget hotel', eat:'a diner',           go:'the city bus',                room:60,   meals:[10, 15, 20],   ride:10,  level:25,   sponsor:null, roomRate:0.5, gift:500 },
-  { stay:'a hotel room',  eat:'a café',             go:'taxis',                       room:99,   meals:[20, 30, 45],   ride:36,  level:50,   sponsor:null, roomComp:true, gift:1000 },
+  { stay:'a standard room at the casino', eat:'a diner',           go:'the city bus',                room:60,   meals:[10, 15, 20],   ride:10,  level:25,   sponsor:null, roomRate:0.5, gift:500 },
+  { stay:'a deluxe room at the casino', eat:'a café',             go:'taxis',                       room:99,   meals:[20, 30, 45],   ride:36,  level:50,   sponsor:null, roomComp:true, gift:1000 },
   { stay:'a tower suite', eat:'fine dining',        go:'a car service',               room:799,  meals:[100, 150, 250],ride:300, level:250,  sponsor:'an energy drink' },
   { stay:'a villa',       eat:'the chef’s table',   go:'a limo with a driver',        room:1500, meals:[200, 300, 500],ride:800, level:2500, sponsor:'a watch brand' },
   { stay:'the penthouse', eat:'anywhere you like',  go:'your private car and driver', room:5000, meals:[500, 750, 1250],ride:1500, level:10000, sponsor:null, comped:true },
@@ -2169,7 +2169,7 @@ function stayBill(i, day){
   const parts = [];   // [label, price, covered by]
   if (room){
     parts.push(L.roomComp && !covered('room') ? ['A night ' + stayAt(L), L.room, '', 'the casino']
-      : ['A night ' + stayAt(L) + (L.roomRate && !covered('room') ? ' (casino rate, half price)' : ''), covered('room') ? L.room : roomPrice(L), covered('room') ? coverName('room') : '']);
+      : ['A night ' + stayAt(L) + (L.roomRate && !covered('room') ? ' (half price)' : ''), covered('room') ? L.room : roomPrice(L), covered('room') ? coverName('room') : '']);
     if (L.ride > 0) parts.push(['Getting around by ' + L.go.replace(/^(a|an) /, ''), L.ride, covered('ride') ? coverName('ride') : '']);
   } else parts.push(L.freeMeal === i && !covered('meals') ? [cap1(MEAL_NAMES[i]) + ' at ' + L.eat, L.meals[i], '', 'the players’ club'] : [cap1(MEAL_NAMES[i]) + ' at ' + L.eat, L.meals[i], covered('meals') ? coverName('meals') : '']);
   const due = parts.reduce((a, x) => a + (x[2] || x[3] ? 0 : x[1]), 0);

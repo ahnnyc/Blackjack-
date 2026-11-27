@@ -12,8 +12,8 @@ There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $500), 6
 |---|---|---|---|---|---|---|---|
 | Guppy | $0 | $5 | a friend's couch, free | fast food $25 | walking | $25 | none |
 | Minnow | $1,000 | $10 | hostel bed $22 | fast food $25 (breakfast comped) | city bus $3 | $44 | none |
-| Barracuda | $5,000 | $25 | budget hotel $60, half price $30 | diner $45 | city bus $10 | $85 | none |
-| Swordfish | $10,000 | $50 | hotel room $99, comped | café $95 | taxis $36 | $131 | none |
+| Barracuda | $5,000 | $25 | standard room at the casino $60, half price $30 | diner $45 | city bus $10 | $85 | none |
+| Swordfish | $10,000 | $50 | deluxe room at the casino $99, comped | café $95 | taxis $36 | $131 | none |
 | Marlin | $25,000 | $250 | tower suite $799 | fine dining $500 | car service $300 | $1,599 | an energy drink |
 | Whale | $250,000 | $2,500 | villa $1,500 | chef's table $1,000 | limo with driver $800 | $3,300 | a watch brand |
 | Super Whale | $5,000,000 | $10,000 | penthouse | anywhere | private car and driver | comped (else $9,000) | none |
