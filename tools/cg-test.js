@@ -62,7 +62,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('shirtCountsWhenPaid', (await p.evaluate(() => __bj.prestige())) === 151, await p.evaluate(() => __bj.prestige()));
   // with no debts, a thing says what it does for you in words: how much closer to the next rank, and what that rank gets you
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'shirt'))); await p.waitForTimeout(200);
-  check('shirtBenefit', /^Sharp shirt \| Price: \$150\. \/ • Impresses the casino: gets you 15% closer to Minnow, where you can get a \$10,000 credit card\.$/.test(await sheet() || ''), await sheet());
+  check('shirtBenefit', /^Sharp shirt \| Price: \$150\. \/ • Impresses the casino: gets you 15% closer to Minnow, where you can get \$100 in free chips, breakfast comped every day and a \$10,000 credit card\.$/.test(await sheet() || ''), await sheet());
   check('rankUnderBadge', (await p.textContent('#levelPct')) === '15% to Minnow', await p.textContent('#levelPct'));
   await p.evaluate(() => __bj.hideSheets());
   // 4) a deal: the weekly meal deal makes meals free for a week

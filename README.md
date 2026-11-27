@@ -11,13 +11,14 @@ There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $500), 6
 | Rank | Prestige | Expected bet (never shown) | Stay | Eat | Get around | A day (before savings) | Sponsor |
 |---|---|---|---|---|---|---|---|
 | Guppy | $0 | $5 | a friend's couch, free | fast food $25 | walking | $25 | none |
-| Minnow | $1,000 | $10 | hostel bed $22 | fast food $25 | city bus $3 | $50 | none |
-| Barracuda | $5,000 | $25 | budget hotel $60 | diner $45 | city bus $10 | $115 | none |
-| Swordfish | $10,000 | $50 | hotel room $99 | café $95 | taxis $36 | $230 | none |
+| Minnow | $1,000 | $10 | hostel bed $22 | fast food $25 (breakfast comped) | city bus $3 | $44 | none |
+| Barracuda | $5,000 | $25 | budget hotel $60, half price $30 | diner $45 | city bus $10 | $85 | none |
+| Swordfish | $10,000 | $50 | hotel room $99, comped | café $95 | taxis $36 | $131 | none |
 | Marlin | $25,000 | $250 | tower suite $799 | fine dining $500 | car service $300 | $1,599 | an energy drink |
 | Whale | $250,000 | $2,500 | villa $1,500 | chef's table $1,000 | limo with driver $800 | $3,300 | a watch brand |
 | Super Whale | $5,000,000 | $10,000 | penthouse | anywhere | private car and driver | comped (else $9,000) | none |
 
+- **Small regulars get rewarded** (the players' club, since nobody sponsors them): the first time in a game you reach Minnow, Barracuda or Swordfish the casino gives you $100, $500 or $1,000 in free chips (once per rank per game, said in the new-rank message), and those ranks get breakfast comped, the room at half price, and the room comped. Modelled: 64% of starts reach Super Whale in a median 116 hours, against 66% and 118 without them, so the climb is unchanged.
 - **Players never see prestige.** It is the hidden number behind the rank. On screen there are only rank names and, under the rank badge, how far along you are ("15% to Minnow"). Every offer of a thing or a person says in words what it does for you: "Impresses the casino: gets you 15% closer to Minnow, where you can get a $10,000 credit card", or which rank it makes you and what that rank gets you. Selling says how far you fall back. Debt is "holding your rank back", never a figure.
 - **Prestige** = prestige from play (every $4 bet earns $1) + what you paid for things (counted only once your debts are paid, so nothing bought on credit counts until it's paid off) − half of any debt left over beyond what your things are worth (so losing money and borrowing can drop your rank; modelled: about 117 hours to Super Whale, 62% of starts make it) + eye candy ($5,000) and an entourage ($25,000).
 - **Bets:** as in a real casino you can sit at any table and bet its minimum; there's no minimum by rank. But the casino rates you: if your average bet over a day is under what your rank is expected to bet (the lowest rank you held that day, so ranking up mid-day costs nothing), your sponsor pays nothing that day, any comps for the day are charged to you (a Super Whale pays $9,000), and your eye candy and entourage leave. Nobody is warned beforehand; the end-of-day "Low bets today" message is how the player finds out. Modelled (300 players each): betting your rank's level, 58% of starts reach Super Whale in a median 120 hours; dropping to $5 bets when chips run low, or always betting $5, never gets there.
@@ -60,6 +61,7 @@ Every message in the game is short and plain: what happened and the numbers, no 
 - `tools/offline-test.js` — loads the game, cuts the connection, and plays three hands to prove it works offline.
 - `tools/cg-test.js` — the money side: the $1,000 start, prestige from play, offers, credit lines and daily interest, bills and sponsors, no minimum by rank, the loan shark, the grave, starting over.
 - `tools/rating-test.js` — every table open, no minimum by rank, and the low-bet day: sponsor, comps and people lost, told only afterwards; ranking up mid-day is safe.
+- `tools/perks-test.js` — free chips on reaching Minnow, Barracuda and Swordfish (once per game), breakfast comped, half-price and comped rooms.
 
 The record lives in the phone's own storage for this site. It is not synced anywhere.
 
