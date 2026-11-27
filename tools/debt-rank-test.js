@@ -15,7 +15,7 @@ fs.writeFileSync(dir + '/dr-page.html', '<!doctype html><html><head><meta charse
   const sheet = async () => (await p.isVisible('#fenceSheet')) ? (await p.textContent('#fenceH')) + ' | ' + (await p.innerText('#fenceText')).replace(/\n+/g, ' / ') : null;
   await p.click('#bankStart'); await p.waitForTimeout(400);
   await p.evaluate(() => { const S = __bj.S; S.settings.rules.motion = false; __bj.applyMotion(); S.fenceLast = 1e9;
-    S.playPres = 300000; S.bankroll = 50000; S.open = [true, true, true, true]; S.table = 1; S.line = { id:'marker2', name:'a bigger casino marker', limit:1000000, rate:0.03 }; __bj.render(); });
+    S.playPres = 300000; S.bankroll = 50000; S.open = [true, true, true, true]; S.table = 1; S.line = { id:'testline', name:'a bigger casino marker', limit:1000000, rate:0.03 }; __bj.render(); });
   await p.waitForTimeout(400); await p.evaluate(() => __bj.hideSheets());
   check('whaleStart', (await p.evaluate(() => [__bj.prestige(), __bj.rankNo()])).join() === '300000,5', await p.evaluate(() => [__bj.prestige(), __bj.rankNo()]));
   // borrow $95,238 through the real cashier: with the 5% cash-advance fee, $100,000 owed

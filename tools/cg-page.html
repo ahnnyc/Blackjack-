@@ -584,6 +584,21 @@ const OFFERS = [
   { id:'jet',       rank:6, kind:'rank',   art:'🛩️', name:'a private jet',              price:5000000 },
   { id:'openmarker',rank:6, kind:'credit', art:'📜', name:'an open marker',             limit:1e12,    rate:0.02 },
 ];
+// Luxury and the casino's credit. The casino only extends a marker to players who live the part: a Shark's $100,000
+// marker and a Whale's $1,000,000 marker need a luxury rental running (condo, luxury car or chef) or a home, car or chef
+// you own. Give them up and the casino sees more risk: the marker is cut to half its limit and its interest rises to
+// CUT_RATE until you have one again. Simulated (a player who keeps renting, 300 players): today 65% of starts reach Super
+// Whale, median 116 game days; cut in half 49%, 122 days; frozen outright 42%, 162 days; requiring a Whale to own the
+// penthouse or limo, 6%. The Super Whale's open marker has no conditions.
+const LUX_RENT = ['condorent', 'carlease', 'chefhire'], LUX_BIG = ['penthouse', 'limo'], CUT_RATE = 0.05, CUT_SHARE = 0.5;
+const MARKER_NEEDS = { marker: 'lux', marker2: 'lux' };
+const isLuxOwned = x => { const o = OFFERS.find(y => y.id === x.oid); return !!o && o.kind === 'save' && o.keep && o.rank >= 4; };
+function luxuryHeld(need){   // the names of what you have that counts
+  return stashList().filter(isLuxOwned).map(x => x.item).concat(LUX_RENT.filter(dealOn).map(id => OFFERS.find(o => o.id === id).name));
+}
+const markerOK = id => !MARKER_NEEDS[id] || luxuryHeld(MARKER_NEEDS[id]).length > 0;
+const lineCut = () => !!(S.line && !markerOK(S.line.id));
+const needWords = () => 'a luxury rental (a condo, a luxury car or a chef) or a home, car or chef you own';
 const GUY_GAP = 10, GUY_CHANCE = 1 / 4;   // an offer about every 14 hands
 // Prestige levels, named so the player knows where they stand.
 const LEVELS = [
@@ -622,7 +637,7 @@ const RULES = [
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
   { g:'Extras', k:'stay', label:'Daily costs and sponsors', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a friend’s couch, fast food and walking up to a villa, the chef’s table and a limo. Super Whales are comped. From Shark up, a sponsor pays 75% of the day’s bills at the end of each day if you made the right move on at least 95% of your hands and lived at your rank (a cheaper room, meals or ride chosen on the Expenses screen stops it).' },
   { g:'Extras', k:'host', label:'Eye candy and entourage', desc:'Offered from Shark up: eye candy ($300 a day) and an entourage from Whale up ($2,500 a day). Both raise your rank. Fees are charged at the end of each day. If you can’t pay, they leave.' },
-  { g:'Extras', k:'fence', label:'Offers', desc:'Between hands you get one offer at a time, matched to your rank: something to raise your rank, something that saves money over time (a home, a car, a chef, a deal), or a line of credit. Each offer says what it does for you. You can sell things back for half what you paid.' },
+  { g:'Extras', k:'fence', label:'Offers', desc:'Between hands you get one offer at a time, matched to your rank: something to raise your rank, something that saves money over time (a home, a car, a chef, a deal), or a line of credit. Each offer says what it does for you. You can sell things back for half what you paid. The casino’s marker (from Shark up) is offered only while you have a luxury rental or a home, car or chef you own; give them up and the casino halves the limit and raises interest to 5% until you have one again.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -955,7 +970,7 @@ function run(fn){
   Promise.resolve().then(fn)
     .then(async () => { if (R && R.phase === 'done' && !R.paid){ render(); await payoutAnim(); } })
     .catch(e => { console.error(e); if (R) { R.countFrom = null; R.paid = true; } })
-    .finally(() => { busy = false; saveLocal(); render(); const stop = debtsAfterHand(); if (!S.dead) stayAfterHand(); if (!S.dead) brokeAfterHand(); if (!stop && !tablesAfterHand()) fenceAfterHand(); pumpSheets(150); });
+    .finally(() => { busy = false; saveLocal(); render(); const stop = debtsAfterHand(); if (!S.dead) creditWatch(); if (!S.dead) stayAfterHand(); if (!S.dead) brokeAfterHand(); if (!stop && !tablesAfterHand()) fenceAfterHand(); pumpSheets(150); });
 }
 
 async function deal(){
@@ -1719,7 +1734,7 @@ function renderRecord(){
       const c = it.c;
       const title = { buy:'Bought ' + c.item, sell:'Sold ' + c.item, seized:'Security took ' + c.item,
         card:'Borrowed on your credit', cardpay:'Paid back your credit', cardint:'Interest on your credit',
-        shark:'Borrowed from the juice man', sharkpay:'Paid the juice man', vig:'The juice man’s cut', dead:'Killed by the juice man', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), cardfee:'Cash advance fee', gift:'Welcome gift for reaching ' + (c.what || 'a new rank'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left', sharktook:'The juice man took ' + (c.item || 'something'), sponsor:'Paid by your sponsor, ' + (c.what || ''), nosponsor:'No sponsor pay: under 95% right moves', nosponsorlive:'No sponsor pay: lived below your rank', line:'New credit: ' + (c.what || '') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
+        shark:'Borrowed from the juice man', sharkpay:'Paid the juice man', vig:'The juice man’s cut', dead:'Killed by the juice man', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), cardfee:'Cash advance fee', gift:'Welcome gift for reaching ' + (c.what || 'a new rank'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left', sharktook:'The juice man took ' + (c.item || 'something'), sponsor:'Paid by your sponsor, ' + (c.what || ''), nosponsor:'No sponsor pay: under 95% right moves', nosponsorlive:'No sponsor pay: lived below your rank', linecut:'The casino cut back ' + (c.what || 'your marker'), lineback:'The casino restored ' + (c.what || 'your marker'), line:'New credit: ' + (c.what || '') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
       when.textContent = title + ' · ' + stamp(c.t);
       const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
       const what = document.createElement('div'); what.className = 'what num';
@@ -1826,8 +1841,8 @@ function inPlay(){ return S.round && R ? cents(R.hands.reduce((a, h) => a + h.be
 const handsThisGame = () => history.reduce((a, r) => a + (r.s === S.session ? 1 : 0), 0);
 // Credit comes only from a line offered to you; prestige still loosens the juice man.
 const lineName = () => S.line ? S.line.name.replace(/^(a|an) /, 'your ') : 'credit';
-const cardLimit = () => S.line ? S.line.limit : 0;
-const cardRate = () => S.line ? S.line.rate : 0;
+const cardLimit = () => S.line ? (lineCut() ? Math.floor(S.line.limit * CUT_SHARE) : S.line.limit) : 0;   // a marker cut back: half the limit
+const cardRate = () => S.line ? (lineCut() ? Math.max(S.line.rate, CUT_RATE) : S.line.rate) : 0;
 const sharkMax = () => cents(SHARK_MAX + prestige());
 const sharkRate = () => prestige() >= 100000 ? 0.10 : prestige() >= 25000 ? 0.15 : SHARK_RATE;
 const cardLeft = () => Math.max(0, cents(cardLimit() - S.card));
@@ -1971,6 +1986,8 @@ function cashierLabels(){
   const nextDay = (Math.floor(n / DAY) + 1) * DAY;
   $('cardH').textContent = S.line ? S.line.name.replace(/^(a|an) /, '').replace(/^./, c => c.toUpperCase()) : 'Credit';
   $('cardNote').textContent = !S.line ? 'No credit yet. Lines of credit are offered between hands as you rank up.'
+    : lineCut() ? 'Cut back: the casino halved your limit to ' + money(cardLimit()) + ' and raised interest to ' + pct(CUT_RATE) + ' a day, because you no longer have ' + needWords(S.line.id) + '. Get one and it goes back to ' + money(S.line.limit) + ' at ' + pct(S.line.rate) + '.' + (S.card > 0 ? ' You owe ' + money(S.card) + ': ' + money(cardInterest()) + ' interest at the end of the day.' + (cardMaxed() ? ' No room left to borrow.' : '') : '')
+    : MARKER_NEEDS[S.line.id] && S.card <= 0 ? 'You owe nothing. The limit is ' + money(cardLimit()) + ', at ' + pct(cardRate()) + ' a day on what you owe. It stays at the full amount while you have ' + needWords(S.line.id) + ' (you have ' + luxuryHeld(MARKER_NEEDS[S.line.id]).join(', ') + '). Each cash withdrawal costs ' + pct(CASH_FEE) + ' (at least ' + money(CASH_FEE_MIN) + ').'
     : S.card > 0
       ? 'You owe ' + money(S.card) + '. ' + (cardMaxed() ? 'No room left on it.' : money(maxCash(cardLeft())) + ' left to borrow.') +
         ' Interest is ' + pct(cardRate()) + ' a day: ' + money(cardInterest()) + ' at the end of the day (after hand ' + nextDay + '). Each cash withdrawal costs ' + pct(CASH_FEE) + ' (at least ' + money(CASH_FEE_MIN) + '), added to what you owe.' + (debtCost() > 0 ? ' Owing money holds your rank back.' : '')
@@ -2556,19 +2573,35 @@ function prestigeLines(add, person){
   return out;
 }
 // what a money-saving offer saves, in plain numbers
+// what a luxury item does for the casino's credit, for its offer
+function creditPerk(o){
+  if (rankNo() >= 6) return '';
+  const big = LUX_BIG.includes(o.id), lux = big || LUX_RENT.includes(o.id);
+  if (!lux) return '';
+  const id = rankNo() >= 5 ? 'marker2' : 'marker', m = OFFERS.find(x => x.id === id);
+  if (S.line && S.line.id === id && lineCut()) return 'The casino cut your ' + m.name.replace(/^(a|an) /, '') + ' in half because it sees you as a risk. This restores it: up to ' + money(m.limit) + ' again, at ' + pct(m.rate) + ' a day.';
+  if (S.line && S.line.id === id) return 'Keeps your ' + m.name.replace(/^(a|an) /, '') + ' at the full ' + money(m.limit) + ' and ' + pct(m.rate) + ' a day. The casino watches how you live.';
+  if (S.line && S.line.limit >= m.limit) return '';
+  return 'Living like this gets you the casino’s credit: ' + m.name + ' for up to ' + money(m.limit) + ' at ' + pct(m.rate) + ' a day, offered between hands. It stays at the full amount only while you have ' + needWords(id) + '.';
+}
 function saveLines(o){
   const L = life(), per = o.covers === 'room' ? roomPrice(L) : o.covers === 'ride' ? L.ride : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0);
   const what = o.covers === 'room' ? 'your room' : o.covers === 'ride' ? 'getting around' : 'your meals';
   const out = o.keep ? prestigeLines(o.price) : [];   // a purchase: what it does for your rank comes first
+  const cl = creditPerk(o);
+  if (cl) out.push(cl);   // a rental: first; a purchase: after what it does for your rank
   if (o.keep){ out.push(covered(o.covers) || per <= 0 ? 'You pay nothing for ' + what + ' at the moment.' : 'Also: no more paying for ' + what + ' (' + money(per) + ' a day now).'); return out; }
   if (covered(o.covers)) out.push('You already pay nothing for ' + what + '.');
   else if (per <= 0) out.push('You pay nothing for ' + what + ' at this rank' + (o.keep ? ', but it keeps working when you rank up.' : '.'));
-  else if (o.days){ const worth = per * o.days; out.push('Covers ' + what + ' for ' + o.days + ' days: ' + money(worth) + ' of bills for ' + money(o.price) + (worth > o.price ? ', saving ' + money(worth - o.price) : '') + '.'); }
+  else if (o.days){ const worth = per * o.days;
+    out.push(L.sponsor && !L.comped ? 'Covers ' + what + ' for ' + o.days + ' days (' + money(worth) + ' of bills). Your sponsor already pays 75% of your bills on days you play well, so it saves money only on days you don’t.'
+      : 'Covers ' + what + ' for ' + o.days + ' days: ' + money(worth) + ' of bills for ' + money(o.price) + (worth > o.price ? ', saving ' + money(worth - o.price) : '') + '.'); }
   else out.push('No more paying for ' + what + ' (now ' + money(per) + ' a day). Pays for itself in ' + Math.ceil(o.price / per).toLocaleString('en-US') + ' days, and keeps working when you rank up.');
   return out;
 }
 function creditLines(o){
   const out = ['Borrow up to ' + (o.limit >= 1e11 ? 'any amount' : money(o.limit)) + ', at ' + pct(o.rate) + ' interest a day on what you owe.', 'Each cash withdrawal costs ' + pct(CASH_FEE) + ' (at least ' + money(CASH_FEE_MIN) + '), added to what you owe.'];
+  if (MARKER_NEEDS[o.id]) out.unshift('The casino offers it because you live the part: ' + esc(luxuryHeld(MARKER_NEEDS[o.id]).join(', ')) + '. It stays at the full amount while you have ' + needWords(o.id) + '. Give that up and the casino sees more risk: it cuts the limit in half, to ' + money(o.limit * CUT_SHARE) + ', and raises interest to ' + pct(CUT_RATE) + ' a day until you have one again.');
   if (S.line) out.push('Replaces ' + esc(S.line.name) + ' (' + (S.line.limit >= 1e11 ? 'no limit' : money(S.line.limit)) + ' at ' + pct(S.line.rate) + ' a day). What you owe carries over.');
   else out.push('Your first credit. Without it, only the juice man lends.');
   return out;
@@ -2588,7 +2621,7 @@ function availableOffers(){
   return OFFERS.filter(o => {
     if (o.rank > r || o.retired) return false;
     if (o.kind === 'people') return rules().host && !people()[o.id];
-    if (o.kind === 'credit') return !S.line || o.limit > S.line.limit;
+    if (o.kind === 'credit') return (!S.line || o.limit > S.line.limit) && markerOK(o.id);
     if (o.kind === 'save' && !o.keep){
       if (covered(o.covers) || dealOn(o.id)) return false;
       if (o.rank === r) return o.price <= S.bankroll;                 // deals and rentals at their own rank
@@ -2611,6 +2644,30 @@ function fenceAfterHand(){
   for (const x of list){ pick -= x.w; if (pick <= 0){ o = x.o; break; } }
   S.fenceLast = n;
   queueSheet(() => fenceOffer(o));
+}
+// The casino reacts when you give up (or get back) what keeps your marker open
+function creditWatch(){
+  if (!S.line || !MARKER_NEEDS[S.line.id]) { S.lineCutSeen = 0; return; }
+  const cut = lineCut(), had = S.luxSeen || [], now = luxuryHeld(MARKER_NEEDS[S.line.id]);
+  if (cut && !S.lineCutSeen){
+    S.lineCutSeen = 1; const m = S.line, gone = had;
+    cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'linecut', what: m.name });
+    queueSheet(() => { guyOffer = false; fenceSheet('The casino noticed', '📜', (gone.length ? 'You no longer have ' + esc(gone.join(', ').replace(/, ([^,]*)$/, ' or $1')) + '. To the casino that looks like a player running out of money, so it sees you as a bigger risk.'
+      : 'The casino gives its full marker only to players who live the part, and you don’t have ' + needWords(m.id) + '. To the casino that looks like a bigger risk.') + bullets([
+      'Your ' + esc(m.name.replace(/^(a|an) /, '')) + ' is cut in half: from ' + money(m.limit) + ' to ' + money(cardLimit()) + '.' + (S.card >= cardLimit() ? ' You already owe ' + money(S.card) + ', so no new borrowing until you pay it down.' : ''),
+      'Interest goes up from ' + pct(m.rate) + ' to ' + pct(CUT_RATE) + ' a day' + (S.card > 0 ? ' on the ' + money(S.card) + ' you owe.' : '.'),
+      'Get ' + needWords(m.id) + ' and the casino restores it: ' + money(m.limit) + ' at ' + pct(m.rate) + '.']), [btn('OK', () => hideSheets(), { primary:true })]); });
+  } else if (!cut && S.lineCutSeen){
+    S.lineCutSeen = 0; const m = S.line;
+    cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'lineback', what: m.name });
+    queueSheet(() => { guyOffer = false; fenceSheet('The casino is happy again', '📜', 'You have ' + esc(now.join(', ')) + ', so the casino restores your ' + esc(m.name.replace(/^(a|an) /, '')) + ': borrow up to ' + money(m.limit) + ' again, at ' + pct(m.rate) + ' a day.', [btn('OK', () => hideSheets(), { primary:true })]); });
+  }
+  S.luxSeen = now;
+  // a luxury rental that just ran out while it keeps the marker open: offer it again right away
+  if (cut){
+    const r = rankNo(), o = LUX_RENT.map(id => OFFERS.find(x => x.id === id)).find(x => S.deals[x.id] != null && !dealOn(x.id) && !(S.renewSeen || {})[x.id + S.deals[x.id]]);
+    if (o){ (S.renewSeen = S.renewSeen || {})[o.id + S.deals[o.id]] = 1; const oo = offerAtRank(o, r); if (oo.price <= S.bankroll && !covered(oo.covers)) queueSheet(() => fenceOffer(oo)); }
+  }
 }
 function fenceSheet(title, art, html, buttons){
   hideSheets();
@@ -2678,8 +2735,16 @@ function fenceSellOffer(x){
   const o = OFFERS.find(y => y.id === x.oid), loses = o && o.covers ? ' You’d start paying for ' + (o.covers === 'room' ? 'your room' : o.covers === 'ride' ? 'getting around' : 'your meals') + ' again, unless something else covers it.' : '';
   guyOffer = false;
   fenceSheet('Sell ' + esc(x.item.replace(/^(a|an) /, '')) + '?', x.art,
-    'You get <b>' + money(x.offer) + '</b>, half what you paid (' + money(x.paid) + ').' + sellRankLine(x.paid) + loses,
+    'You get <b>' + money(x.offer) + '</b>, half what you paid (' + money(x.paid) + ').' + sellRankLine(x.paid) + loses + sellCreditLine(x),
     [btn('Keep it', () => openStuff(x)), btn('Sell for ' + money(x.offer), () => fenceSell(x), { primary:true })]);
+}
+// selling the last thing that keeps your marker open: say what the casino will do
+function sellCreditLine(x){
+  if (!S.line || !MARKER_NEEDS[S.line.id] || lineCut()) return '';
+  const need = MARKER_NEEDS[S.line.id], still = luxuryHeld(need).filter((n, i, a) => n !== x.item || a.indexOf(n) !== i);
+  const counts = isLuxOwned(x);
+  if (!counts || still.length) return '';
+  return '<br><br><b>The casino will notice.</b> Without it, the casino cuts your ' + esc(S.line.name.replace(/^(a|an) /, '')) + ' in half, to ' + money(S.line.limit * CUT_SHARE) + ', and raises interest to ' + pct(CUT_RATE) + ' a day.';
 }
 function fenceSell(x){
   const list = stashList(), i = list.indexOf(x);
@@ -2689,6 +2754,7 @@ function fenceSell(x){
   hideSheets(); render();
   showMove(before, $('openStuff'), $('bankAmt'));
   say('Sold ' + x.item + ' for ' + money(x.offer) + '.');
+  creditWatch(); touch(); saveLocal(); saveCloudState(); pumpSheets(400);
 }
 
 /* ---------- your stuff, as cards you flip through ---------- */

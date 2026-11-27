@@ -24,7 +24,7 @@ fs.writeFileSync(dir + '/rn-page.html', '<!doctype html><html><head><meta charse
   // Shark: rent a condo, which counts nothing toward rank
   await p.evaluate(() => { __bj.S.playPres = 30000; __bj.render(); __bj.hideSheets(); });
   const pres0 = await p.evaluate(() => __bj.prestige());
-  check('condoRent', /^Rent a condo for a month \| Price: \$15,000 for 30 days\. \/ • Covers your room for 30 days: \$23,970 of bills for \$15,000, saving \$8,970\.$/.test(await offer('condorent', 'offer-condo') || ''), await sheet());
+  check('condoRent', /^Rent a condo for a month \| Price: \$15,000 for 30 days\. \/ • Living like this gets you the casino’s credit: a casino marker for up to \$100,000 at 3% a day, offered between hands\. It stays at the full amount only while you have a luxury rental \(a condo, a luxury car or a chef\) or a home, car or chef you own\. \/ • Covers your room for 30 days \(\$23,970 of bills\)\. Your sponsor already pays 75% of your bills on days you play well, so it saves money only on days you don’t\.$/.test(await offer('condorent', 'offer-condo') || ''), await sheet());
   check('rentButton', (await p.textContent('#fenceBtns button:last-child')) === 'Rent for $15,000', await p.textContent('#fenceBtns button:last-child'));
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
   check('rentSaid', (await p.textContent('#msg')) === 'You rented a condo for 30 days.', await p.textContent('#msg'));
@@ -38,7 +38,7 @@ fs.writeFileSync(dir + '/rn-page.html', '<!doctype html><html><head><meta charse
   // Whale: buy a penthouse at a real price, which counts toward rank
   await p.evaluate(() => { __bj.S.deals = {}; });   // the condo rental ended
   const pent = await offer('penthouse', 'offer-penthouse');
-  check('penthouseBuy', /^Buy a penthouse \| Price: \$3,000,000\. \/ • Impresses the casino: gets you \d+% closer to Super Whale, where you can get everything comped[^/]*\/ • Also: no more paying for your room \(\$1,500 a day now\)\.$/.test(pent || '') && (await p.textContent('#fenceBtns button:last-child')) === 'Buy for $3,000,000', pent);
+  check('penthouseBuy', /^Buy a penthouse \| Price: \$3,000,000\. \/ • Impresses the casino: gets you \d+% closer to Super Whale, where you can get everything comped[^/]*\/ • Living like this gets you the casino’s credit: a bigger casino marker for up to \$1,000,000 at 3% a day, offered between hands\. It stays at the full amount only while you have a luxury rental \(a condo, a luxury car or a chef\) or a home, car or chef you own\. \/ • Also: no more paying for your room \(\$1,500 a day now\)\.$/.test(pent || '') && (await p.textContent('#fenceBtns button:last-child')) === 'Buy for $3,000,000', pent);
   await p.evaluate(() => __bj.hideSheets());
   check('limoBuy', /^Buy your own limo \| Price: \$400,000\. \/ • Impresses the casino: gets you 8% closer to Super Whale/.test(await offer('limo') || ''), await sheet()); await p.evaluate(() => __bj.hideSheets());
   // a rental skipped at Shark comes back at Whale, re-priced for a Whale's villa: two thirds of $45,000
@@ -46,7 +46,7 @@ fs.writeFileSync(dir + '/rn-page.html', '<!doctype html><html><head><meta charse
   const back = await p.evaluate(() => __bj.availableOffers().filter(x => x.o.kind === 'save').map(x => x.o.id + ':' + x.o.price));
   check('rentalsBackRepriced', back.includes('condorent:29500') && back.includes('carlease:15500') && back.includes('chefhire:19500') && !back.some(x => /^carrental/.test(x)), back);
   const cond = await p.evaluate(() => { const x = __bj.availableOffers().find(x => x.o.id === 'condorent'); __bj.fenceOffer(x.o); return 1; }); await p.waitForTimeout(300);
-  check('repricedOfferText', /^Rent a condo for a month \| Price: \$29,500 for 30 days\. \/ • Covers your room for 30 days: \$45,000 of bills for \$29,500, saving \$15,500\.$/.test(await sheet() || ''), await sheet());
+  check('repricedOfferText', /^Rent a condo for a month \| Price: \$29,500 for 30 days\. \/ • Living like this gets you the casino’s credit: a bigger casino marker for up to \$1,000,000 at 3% a day, offered between hands\. It stays at the full amount only while you have a luxury rental \(a condo, a luxury car or a chef\) or a home, car or chef you own\. \/ • Covers your room for 30 days \(\$45,000 of bills\)\. Your sponsor already pays 75% of your bills on days you play well, so it saves money only on days you don’t\.$/.test(await sheet() || ''), await sheet());
   await p.evaluate(() => __bj.hideSheets());
   // nothing to rent once everything is comped
   await p.evaluate(() => { __bj.S.playPres = 6000000; __bj.render(); __bj.hideSheets(); });
