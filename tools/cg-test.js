@@ -60,21 +60,28 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await p.click('#openCashier'); await p.waitForTimeout(200); await p.click('#cardPresets button:text-is("+$1,000")'); await p.click('#cardPay'); await p.waitForTimeout(500); await closeAll();
   check('books', await books(), await books());   // start + hands + borrowing, paying back and buying (before the test sets any amounts by hand)
   check('shirtCountsWhenPaid', (await p.evaluate(() => __bj.prestige())) === 151, await p.evaluate(() => __bj.prestige()));
-  // 4) a deal: the weekly motel rate makes the room free for a week
-  await p.evaluate(() => { __bj.S.bankroll = 2000; __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'motelweek')); }); await p.waitForTimeout(200);
-  check('dealOffer', /saving \$93/.test(await sheet() || ''), await sheet());
+  // 4) a deal: the weekly meal deal makes meals free for a week
+  await p.evaluate(() => { __bj.S.bankroll = 2000; __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'mealdeal')); }); await p.waitForTimeout(200);
+  check('dealOffer', /Covers your meals for 7 days: \$175 of bills for \$120, saving \$55/.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300); await closeAll();
-  await p.evaluate(() => { __bj.S.settings.rules.stay = true; __bj.S.day = { ok: 0, all: 0, bills: 0 }; __bj.stayBill(3, 1); }); await p.waitForTimeout(200);
-  check('roomFree', /free \(your weekly motel rate\)/.test(await sheet() || ''), await sheet());
+  await p.evaluate(() => { __bj.S.settings.rules.stay = true; __bj.S.day = { ok: 0, all: 0, bills: 0 }; __bj.stayBill(2, 1); }); await p.waitForTimeout(200);
+  check('mealFree', /free \(your weekly meal deal\)/.test(await sheet() || ''), await sheet());
   await closeAll();
-  // 5) a meal is charged and counted toward the sponsor; good play pays 75%, bad play nothing
+  // 5) the room on a friend's couch is free; once the deal is gone a meal is charged; no sponsor below Marlin
+  await p.evaluate(() => { __bj.S.deals = {}; __bj.S.day = { ok: 0, all: 0, bills: 0 }; __bj.stayBill(3, 1); }); await p.waitForTimeout(200);
+  check('couchFree', /A night on a friend’s couch: free/.test(await sheet() || ''), await sheet()); await closeAll();
   await p.evaluate(() => { __bj.S.day = { ok: 0, all: 0, bills: 0 }; __bj.stayBill(2, 1); }); await p.waitForTimeout(200);
   const billed = await p.evaluate(() => __bj.S.day.bills);
   check('mealBilled', billed === 11, billed); await closeAll();
   await p.evaluate(() => { __bj.S.day = { ok: 98, all: 100, bills: 100 }; __bj.sponsorDay(1); }); await p.waitForTimeout(300);
-  check('sponsorPays', /pays \$75/.test(await sheet() || ''), await sheet()); await closeAll();
+  check('noSponsorBelowMarlin', (await sheet()) === null, await sheet()); await closeAll();
+  // at Marlin the sponsor pays 75% for good play, nothing for bad
+  const pp = await p.evaluate(() => __bj.S.playPres);
+  await p.evaluate(() => { __bj.S.playPres = 30000; __bj.S.day = { ok: 98, all: 100, bills: 100 }; __bj.sponsorDay(1); }); await p.waitForTimeout(300);
+  check('sponsorPays', /Your sponsor, an energy drink, pays \$75/.test(await sheet() || ''), await sheet()); await closeAll();
   await p.evaluate(() => { __bj.S.day = { ok: 80, all: 100, bills: 100 }; __bj.sponsorDay(2); }); await p.waitForTimeout(300);
   check('sponsorWithholds', /nothing today/.test(await sheet() || ''), await sheet()); await closeAll();
+  await p.evaluate(pp => { __bj.S.playPres = pp; }, pp);
   // 6) interest once a day on what you owe
   await p.evaluate(() => { const S = __bj.S, H = __bj.history; S.card = 1000; const last = H[H.length - 1]; while (H.filter(r => r.s === S.session).length < 149) H.push({ ...last, t: Date.now() }); S.staySeen = 149; S.settings.rules.stay = false; });
   await playHand(); await closeAll();
