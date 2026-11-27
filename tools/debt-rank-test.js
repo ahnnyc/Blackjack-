@@ -18,9 +18,9 @@ fs.writeFileSync(dir + '/dr-page.html', '<!doctype html><html><head><meta charse
     S.playPres = 300000; S.bankroll = 50000; S.open = [true, true, true, true]; S.table = 1; S.line = { id:'marker2', name:'a bigger casino marker', limit:1000000, rate:0.03 }; __bj.render(); });
   await p.waitForTimeout(400); await p.evaluate(() => __bj.hideSheets());
   check('whaleStart', (await p.evaluate(() => [__bj.prestige(), __bj.rankNo()])).join() === '300000,5', await p.evaluate(() => [__bj.prestige(), __bj.rankNo()]));
-  // borrow $100,000 through the real cashier
+  // borrow $95,238 through the real cashier: with the 5% cash-advance fee, $100,000 owed
   await p.evaluate(() => __bj.openCashier()); await p.waitForTimeout(200);
-  await p.fill('#cardInput', '100000'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardBorrow'); await p.waitForTimeout(400);
+  await p.fill('#cardInput', '95238'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardBorrow'); await p.waitForTimeout(400);
   await p.waitForTimeout(500); await p.evaluate(() => __bj.openCashier()); await p.waitForTimeout(200);
   check('cashierSays', /Owing money holds your rank back\./.test(await p.textContent('#cardNote')), await p.textContent('#cardNote'));
   await p.evaluate(() => __bj.hideSheets());
@@ -28,7 +28,7 @@ fs.writeFileSync(dir + '/dr-page.html', '<!doctype html><html><head><meta charse
   // $200,000 owed: prestige 200,000, Marlin, and the message says why
   await p.evaluate(() => __bj.hideSheets());
   await p.evaluate(() => __bj.openCashier()); await p.waitForTimeout(200);
-  await p.fill('#cardInput', '100000'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardBorrow'); await p.waitForTimeout(400);
+  await p.fill('#cardInput', '95238'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardBorrow'); await p.waitForTimeout(400);
   await p.waitForTimeout(700);
   const d2 = await sheet();
   check('marlin', (await p.evaluate(() => [__bj.prestige(), __bj.rankNo()])).join() === '200000,4', await p.evaluate(() => [__bj.prestige(), __bj.rankNo()]));

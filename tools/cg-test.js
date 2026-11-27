@@ -44,20 +44,21 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('creditOffer', /^Store card \| A line of credit/.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
   // taking the line opens the cashier with the whole line filled in, and only amounts you can borrow on offer
-  check('cashierOpensFilled', (await p.isVisible('#cashSheet')) && (await p.inputValue('#cardInput')) === '2000' && (await p.textContent('#cardH')) === 'Store card'
-    && JSON.stringify(await p.$$eval('#cardPresets button', bs => bs.map(x => x.textContent))) === '["+$1,000","All $2,000"]',
+  check('cashierOpensFilled', (await p.isVisible('#cashSheet')) && (await p.inputValue('#cardInput')) === '1904' && (await p.textContent('#cardH')) === 'Store card'
+    && JSON.stringify(await p.$$eval('#cardPresets button', bs => bs.map(x => x.textContent))) === '["+$1,000","All $1,904"]',
     { open: await p.isVisible('#cashSheet'), filled: await p.inputValue('#cardInput'), head: await p.textContent('#cardH'), presets: await p.$$eval('#cardPresets button', bs => bs.map(x => x.textContent)) });
+  check('feeOnButton', (await p.textContent('#cardBorrow')) === 'Borrow $1,904 (+$95 fee)', await p.textContent('#cardBorrow'));
   await p.fill('#cardInput', '1000'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardBorrow'); await p.waitForTimeout(500); await closeAll();
   const s2 = await p.evaluate(() => ({ bank: __bj.S.bankroll, owed: __bj.S.card }));
-  check('borrowed', s2.owed === 1000, s2);
+  check('borrowed', s2.owed === 1050, s2);   // $1,000 plus the 5% cash-advance fee
   // 3) things bought while owing don't count until the debt is paid
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'shirt'))); await p.waitForTimeout(200);
-  check('shirtOffer', /^Sharp shirt \| Price: \$150\. \/ • It won’t raise your rank until your debts are paid \(you owe \$1,000\)\.$/.test(await sheet() || ''), await sheet());
+  check('shirtOffer', /^Sharp shirt \| Price: \$150\. \/ • It won’t raise your rank until your debts are paid \(you owe \$1,050\)\.$/.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(500); await closeAll();
   const s3 = await p.evaluate(() => ({ prestige: __bj.prestige(), stash: __bj.S.stash.map(x => x.item) }));
   check('shirtCountsLater', s3.prestige === 0 &&   // $1,000 owed: the $150 shirt cancels $150 of it, the other $850 costs $425, so 0
     s3.stash.includes('a sharp shirt'), s3);
-  await p.click('#openCashier'); await p.waitForTimeout(200); await p.click('#cardPresets button:text-is("+$1,000")'); await p.click('#cardPay'); await p.waitForTimeout(500); await closeAll();
+  await p.click('#openCashier'); await p.waitForTimeout(200); await p.fill('#cardInput', '1050'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardPay'); await p.waitForTimeout(500); await closeAll();
   check('books', await books(), await books());   // start + hands + borrowing, paying back and buying (before the test sets any amounts by hand)
   check('shirtCountsWhenPaid', (await p.evaluate(() => __bj.prestige())) === 151, await p.evaluate(() => __bj.prestige()));
   // with no debts, a thing says what it does for you in words: how much closer to the next rank, and what that rank gets you
