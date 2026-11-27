@@ -1949,6 +1949,9 @@ function welcomeBack(){
   if (firstVisit || S.dead) return;
   const lines = [];
   lines.push('Chips: <b>' + money(S.bankroll) + '</b>');
+  // a better table already open to you comes first, so the goal never skips past the table you could move to now
+  const up = openList().findIndex((o, k) => k > tableNo() && o);
+  if (up > 0) lines.push('The <b>' + deckTable(TABLES[up].d) + '</b> is open to you. Tap the Limits sign to move up.');
   lines.push(nextGoal());
   guyOffer = false;
   fenceSheet('Welcome back', '🐋', lines.join('<br><br>'), [btn('Play', () => hideSheets(), { primary:true })]);
