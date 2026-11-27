@@ -151,7 +151,6 @@ body.still :is(#levelBtn,.rankfish).lv6{animation:none}
 .exp button.er:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .exp button.er .amt{color:var(--gold)}
 .exp button.er.off .what{font-style:italic}
-.exp button.er.off .amt{font-weight:600;border:1px dashed var(--gold);border-radius:999px;padding:1px 10px}
 .opt{display:flex;flex-direction:column;gap:8px}
 .opt .btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:10px 14px;min-height:56px;font-size:17px}
 .opt .btn small{font-size:16px;font-weight:400;color:var(--muted)}
@@ -1907,8 +1906,8 @@ function expenseRows(){
   const p = people();
   if (p.candy) add('Eye candy', 'with you', money(PEOPLE.candy.fee), 'candy');
   if (p.crew) add('Entourage', 'with you', money(PEOPLE.crew.fee), 'crew');
-  if (canBringBack('candy')) rows.push({ what: 'Eye candy', note: 'sent home', amt: 'Bring back', tap: 'candy', off: true });
-  if (canBringBack('crew')) rows.push({ what: 'Entourage', note: 'sent home', amt: 'Bring back', tap: 'crew', off: true });
+  if (canBringBack('candy')) rows.push({ what: 'Eye candy', note: 'sent home', amt: '$0', tap: 'candy', off: true });
+  if (canBringBack('crew')) rows.push({ what: 'Entourage', note: 'sent home', amt: '$0', tap: 'crew', off: true });
   if (S.card > 0 && S.line) add('Interest', pct(cardRate()) + ' a day on the ' + money(S.card) + ' you owe on ' + lineName(), money(cardInterest()));
   const total = cents((L.comped ? 0 : (covered('room') ? 0 : roomPrice(L)) + (covered('meals') ? 0 : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0)) + (covered('ride') ? 0 : L.ride))
     + (p.candy ? PEOPLE.candy.fee : 0) + (p.crew ? PEOPLE.crew.fee : 0) + (S.card > 0 && S.line ? cardInterest() : 0));
@@ -1920,7 +1919,7 @@ function renderExpenses(){
   const box = $('expList'); box.replaceChildren();
   for (const x of expenseRows()){
     const row = document.createElement(x.tap ? 'button' : 'div'); row.className = 'er' + (x.total ? ' total' : '') + (x.tap ? ' tap' : '') + (x.off ? ' off' : '');
-    if (x.tap){ row.type = 'button'; row.addEventListener('click', () => openChoice(x.tap)); row.setAttribute('aria-label', x.off ? x.what + ', sent home. Tap to bring them back.' : x.what + ', ' + x.amt + '. Tap to change.'); }
+    if (x.tap){ row.type = 'button'; row.addEventListener('click', () => openChoice(x.tap)); row.setAttribute('aria-label', x.off ? x.what + ', sent home. Tap for options.' : x.what + ', ' + x.amt + '. Tap to change.'); }
     const w = document.createElement('div'); w.className = 'what'; w.textContent = x.what;
     if (x.note){ const sm = document.createElement('small'); sm.textContent = x.note; w.append(sm); }
     const a = document.createElement('div'); a.className = 'amt num'; a.textContent = x.amt + (x.tap ? ' ›' : '');
@@ -2368,11 +2367,11 @@ function hostOffer(k){
   guyOffer = false;
   const x = PEOPLE[k];
   const hire = who => { people()[k] = who; if (S.gone) delete S.gone[k]; touch(); saveLocal(); saveCloudState(); hideSheets(); render();
-    say((k === 'candy' ? 'Your eye candy (' + who + ') is at your side.' : 'Your entourage is with you.')); tablesAfterHand(); };
+    say((k === 'candy' ? 'Your eye candy is at your side.' : 'Your entourage is with you.')); tablesAfterHand(); };
   const lines = [money(x.fee) + ' a day, charged at the end of each day.'].concat(prestigeLines(x.prestige, true));
   if (k === 'candy') fenceSheet('Eye candy', x.art,
     'A companion at your side at the table.' + bullets(lines),
-    [btn('No thanks', () => hideSheets()), btn('A man', () => hire('a man'), { primary:true }), btn('A woman', () => hire('a woman'), { primary:true })]);
+    [btn('No thanks', () => hideSheets()), btn('Hire', () => hire(true), { primary:true })]);
   else fenceSheet('An entourage', x.art,
     'A group of friends who follow you around the casino.' + bullets(lines),
     [btn('No thanks', () => hideSheets()), btn('Hire', () => hire(true), { primary:true })]);
@@ -2712,7 +2711,7 @@ function openStuff(x){
 function renderStuff(){
   const list = stuffOrder(), x = list[stuffAt];
   const cost = list.reduce((a, y) => a + y.paid, 0);
-  const pp = people(), with_ = [pp.candy ? 'eye candy (' + pp.candy + ')' : '', pp.crew ? 'an entourage' : ''].filter(Boolean).join(' and ');
+  const pp = people(), with_ = [pp.candy ? 'eye candy' : '', pp.crew ? 'an entourage' : ''].filter(Boolean).join(' and ');
   $('stuffNote').textContent = 'You’re a ' + LEVELS[levelOf(prestige())].name + (LEVELS[levelOf(prestige()) + 1] ? ', ' + rankStand() : '') + '.' + levelNote(levelOf(prestige())).replace(/ Next rank:.*$/, '') + ' ' + (with_ ? 'With you: ' + with_ + '. ' : '') + (list.length ? list.length + (list.length === 1 ? ' thing' : ' things') + ', which cost you ' + money(cost) + '. Swipe or tap Next to flip through.' : 'Everything you buy lands here as a card.');
   fillCard($('stuffCard'), x);
   $('stuffCard').setAttribute('aria-label', x ? itemName(x) + ', paid ' + money(x.paid) : 'No stuff yet');
