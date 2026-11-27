@@ -1984,7 +1984,7 @@ function tablesAfterHand(){
     if (to >= 0){
       const from = tbl(), rk = LEVELS[rankNo()].name;
       openList()[to] = true; moveTo(to); render();
-      later(() => { guyOffer = false; fenceSheet('Moved up', '🥂', 'A ' + rk + '’s minimum bet is ' + money(life().minBet) + ', above the ' + money(from.max) + ' maximum at the ' + deckTable(from.d) + '. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: your bets ' + money(minBet()) + ' to ' + money(maxBet()) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
+      later(() => { guyOffer = false; fenceSheet('New table', '🥂', rk + 's bet at least ' + money(life().minBet) + ' a hand. The <span style="white-space:nowrap">' + deckTable(from.d) + '</span> only goes up to ' + money(from.max) + ', so you’re now at the <b style="white-space:nowrap">' + deckTable(TABLES[to].d) + '</b>.', [btn('OK', () => hideSheets(), { primary:true })]); });
       return true;
     }
   }
@@ -2002,7 +2002,7 @@ function tablesAfterHand(){
   const up = S.invite, t = TABLES[up];
   S.invite = 0; touch(); saveLocal(); saveCloudState();
   later(() => { guyOffer = false; fenceSheet('New table open', '🥂',
-    'The <b>' + deckTable(t.d) + '</b> is open: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks give you better odds.<br><br>' + nextGoal(),
+    'The <b>' + deckTable(t.d) + '</b> is open: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks give you better odds.',
     [btn('Stay here', () => hideSheets()), btn('Move up', () => { moveTo(up); hideSheets(); render(); }, { primary:true, disabled: !canSit(up) })]); });
   return true;
   function later(fn){ queueSheet(fn); }

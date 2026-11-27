@@ -49,7 +49,7 @@ Starting over (from the Record screen, the out-of-chips message or game over) go
 
 When the app is reopened, or you come back after 10 minutes or more away, a Welcome back message says who you are (rank, prestige, how far to the next rank, minimum bet), the life you live at that rank (where you stay, eat and how you get around, counting homes, cars, a chef and deals you have, what it costs a day, your sponsor, who is with you), then your chips, what you owe, and the next goal.
 
-Every message in the game is short and plain: what happened and the numbers, no jokes. The welcome screen says only the $1,000 start and the next table. Borrowing is explained when the chips run out. Each new-table message states the next goal in full. A free bill is always called comped.
+Every message in the game is short and plain: what happened and the numbers, no jokes. The welcome screen says only the $1,000 start and the next table. Borrowing is explained when the chips run out. The new-table message says only which table opened, its bets and that fewer decks give better odds. A free bill is always called comped.
 
 ## Files
 
