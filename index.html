@@ -1373,9 +1373,7 @@ function stackEl(amount, max){
 }
 function levelNote(i){
   const L = LIFE[i], nx = LEVELS[i + 1];
-  const cost = dayCost(L);
-  const how = L.comped ? ' Your room, meals and car are comped.' : ' You stay ' + stayAt(L) + ', eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat + ' and get around by ' + L.go.replace(/^(a|an) /, '') + ': ' + money(cost) + ' a day before savings.';
-  return how + (nx ? ' Next rank: ' + nx.name + '.' : ' This is the top rank.');
+  return ' ' + lifeLine(i) + (nx ? ' Next rank: ' + nx.name + '.' : ' This is the top rank.');
 }
 function checkLevel(){
   const i = levelOf(prestige());
@@ -2029,9 +2027,18 @@ function nextGoal(){
 function whoYouAre(){
   const i = rankNo(), L = LIFE[i], nx = LEVELS[i + 1], pres = prestige();
   let t = 'You’re a <b>' + LEVELS[i].name + '</b>' + (nx ? ', ' + rankStand(pres) : '') + '.';
-  let life_;
-  if (L.comped) life_ = 'You live in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
-  else {
+  let life_ = lifeLine(i);
+  if (!L.comped && L.sponsor) life_ += ' Your sponsor is ' + L.sponsor + '.';
+  const pp = people(), with_ = [pp.candy ? 'eye candy' : '', pp.crew ? 'an entourage' : ''].filter(Boolean).join(' and ');
+  if (with_) life_ += ' With you: ' + with_ + '.';
+  return t + '<br><br>' + life_;
+}
+// The life at a rank in one sentence, with that rank's perks and whatever you own or have paid ahead counted in, and what
+// it actually costs a day after all of that. The same sentence everywhere, so no two messages disagree about a price.
+function lifeLine(i){
+  const L = LIFE[i];
+  if (L.comped) return 'You live in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
+  {
     const homeOwned = covered('room') && OFFERS.some(o => o.covers === 'room' && o.keep && owns(o.id));
     const carOwned = covered('ride') && OFFERS.some(o => o.covers === 'ride' && o.keep && owns(o.id));
     const stay = homeOwned ? 'live in ' + coverName('room') : 'stay ' + stayAt(L) + (covered('room') ? ' on ' + coverName('room') : L.roomComp ? ' (comped)' : L.roomRate ? ' (half price)' : '');
@@ -2039,12 +2046,8 @@ function whoYouAre(){
     const eat = chef ? 'have ' + coverName('meals') + ' cook for you' : 'eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat + (covered('meals') ? ' on ' + coverName('meals') : L.freeMeal === 0 ? ' (breakfast comped)' : '');
     const go = carOwned ? 'get around in ' + coverName('ride') : L.ride <= 0 ? 'walk everywhere' : 'get around by ' + L.go.replace(/^(a|an) /, '') + (covered('ride') ? ' on ' + coverName('ride') : '');
     const cost = (covered('room') ? 0 : roomPrice(L)) + (covered('ride') ? 0 : L.ride) + (covered('meals') ? 0 : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0));
-    life_ = 'You ' + stay + ', ' + eat + ' and ' + go + ': ' + (cost > 0 ? money(cost) + ' a day.' : 'nothing to pay each day.');
-    if (L.sponsor) life_ += ' Your sponsor is ' + L.sponsor + '.';
+    return 'You ' + stay + ', ' + eat + ' and ' + go + ': ' + (cost > 0 ? money(cost) + ' a day.' : 'nothing to pay each day.');
   }
-  const pp = people(), with_ = [pp.candy ? 'eye candy' : '', pp.crew ? 'an entourage' : ''].filter(Boolean).join(' and ');
-  if (with_) life_ += ' With you: ' + with_ + '.';
-  return t + '<br><br>' + life_;
 }
 const AWAY_MS = 10 * 60 * 1000;   // back after 10 minutes or more away also counts as reopening
 function welcomeBack(){
@@ -2147,7 +2150,7 @@ const stayAt = L => (L.on ? 'on ' : 'in ') + L.stay;   // in a motel, on a frien
 const roomPrice = L => L.roomComp ? 0 : L.roomRate ? Math.round(L.room * L.roomRate) : L.room;
 const mealPrice = (L, i) => L.freeMeal === i ? 0 : L.meals[i];
 const dayCost = L => roomPrice(L) + L.ride + [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0);
-const PERK_NOTE = ['', 'Breakfast is comped every day.', 'Your room is half price (the casino rate).', 'Your room is comped.'];
+const PERK_NOTE = ['', 'Your breakfast is comped from now on.', 'The casino gives you its room rate: half price.', 'Your room is comped from now on.'];
 // one bill: a meal, or the room and getting around at the end of the day
 function stayBill(i, day){
   if (!rules().stay || S.dead || S.round) return pumpSheets(0);

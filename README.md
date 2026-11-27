@@ -8,7 +8,7 @@ There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $500), 6
 
 ## Ranks
 
-| Rank | Prestige | Expected bet (never shown) | Stay | Eat | Get around | A day (before savings) | Sponsor |
+| Rank | Prestige | Expected bet (never shown) | Stay | Eat | Get around | A day (after perks, before homes, cars and deals) | Sponsor |
 |---|---|---|---|---|---|---|---|
 | Guppy | $0 | $5 | a friend's couch, free | fast food $25 | walking | $25 | none |
 | Minnow | $1,000 | $10 | hostel bed $22 | fast food $25 (breakfast comped) | city bus $3 | $44 | none |

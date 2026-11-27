@@ -1,5 +1,5 @@
 // Small regulars get rewarded: free chips the first time you reach Minnow ($100), Barracuda ($500) and Swordfish ($1,000),
-// once per game; breakfast comped at Minnow; the room at half price at Barracuda and comped at Swordfish.
+// once per game, and the new-rank message never contradicts itself about the price; breakfast comped at Minnow; the room at half price at Barracuda and comped at Swordfish.
 // Usage: node tools/perks-test.js [shotsdir]   (reads tools/game.html)
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname, shots = process.argv[2];
 const HOOK = "window.__bj = { get S(){ return S; }, prestige, rankNo, hideSheets, render, applyMotion, stayBill, whoYouAre };\n";
@@ -22,18 +22,18 @@ fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charse
   // Minnow: $100, breakfast comped
   let b0 = await bank();
   const m = await rankTo(1000, 'rank-minnow');
-  check('minnowGift', /^New rank \| You are now a Minnow\. \/ Welcome gift from the casino: \$100 in free chips\. Breakfast is comped every day\./.test(m || '') && (await bank()) === b0 + 100, [m, await bank() - b0]);
+  check('minnowGift', /^New rank \| You are now a Minnow\. \/ Welcome gift from the casino: \$100 in free chips\. Your breakfast is comped from now on\. \/ You stay in a hostel bed, eat fast food \(breakfast comped\) and get around by the city bus: \$44 a day\./.test(m || '') && (await bank()) === b0 + 100, [m, await bank() - b0]);
   check('breakfastComped', /^Breakfast \| Breakfast at fast food: comped by the players’ club$/.test(await bill(0) || ''), await bill(0));
   check('lunchCharged', /^Lunch \| Lunch at fast food: \$8, taken from your chips\.$/.test(await bill(1) || ''), await bill(1));
   // Barracuda: $500, room half price
   b0 = await bank();
-  const bc = await rankTo(5000);
-  check('barracudaGift', /Welcome gift from the casino: \$500 in free chips\. Your room is half price/.test(bc || '') && (await bank()) === b0 + 500, [bc, await bank() - b0]);
+  const bc = await rankTo(5000, 'rank-barracuda');
+  check('barracudaGift', /Welcome gift from the casino: \$500 in free chips\. The casino gives you its room rate: half price\. \/ You stay in a budget hotel \(half price\), eat at a diner and get around by the city bus: \$85 a day\./.test(bc || '') && (await bank()) === b0 + 500, [bc, await bank() - b0]);
   check('roomHalf', /A night in a budget hotel \(casino rate, half price\): \$30/.test(await bill(3) || ''), await bill(3));
   // Swordfish: $1,000, room comped
   b0 = await bank();
   const sw = await rankTo(10000);
-  check('swordfishGift', /Welcome gift from the casino: \$1,000 in free chips\. Your room is comped\./.test(sw || '') && (await bank()) === b0 + 1000, [sw, await bank() - b0]);
+  check('swordfishGift', /Welcome gift from the casino: \$1,000 in free chips\. Your room is comped from now on\. \/ You stay in a hotel room \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(sw || '') && (await bank()) === b0 + 1000, [sw, await bank() - b0]);
   check('roomComped', /^End of day 1 \| A night in a hotel room: comped by the casino \/ Getting around by taxis: \$36/.test(await bill(3) || ''), await bill(3));
   check('whoSwordfish', /You stay in a hotel room \(comped\), eat at a café and get around by taxis: \$131 a day\./.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
   // dropping back and climbing again gives no second gift
