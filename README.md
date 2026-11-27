@@ -19,6 +19,7 @@ There are four tables, using the deck counts Vegas uses: 8 decks ($5 to $500), 6
 | Super Whale | $5,000,000 | $10,000 | penthouse | anywhere | private car and driver | comped (else $9,000) | none |
 
 - **Small regulars get rewarded** (the players' club, since nobody sponsors them): the first time in a game you reach Minnow, Barracuda or Swordfish the casino gives you $100, $500 or $1,000 in free chips (once per rank per game, said in the new-rank message), and those ranks get breakfast comped, the room at half price, and the room comped. Modelled: 64% of starts reach Super Whale in a median 116 hours, against 66% and 118 without them, so the climb is unchanged.
+- **Rentals below Whale, purchases at Whale:** homes, cars and a chef are rented by the month below Whale (they say "Rent", "Lease" or "Hire", don't count toward your rank, and keep working if your rank changes until they run out). At Whale a penthouse ($3,000,000) and your own limo ($400,000) are real purchases that last for good and count toward your rank. The old cheap apartment, condo, cars and chef are no longer offered but keep working for anyone who bought them.
 - **Deals cover only the place they were bought for:** the weekly hostel rate pays for the hostel, not a room at the casino; the fast-food meal deal doesn't pay for the diner; the bus pass still works wherever you ride the same city bus. Homes, cars and the chef keep working at every rank.
 - **Cash advance fee:** borrowing cash on any credit line (card or marker) costs 5%, at least $10, added to what you owe, so moving money in and out isn't free. The cashier's Borrow button shows the fee, and "All" leaves room for it. The loan shark charges no fee (his cut is enough).
 - **Rank-up fireworks:** ranking up sets off fireworks, which burst over the new-rank message; the message pops up in the middle of the screen after the first bursts (a tap shows it at once). They grow with the rank: Minnow 3 small white bursts; Barracuda 4, blue and white; Swordfish 6, light blue, with rings; Marlin 8 bigger, orange, gold and red, with crackling sparks; Whale 12 in every color with gold willows; Super Whale 18 of the biggest with double rings and a gold finale. Off when Animations is off in Rules. Previewed and approved first (claude.ai/artifact/9qRi1WQTw77joSXskTfx1Q).
@@ -39,10 +40,10 @@ Between hands (about every 14) you get one offer matched to your rank, saying wh
 |---|---|---|---|
 | Guppy | weekly meal deal $120 (7 days) | sharp shirt $150 | store card $2,000 |
 | Minnow | weekly hostel rate $120 (7 days), bus pass $60 (30 days) | tailored suit $600 | credit card $10,000 |
-| Barracuda | apartment $2,500, used car $4,000 | gold watch $2,500 | bigger card $25,000 |
-| Swordfish | condo $8,000, new car $30,000 | diamond ring $8,000 | gold card $50,000 |
-| Marlin | personal chef $15,000, luxury car $90,000 | eye candy $300 a day | casino marker $100,000 |
-| Whale | penthouse $100,000, own limo $250,000 | entourage $2,500 a day | bigger marker $1,000,000 |
+| Barracuda | weekly meal plan at the diner $250 (7 days) | gold watch $2,500 | bigger card $25,000 |
+| Swordfish | rent a car $900 (30 days) | diamond ring $8,000 | gold card $50,000 |
+| Marlin | rent a condo $15,000, lease a luxury car $6,000, hire a personal chef $9,000 (each 30 days) | eye candy $300 a day | casino marker $100,000 |
+| Whale | buy a penthouse $3,000,000, buy your own limo $400,000 | entourage $2,500 a day | bigger marker $1,000,000 |
 | Super Whale | | private jet $5,000,000 | open marker, no limit |
 
 Homes, cars and the chef work for good, at every higher rank too, and add their price to your prestige. Credit lines charge interest once a day (5%, down to 2% for the open marker); a new line replaces the old one and what you owe carries over. Things sell back for half what you paid.
@@ -69,6 +70,7 @@ Every message in the game is short and plain: what happened and the numbers, no 
 - `tools/rating-test.js` — every table open, no minimum by rank, and the low-bet day: sponsor, comps and people lost, told only afterwards; ranking up mid-day is safe.
 - `tools/perks-test.js` — free chips on reaching Minnow, Barracuda and Swordfish (once per game), breakfast comped, half-price and comped rooms.
 - `tools/fireworks-test.js` — rank-up fireworks before the message, a tap shows it at once, none with Animations off; every message box centered and on screen at 390 and 320 wide.
+- `tools/rentals-test.js` — monthly rentals below Whale (no rank, keep working after a rank change), real purchases at Whale, old cheap homes and cars no longer offered.
 
 The record lives in the phone's own storage for this site. It is not synced anywhere.
 
