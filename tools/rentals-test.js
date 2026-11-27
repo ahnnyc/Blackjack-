@@ -25,19 +25,22 @@ fs.writeFileSync(dir + '/rn-page.html', '<!doctype html><html><head><meta charse
   await p.evaluate(() => { __bj.S.playPres = 30000; __bj.render(); __bj.hideSheets(); });
   const pres0 = await p.evaluate(() => __bj.prestige());
   check('condoRent', /^Rent a condo for a month \| Price: \$15,000 for 30 days\. \/ • Covers your room for 30 days: \$23,970 of bills for \$15,000, saving \$8,970\.$/.test(await offer('condorent', 'offer-condo') || ''), await sheet());
-  await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300); await p.evaluate(() => __bj.hideSheets());
+  check('rentButton', (await p.textContent('#fenceBtns button:last-child')) === 'Rent for $15,000', await p.textContent('#fenceBtns button:last-child'));
+  await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
+  check('rentSaid', (await p.textContent('#msg')) === 'You rented a condo for 30 days.', await p.textContent('#msg'));
+  await p.evaluate(() => __bj.hideSheets());
   check('rentNoRank', (await p.evaluate(() => __bj.prestige())) === pres0, [pres0, await p.evaluate(() => __bj.prestige())]);
-  check('chefHire', /^Hire a personal chef for a month \| Price: \$9,000 for 30 days/.test(await offer('chefhire') || ''), await sheet()); await p.evaluate(() => __bj.hideSheets());
-  check('carLease', /^Lease a luxury car for a month \| Price: \$6,000 for 30 days/.test(await offer('carlease') || ''), await sheet()); await p.evaluate(() => __bj.hideSheets());
+  check('chefHire', /^Hire a personal chef for a month \| Price: \$9,000 for 30 days/.test(await offer('chefhire') || '') && (await p.textContent('#fenceBtns button:last-child')) === 'Hire for $9,000', await sheet()); await p.evaluate(() => __bj.hideSheets());
+  check('carLease', /^Lease a luxury car for a month \| Price: \$6,000 for 30 days/.test(await offer('carlease') || '') && (await p.textContent('#fenceBtns button:last-child')) === 'Lease for $6,000', await sheet()); await p.evaluate(() => __bj.hideSheets());
   // up to Whale: the rented condo still covers the room, and life says so
   await p.evaluate(() => { __bj.S.playPres = 300000; __bj.render(); __bj.hideSheets(); });
   check('condoStillCovers', /You live in your rented condo,/.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
   // Whale: buy a penthouse at a real price, which counts toward rank
   await p.evaluate(() => { __bj.S.deals = {}; });   // the condo rental ended
   const pent = await offer('penthouse', 'offer-penthouse');
-  check('penthouseBuy', /^Buy a penthouse \| Price: \$3,000,000\. \/ • No more paying for your room/.test(pent || '') && /Impresses the casino: gets you \d+% closer to Super Whale/.test(pent || ''), pent);
+  check('penthouseBuy', /^Buy a penthouse \| Price: \$3,000,000\. \/ • Impresses the casino: gets you \d+% closer to Super Whale, where you can get everything comped[^/]*\/ • Also: no more paying for your room \(\$1,500 a day now\)\.$/.test(pent || '') && (await p.textContent('#fenceBtns button:last-child')) === 'Buy for $3,000,000', pent);
   await p.evaluate(() => __bj.hideSheets());
-  check('limoBuy', /^Buy your own limo \| Price: \$400,000\./.test(await offer('limo') || ''), await sheet()); await p.evaluate(() => __bj.hideSheets());
+  check('limoBuy', /^Buy your own limo \| Price: \$400,000\. \/ • Impresses the casino: gets you 8% closer to Super Whale/.test(await offer('limo') || ''), await sheet()); await p.evaluate(() => __bj.hideSheets());
   // retired offers never come up
   check('retiredNotOffered', !(await p.evaluate(() => __bj.availableOffers().some(x => ['apartment','usedcar','condo','newcar','chef','luxcar'].includes(x.o.id)))), await p.evaluate(() => __bj.availableOffers().map(x => x.o.id)));
   out.errors = errs; out.fails = fails; console.log(JSON.stringify(out, null, 1)); await b.close(); fs.unlinkSync(dir + '/rn-page.html');
