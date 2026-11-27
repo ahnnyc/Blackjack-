@@ -2127,16 +2127,33 @@ function whoYouAre(){
 // it actually costs a day after all of that. The same sentence everywhere, so no two messages disagree about a price.
 function lifeLine(i){
   const L = LIFE[i];
-  if (L.comped) return 'You live in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
-  {
-    const homeOwned = yourOwn('room'), carOwned = yourOwn('ride');
-    const stay = homeOwned ? 'live in ' + coverName('room') : 'stay ' + stayAt(L) + (covered('room') ? ' on ' + coverName('room') : L.roomComp ? ' (comped)' : L.roomRate ? ' (half price)' : '');
-    const chef = yourOwn('meals');
-    const eat = chef ? 'have ' + coverName('meals') + ' cook for you' : 'eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat + (covered('meals') ? ' on ' + coverName('meals') : L.freeMeal === 0 ? ' (breakfast comped)' : '');
-    const go = carOwned ? 'get around in ' + coverName('ride') : L.ride <= 0 ? 'walk everywhere' : 'get around by ' + L.go.replace(/^(a|an) /, '') + (covered('ride') ? ' on ' + coverName('ride') : '');
-    const cost = (covered('room') ? 0 : roomPrice(L)) + (covered('ride') ? 0 : L.ride) + (covered('meals') ? 0 : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0));
-    return 'You ' + stay + ', ' + eat + ' and ' + go + ': ' + (cost > 0 ? money(cost) + ' a day.' : 'nothing to pay each day.');
-  }
+  if (L.comped) return 'You stay in ' + L.stay + ', eat ' + L.eat + ' and get around in ' + L.go + ', all comped.';
+  const bare = o => o.name.replace(/^(a|an|your own) /, '');
+  const left = o => { const d = Math.max(1, Math.ceil(((S.deals || {})[o.id] - handsThisGame()) / DAY)); return ' (' + d + (d === 1 ? ' day' : ' days') + ' left)'; };
+  const at = e => (/^(a |the )/.test(e) ? 'at ' : '') + e;
+  // where you sleep: owned, rented, on a deal, free, comped, or paid by the night
+  const ro = coverOffer('room');
+  const stay = ro && ro.keep ? 'live in the ' + bare(ro) + ' you own'
+    : ro && ro.anywhere ? 'rent ' + (ro.thing || ro.name) + left(ro)
+    : ro ? 'stay ' + stayAt(L) + ' on ' + coverName('room') + left(ro)
+    : L.room <= 0 ? 'sleep ' + stayAt(L) + ' for free'
+    : L.roomComp ? 'stay ' + stayAt(L) + ', comped'
+    : 'pay ' + money(roomPrice(L)) + ' a night for ' + L.stay + (L.roomRate ? ' (half price)' : '');
+  // what you eat
+  const mo = coverOffer('meals');
+  const eat = mo && mo.keep ? 'have the ' + bare(mo) + ' you employ cook for you'
+    : mo && mo.anywhere ? 'have ' + (mo.thing || mo.name) + ' cook for you' + left(mo)
+    : mo ? 'eat ' + at(L.eat) + ' on ' + coverName('meals') + left(mo)
+    : 'eat ' + at(L.eat) + (L.freeMeal === 0 ? ' (breakfast comped)' : '');
+  // how you get around
+  const go_ = coverOffer('ride');
+  const go = go_ && go_.keep ? 'ride in the ' + bare(go_) + ' you own'
+    : go_ && go_.anywhere ? (go_.verb === 'Lease' ? 'lease ' : 'rent ') + (go_.thing || go_.name) + left(go_)
+    : go_ ? 'ride ' + L.go + ' on ' + coverName('ride') + left(go_)
+    : L.ride <= 0 ? 'walk everywhere'
+    : 'get around by ' + L.go.replace(/^(a|an) /, '');
+  const cost = (covered('room') ? 0 : roomPrice(L)) + (covered('ride') ? 0 : L.ride) + (covered('meals') ? 0 : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0));
+  return 'You ' + stay + ', ' + eat + ' and ' + go + ': ' + (cost > 0 ? money(cost) + ' a day in all.' : 'nothing to pay each day.');
 }
 const AWAY_MS = 10 * 60 * 1000;   // back after 10 minutes or more away also counts as reopening
 function welcomeBack(){
