@@ -457,8 +457,8 @@ body.still .card.flip{animation:none}
 // Four tables. Fewer decks, bigger bets, better odds. You open a table with enough chips (borrowed or not)
 // or by betting enough at the table below; once open it stays open for that game. Tables can be skipped.
 const TABLES = [
-  { d: 6, min: 5,   max: 1000,   chips: [5, 25, 100, 500, 1000] },
-  { d: 4, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000],      chipsNeed: 1250,    betNeed: 150 },      // quick, so you learn tables exist
+  { d: 8, min: 5,   max: 1000,   chips: [5, 25, 100, 500, 1000] },
+  { d: 6, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000],      chipsNeed: 1250,    betNeed: 150 },      // quick, so you learn tables exist
   { d: 2, min: 100, max: 25000,  chips: [100, 500, 1000, 5000, 25000],   chipsNeed: 7500,    betNeed: 5000 },
   { d: 1, min: 500, max: 100000, chips: [500, 1000, 5000, 25000, 100000], chipsNeed: 100000,  betNeed: 200000 },  // the hard one
 ];
@@ -671,7 +671,7 @@ function migrate(){
   st.decks = tbl().d;   // the table sets the shoe
 }
 function freshState(amount = START){
-  return { v:2, settings:{ decks:6, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
+  return { v:2, settings:{ decks:8, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
     card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, level:0, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
@@ -1851,7 +1851,7 @@ function sitDown(){
   newGame($('bankCancel').hidden ? false : true);   // first visit: sit straight down; start over: then the opening message
 }
 
-/* ---------- tables: 6 decks up to 1 deck ---------- */
+/* ---------- tables: 8 decks up to 1 deck (the counts Vegas uses) ---------- */
 function canSit(i){ return openList()[i] && S.bankroll + S.bet >= TABLES[i].min; }
 function moveTo(i){
   if (S.round || i === tableNo()) return;
