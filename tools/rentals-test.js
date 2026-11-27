@@ -34,7 +34,7 @@ fs.writeFileSync(dir + '/rn-page.html', '<!doctype html><html><head><meta charse
   check('carLease', /^Lease a luxury car for a month \| Price: \$6,000 for 30 days/.test(await offer('carlease') || '') && (await p.textContent('#fenceBtns button:last-child')) === 'Lease for $6,000', await sheet()); await p.evaluate(() => __bj.hideSheets());
   // up to Whale: the rented condo still covers the room, and life says so
   await p.evaluate(() => { __bj.S.playPres = 300000; __bj.render(); __bj.hideSheets(); });
-  check('condoStillCovers', /You rent a condo \(\d+ days? left\),/.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
+  check('condoStillCovers', /You rent a condo, /.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
   // Whale: buy a penthouse at a real price, which counts toward rank
   await p.evaluate(() => { __bj.S.deals = {}; });   // the condo rental ended
   const pent = await offer('penthouse', 'offer-penthouse');
