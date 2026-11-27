@@ -60,11 +60,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #top{display:flex;align-items:center;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 #ctl::before{content:"";position:absolute;top:-2px;left:-100vmax;right:-100vmax;height:2px;background:var(--rail-line)}
 #topgap{flex:1}
-#bank{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:4px 10px;min-width:0;white-space:nowrap}
+#bank{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}   /* rank and chips on top, centered; progress, up/down and debt under them */
+#bank .bank-top{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;max-width:100%}
+#bank .bank-sub{display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:2px 14px;max-width:100%;font-size:16px}
 @media (max-width:599px){ #top{gap:4px} #top .topbtn, #top #countBtn{padding:0 7px;font-size:15px} }
 @media (max-width:359px){ #top{gap:3px} #top .topbtn, #top #countBtn{padding:0 5px;font-size:14px} }
-#levelBox{display:inline-flex;flex-direction:column;align-items:center;gap:1px;flex:none}
-#levelPct{font-size:16px;line-height:1.1;color:var(--gold);white-space:nowrap}
+#levelPct{font-size:16px;color:var(--gold);white-space:nowrap}
 #levelBtn{flex:none;min-height:36px;padding:0 10px;border-radius:18px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;font-weight:700;white-space:nowrap}
 /* each prestige level has its own badge color, getting richer as you climb (the name always says the level) */
 /* every level badge is a fish: a body that stretches to fit the name, and a fixed tail, so the name sits centered in the body */
@@ -86,10 +87,10 @@ body.still :is(#levelBtn,.rankfish).lv6{animation:none}
 .rankfish{display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;white-space:nowrap;box-sizing:border-box}
 #fenceArt .rankfish{font-size:22px;min-height:54px;padding:0 54px 0 28px}
 #fenceArt .rankfish.lv5::before, #fenceArt .rankfish.lv6::before{top:-1px}
-#plTag{font-size:17px;font-weight:700;white-space:nowrap;color:var(--muted)}
+#plTag{font-size:16px;font-weight:700;white-space:nowrap;color:var(--muted)}
 #plTag.up{color:var(--good)} #plTag.down{color:var(--bad)}
 #bank .lbl{font-size:16px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
-#bank .amt{font-size:24px;font-weight:700;line-height:1.1}
+#bank .amt{font-size:30px;font-weight:700;line-height:1;white-space:nowrap}
 .topbtn{min-height:44px;padding:0 14px;border-radius:22px;border:1.5px solid var(--gold);background:transparent;font-size:16px;font-weight:600;color:var(--gold)}
 
 /* table */
@@ -140,7 +141,7 @@ body.still :is(#levelBtn,.rankfish).lv6{animation:none}
 #limits{justify-self:start;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:16px;line-height:1.2;background:rgba(0,0,0,.15)}
 #limits .lt{letter-spacing:.08em;text-transform:uppercase}
 #limits #limitsV{font-weight:700;white-space:nowrap}
-#oweV{font-size:17px;font-weight:700;white-space:nowrap;color:var(--gold);border:1.5px dashed var(--gold);border-radius:8px;padding:1px 7px}   /* what you owe, beside up/down */
+#oweV{font-size:16px;font-weight:700;white-space:nowrap;color:var(--gold)}   /* what you owe, beside up/down */
 #shoeLabel{white-space:nowrap;text-align:center;font-size:16px;font-weight:600;color:var(--gold);line-height:1.1}
 #banner{position:absolute;left:50%;top:50%;z-index:4;transform:translate(-50%,-50%);pointer-events:none;
   width:max-content;max-width:98%;text-align:center;padding:6px 14px;border-radius:16px;
@@ -351,7 +352,7 @@ body.still .card.flip{animation:none}
   </main>
 
   <footer id="ctl">
-    <div id="bank"><span id="levelBox"><button type="button" id="levelBtn" aria-label="Rank"></button><span id="levelPct" class="num"></span></span><span class="amt num" id="bankAmt" aria-label="Bankroll">$1,000</span><span class="pl num" id="plTag"></span><span class="num" id="oweV" hidden></span></div>
+    <div id="bank"><span class="bank-top"><button type="button" id="levelBtn" aria-label="Rank"></button><span class="amt num" id="bankAmt" aria-label="Bankroll">$1,000</span></span><span class="bank-sub"><span id="levelPct" class="num"></span><span class="pl num" id="plTag"></span><span class="num" id="oweV" hidden></span></span></div>
     <div id="countBox" hidden><span>Running count <b class="num" id="rcV">0</b></span><span>True count <b class="num" id="tcV">0</b></span><span class="num" id="decksV"></span></div>
     <div id="msg" role="status" aria-live="polite"></div>
     <div id="actions"></div>
