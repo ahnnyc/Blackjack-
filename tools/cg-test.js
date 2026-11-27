@@ -41,16 +41,18 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('prestigeFromPlay', s1.pres === 1.25 && s1.min === 5 && s1.level === 'Guppy', s1);
   // 2) a store card from Guy, then borrowing on it through the real cashier
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'storecard'))); await p.waitForTimeout(200);
-  check('creditOffer', /store card/.test(await sheet() || ''), await sheet());
+  check('creditOffer', /^Store card \| A line of credit/.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
-  await p.click('#openCashier'); await p.waitForTimeout(200);
-  check('cashierHead', (await p.textContent('#cardH')) === 'Store card', await p.textContent('#cardH'));
-  await p.click('#cardPresets button:text-is("+$1,000")'); await p.click('#cardBorrow'); await p.waitForTimeout(500); await closeAll();
+  // taking the line opens the cashier with the whole line filled in, and only amounts you can borrow on offer
+  check('cashierOpensFilled', (await p.isVisible('#cashSheet')) && (await p.inputValue('#cardInput')) === '2000' && (await p.textContent('#cardH')) === 'Store card'
+    && JSON.stringify(await p.$$eval('#cardPresets button', bs => bs.map(x => x.textContent))) === '["+$1,000","All $2,000"]',
+    { open: await p.isVisible('#cashSheet'), filled: await p.inputValue('#cardInput'), head: await p.textContent('#cardH'), presets: await p.$$eval('#cardPresets button', bs => bs.map(x => x.textContent)) });
+  await p.fill('#cardInput', '1000'); await p.dispatchEvent('#cardInput', 'input'); await p.click('#cardBorrow'); await p.waitForTimeout(500); await closeAll();
   const s2 = await p.evaluate(() => ({ bank: __bj.S.bankroll, owed: __bj.S.card }));
   check('borrowed', s2.owed === 1000, s2);
   // 3) things bought while owing don't count until the debt is paid
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'shirt'))); await p.waitForTimeout(200);
-  check('shirtOffer', /Prestige \+\$150/.test(await sheet() || '') && /once your debts are paid/.test(await sheet() || ''), await sheet());
+  check('shirtOffer', /^Sharp shirt \| Price: \$150/.test(await sheet() || '') && /Prestige \+\$150/.test(await sheet() || '') && /once your debts are paid/.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(500); await closeAll();
   const s3 = await p.evaluate(() => ({ prestige: __bj.prestige(), stash: __bj.S.stash.map(x => x.item) }));
   check('shirtCountsLater', s3.prestige === 1 && s3.stash.includes('a sharp shirt'), s3);
