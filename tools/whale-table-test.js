@@ -1,6 +1,6 @@
 // Big ranks and small tables: a Whale ($2,500 minimum) can't stay at the 8-deck table ($500 maximum), and a
 // Super Whale ($10,000 minimum) can't stay at the 6-deck table ($5,000 maximum). Each is moved up after a hand,
-// told why, and the table list says the smaller tables are too small. A Marlin ($250) still plays 8 decks.
+// told why once the shoe runs out (not mid-shoe), and the table list says the smaller tables are too small. A Marlin ($250) still plays 8 decks.
 // Usage: node tools/whale-table-test.js   (reads tools/game.html)
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
 const HOOK = "window.__bj = { get S(){ return S; }, prestige, minBet, maxBet, rankNo, hideSheets, render, applyMotion, moveTo, openTables, tableNo };\n";
@@ -30,11 +30,23 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   };
   await p.click('#bankStart'); await p.waitForTimeout(300);
   await p.evaluate(() => { const S = __bj.S; S.settings.rules.motion = false; __bj.applyMotion(); S.fenceLast = 1e9; S.settings.rules.stay = false; S.settings.rules.fence = false; S.settings.rules.host = false; });
+  // the ordinary offer: the 6-deck table opens mid-shoe, but it's announced only when the shoe runs out
+  await p.evaluate(() => { __bj.S.bankroll = 1400; __bj.render(); });
+  await playHand();
+  check('newTableWaits', (await sheet()) === null && (await p.evaluate(() => __bj.S.open[1])) === true, [await sheet(), await p.evaluate(() => __bj.S.open)]);
+  await p.evaluate(() => { const S = __bj.S; S.pos = S.shoe.length - Math.ceil(Math.max(20, S.shoe.length * 0.25)) - 2; });
+  await playHand();
+  check('newTableAtShoeEnd', /^New table open \| The 6-deck table is open/.test(await sheet() || ''), await sheet());
+  await p.evaluate(() => __bj.hideSheets());
   // a Marlin stays at 8 decks, $250 to $500
   await p.evaluate(() => { const S = __bj.S; S.playPres = 30000; S.bankroll = 20000; S.open = [true, true, true, true]; __bj.render(); });
   check('marlinLimits', (await p.evaluate(() => [__bj.rankNo(), __bj.tableNo(), __bj.minBet(), __bj.maxBet()])).join() === '4,0,250,500', await p.evaluate(() => [__bj.rankNo(), __bj.tableNo(), __bj.minBet(), __bj.maxBet()]));
   // a Whale at 8 decks: one hand, then moved up to 6 decks
   await p.evaluate(() => { const S = __bj.S; S.playPres = 260000; S.bankroll = 200000; __bj.render(); });
+  await playHand();
+  // mid-shoe: no move yet, and the bet is this table's $500 maximum
+  check('whaleWaitsForShoe', (await p.evaluate(() => [__bj.tableNo(), __bj.minBet(), document.getElementById('fenceSheet').hidden])).join() === '0,500,true', await p.evaluate(() => [__bj.tableNo(), __bj.minBet(), document.getElementById('fenceSheet').hidden]));
+  await p.evaluate(() => { const S = __bj.S; S.pos = S.shoe.length - Math.ceil(Math.max(20, S.shoe.length * 0.25)) - 2; /* this hand reaches the cut card */ });
   await playHand();
   const w = await sheet();
   check('whaleMoved', (await p.evaluate(() => __bj.tableNo())) === 1 && /^Moved up \| A Whale’s minimum bet is \$2,500, above the \$500 maximum at the 8-deck table\. You’re now at the 6-deck table: your bets \$2,500 to \$5,000\.$/.test(w || ''), w);
@@ -45,6 +57,9 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await p.evaluate(() => __bj.hideSheets());
   // a Super Whale at 6 decks: moved up to 2 decks
   await p.evaluate(() => { const S = __bj.S; S.playPres = 5100000; S.bankroll = 2000000; __bj.render(); });
+  await playHand();
+  check('superWaitsForShoe', (await p.evaluate(() => __bj.tableNo())) === 1, await p.evaluate(() => __bj.tableNo()));
+  await p.evaluate(() => { const S = __bj.S; S.pos = S.shoe.length - Math.ceil(Math.max(20, S.shoe.length * 0.25)) - 2; /* this hand reaches the cut card */ });
   await playHand();
   const sw = await sheet();
   check('superWhaleMoved', (await p.evaluate(() => __bj.tableNo())) === 2 && /^Moved up \| A Super Whale’s minimum bet is \$10,000, above the \$5,000 maximum at the 6-deck table\. You’re now at the 2-deck table: your bets \$10,000 to \$25,000\.$/.test(sw || ''), sw);
