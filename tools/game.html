@@ -489,6 +489,7 @@ const LIFE = [
 // Prestige: earned from play (every $4 you bet earns $1), plus what you paid for your things (counted once your debts
 // are cleared, so nothing bought on credit counts until it's paid for), plus the people with you.
 const PRESTIGE_PLAY = 0.25;
+const DEBT_WEIGHT = 0.5;   // every $2 you owe (beyond what your things are worth) costs $1 of prestige
 // Sponsors pay this share of the day's bills when you made the right move on at least SPONSOR_GOOD of your hands.
 const SPONSOR_SHARE = 0.75, SPONSOR_GOOD = 0.95;
 const PEOPLE = {
@@ -775,7 +776,12 @@ function prestige(){
   const things = (S.stash || []).reduce((a, x) => a + (x.paid || 0), 0);
   const owed = cents((S.card || 0) + (S.shark || 0));
   const p = people();
-  return Math.floor((S.playPres || 0) + Math.max(0, things - owed) + (p.candy ? PEOPLE.candy.prestige : 0) + (p.crew ? PEOPLE.crew.prestige : 0));   // whole dollars
+  // debt first cancels what your things are worth; what's left over costs half its size (modelled: about 117 hours to Super Whale)
+  return Math.max(0, Math.floor((S.playPres || 0) + Math.max(0, things - owed) - DEBT_WEIGHT * Math.max(0, owed - things) + (p.candy ? PEOPLE.candy.prestige : 0) + (p.crew ? PEOPLE.crew.prestige : 0)));   // whole dollars
+}
+function debtCost(){
+  const things = (S.stash || []).reduce((a, x) => a + (x.paid || 0), 0);
+  return Math.floor(DEBT_WEIGHT * Math.max(0, cents((S.card || 0) + (S.shark || 0)) - things));
 }
 // what covers a daily cost: a home or car you own, a chef, or a deal still running
 const owns = id => (S.stash || []).some(x => x.oid === id);
@@ -1342,7 +1348,7 @@ function checkLevel(){
   if (i === S.level) return;
   const up = i > S.level; S.level = i; touch(); saveLocal();
   queueSheet(() => { guyOffer = false; fenceSheet(up ? 'New prestige level' : 'Prestige level down', '🐋',
-    'You are now a <b>' + LEVELS[i].name + '</b> (prestige ' + money(prestige()) + ').' + levelNote(i), [btn('OK', () => hideSheets(), { primary:true })]); });
+    'You are now a <b>' + LEVELS[i].name + '</b> (prestige ' + money(prestige()) + ').' + (!up && debtCost() > 0 ? ' What you owe costs you ' + money(debtCost()) + ' of prestige. Pay it back to climb again.' : '') + levelNote(i), [btn('OK', () => hideSheets(), { primary:true })]); });
 }
 function render(){
   applyMotion();
@@ -1799,8 +1805,8 @@ function cashierLabels(){
   $('cardNote').textContent = !S.line ? 'No credit yet. Lines of credit are offered between hands as you rank up.'
     : S.card > 0
       ? 'You owe ' + money(S.card) + '. ' + (cardMaxed() ? 'No room left on it.' : money(cardLeft()) + ' left to borrow.') +
-        ' Interest is ' + pct(cardRate()) + ' a day: ' + money(cardInterest()) + ' at the end of the day (after hand ' + nextDay + ').'
-      : 'You owe nothing. The limit is ' + (S.line.limit >= 1e11 ? 'unlimited' : money(cardLimit())) + '. Interest is ' + pct(cardRate()) + ' a day on what you owe.';
+        ' Interest is ' + pct(cardRate()) + ' a day: ' + money(cardInterest()) + ' at the end of the day (after hand ' + nextDay + ').' + (debtCost() > 0 ? ' Your debts cost you ' + money(debtCost()) + ' of prestige.' : '')
+      : 'You owe nothing. The limit is ' + (S.line.limit >= 1e11 ? 'unlimited' : money(cardLimit())) + '. Interest is ' + pct(cardRate()) + ' a day on what you owe. Owing money lowers your prestige.';
   const cb = Math.min(cv, cardLeft()), cp = Math.min(cv, S.card, S.bankroll);
   $('cardBorrow').textContent = cb > 0 ? 'Borrow ' + money(cb) : 'Borrow';
   $('cardPay').textContent = cp > 0 ? 'Pay back ' + money(cp) : 'Pay back';
@@ -1813,7 +1819,7 @@ function cashierLabels(){
     const left = Math.max(0, S.sharkNext - n);
     $('sharkNote').textContent = 'You owe him ' + money(S.shark) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of it from your chips: ' + money(sharkCut()) +
       ', due after hand ' + S.sharkNext + ' (' + (left === 1 ? 'next hand' : left + ' hands from now') + '). If you can’t pay, he takes your stuff; with nothing to take, the game is over.';
-  } else $('sharkNote').textContent = (S.line ? 'No room left on your credit. ' : 'You have no credit. ') + 'He lends up to ' + money(sharkMax()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of what you owe from your chips. If you can’t pay, he takes your stuff; with nothing to take, the game is over.';
+  } else $('sharkNote').textContent = (S.line ? 'No room left on your credit. ' : 'You have no credit. ') + 'He lends up to ' + money(sharkMax()) + '. Every ' + SHARK_EVERY + ' hands he takes ' + pct(sharkRate()) + ' of what you owe from your chips. If you can’t pay, he takes your stuff; with nothing to take, the game is over. Owing money lowers your prestige.';
   const sv = Math.floor(Number($('sharkInput').value) || 0);
   const sb = Math.min(sv, sharkLeft()), sp = Math.min(sv, S.shark, S.bankroll);
   $('sharkBorrow').textContent = sb > 0 ? 'Borrow ' + money(sb) : 'Borrow';
