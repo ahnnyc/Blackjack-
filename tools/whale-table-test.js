@@ -1,4 +1,4 @@
-// Big ranks and small tables: a Whale ($2,500 minimum) can't stay at the 8-deck table ($500 maximum), and a
+// Every table open to anyone who can cover its minimum (no unlocking). Big ranks and small tables: a Whale ($2,500 minimum) can't stay at the 8-deck table ($500 maximum), and a
 // Super Whale ($10,000 minimum) can't stay at the 6-deck table ($5,000 maximum). Each is moved up after a hand,
 // told why once the shoe runs out (not mid-shoe), and the table list says the smaller tables are too small. A Marlin ($250) still plays 8 decks.
 // Usage: node tools/whale-table-test.js   (reads tools/game.html)
@@ -30,13 +30,19 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   };
   await p.click('#bankStart'); await p.waitForTimeout(300);
   await p.evaluate(() => { const S = __bj.S; S.settings.rules.motion = false; __bj.applyMotion(); S.fenceLast = 1e9; S.settings.rules.stay = false; S.settings.rules.fence = false; S.settings.rules.host = false; });
-  // the ordinary offer: the 6-deck table opens mid-shoe, but it's announced only when the shoe runs out
-  await p.evaluate(() => { __bj.S.bankroll = 1400; __bj.render(); });
+  // every table is open from the start to anyone who can cover its minimum, and nothing is announced at the end of a shoe
+  await p.evaluate(() => __bj.openTables()); await p.waitForTimeout(200);
+  const start = await p.$$eval('#tablesList .trow', rs => rs.map(r => r.innerText.replace(/\n+/g, ' / ')));
+  check('allOpen', /You’re here/i.test(start[0]) && start.slice(1).every(r => /Move to this table/.test(r)) && !start.some(r => /Locked|Opens at/.test(r)), start);
+  await p.evaluate(() => __bj.hideSheets());
   await playHand();
-  check('newTableWaits', (await sheet()) === null && (await p.evaluate(() => __bj.S.open[1])) === true, [await sheet(), await p.evaluate(() => __bj.S.open)]);
   await p.evaluate(() => { const S = __bj.S; S.pos = S.shoe.length - Math.ceil(Math.max(20, S.shoe.length * 0.25)) - 2; });
   await playHand();
-  check('newTableAtShoeEnd', /^New table open \| The 6-deck table is open: bets \$25 to \$5,000\. Fewer decks give you better odds\.$/.test(await sheet() || ''), await sheet());
+  check('noTableMessage', (await sheet()) === null, await sheet());
+  // a Guppy with $80 can't sit at the $100 table
+  await p.evaluate(() => { __bj.S.bankroll = 80; __bj.openTables(); }); await p.waitForTimeout(200);
+  const poor = await p.$$eval('#tablesList .trow', rs => rs.map(r => r.innerText.replace(/\n+/g, ' / ')));
+  check('needMinimum', /Move to this table/.test(poor[1]) && /You need \$100 to sit here/.test(poor[2]) && /You need \$500 to sit here/.test(poor[3]), poor);
   await p.evaluate(() => __bj.hideSheets());
   // a Marlin stays at 8 decks, $250 to $500
   await p.evaluate(() => { const S = __bj.S; S.playPres = 30000; S.bankroll = 20000; S.open = [true, true, true, true]; __bj.render(); });

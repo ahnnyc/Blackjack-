@@ -454,13 +454,13 @@ body.still .card.flip{animation:none}
 (() => {
 'use strict';
 /* ---------- constants ---------- */
-// Four tables. Fewer decks, bigger bets, better odds. You open a table with enough chips (borrowed or not)
-// or by betting enough at the table below; once open it stays open for that game. Tables can be skipped.
+// Four tables. Fewer decks, bigger bets, better odds. As in a real casino, you can sit at any table whose minimum
+// you can cover; your rank's minimum bet still applies, and a table whose maximum is under it is too small for you.
 const TABLES = [
   { d: 8, min: 5,   max: 500,    chips: [5, 25, 100, 500] },
-  { d: 6, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000],      chipsNeed: 1250,    betNeed: 150 },      // quick, so you learn tables exist
-  { d: 2, min: 100, max: 25000,  chips: [100, 500, 1000, 5000, 25000],   chipsNeed: 7500,    betNeed: 5000 },
-  { d: 1, min: 500, max: 100000, chips: [500, 1000, 5000, 25000, 100000], chipsNeed: 100000,  betNeed: 200000 },  // the hard one
+  { d: 6, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000] },
+  { d: 2, min: 100, max: 25000,  chips: [100, 500, 1000, 5000, 25000] },
+  { d: 1, min: 500, max: 100000, chips: [500, 1000, 5000, 25000, 100000] },
 ];
 const DENOMS = [100000, 25000, 5000, 1000, 500, 100, 25, 5];
 const chipLabel = v => v >= 1000 ? (v / 1000) + 'K' : String(v);
@@ -768,7 +768,7 @@ const tableMin = () => tbl().min;
 const rankNo = () => levelOf(prestige());
 const life = () => LIFE[rankNo()];
 const minBet = () => Math.min(maxBet(), Math.max(tableMin(), life().minBet));   // your rank's minimum or the table's, whichever is higher
-const openList = () => S.open || (S.open = [true, false, false, false]);
+const openList = () => [true, true, true, true];   // every table is open to anyone who can cover its minimum
 const betAtList = () => S.betAt || (S.betAt = [0, 0, 0, 0]);
 const ownChips = () => cents(S.bankroll - S.card - S.shark);
 const people = () => S.people || (S.people = {});
@@ -1929,7 +1929,8 @@ function sitDown(){
 
 /* ---------- tables: 8 decks up to 1 deck (the counts Vegas uses) ---------- */
 const bigEnough = i => TABLES[i].max >= life().minBet;   // a table whose maximum is under your rank's minimum is too small for you
-function canSit(i){ return openList()[i] && bigEnough(i) && S.bankroll + S.bet >= TABLES[i].min; }
+const sitMin = i => Math.max(TABLES[i].min, life().minBet);   // what you'd have to bet there: the table's minimum or your rank's
+function canSit(i){ return bigEnough(i) && S.bankroll + S.bet >= sitMin(i); }
 function moveTo(i){
   if (S.round || i === tableNo()) return;
   S.table = i; S.settings.decks = TABLES[i].d;
@@ -1942,24 +1943,20 @@ function openTables(){
 }
 function renderTables(){
   const here = tableNo(), list = $('tablesList'); list.replaceChildren();
-  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Open the next table with enough chips and prestige, or by betting enough at the table below.';
+  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Sit at any table whose minimum you can cover.';
   TABLES.forEach((t, i) => {
-    const open = openList()[i], row = document.createElement('div');
-    row.className = 'trow' + (i === here ? ' here' : '') + (open ? '' : ' locked');
+    const row = document.createElement('div');
+    row.className = 'trow' + (i === here ? ' here' : '');
     const th = document.createElement('div'); th.className = 'th';
     const b = document.createElement('b'); b.textContent = deckWord(t.d);
     const sp = document.createElement('span'); sp.className = 'num'; sp.textContent = money(t.min) + ' to ' + money(t.max);
     th.append(b, sp); row.append(th);
     const st = document.createElement('div'); st.className = 'st';
-    st.textContent = i === here ? '✓ You’re here' : open ? 'Open' : '🔒 Locked';
+    st.textContent = i === here ? '✓ You’re here' : '';
     row.append(st);
-    if (!open){
-      const need = document.createElement('div'); need.className = 'need num';
-      need.textContent = 'Opens at ' + money(t.chipsNeed) + ' in chips and prestige (you have ' + money(cents(S.bankroll + prestige())) + '), or after ' + money(t.betNeed) + ' bet at the ' + deckTable(TABLES[i - 1].d) + ' (you’ve bet ' + money(betAtList()[i - 1]) + ').';
-      row.append(need);
-    } else if (i !== here){
+    if (i !== here){
       const ok = canSit(i) && !S.round;
-      const bt = btn(ok ? 'Move to this table' : !bigEnough(i) ? 'Too small for a ' + LEVELS[rankNo()].name + ' (' + money(life().minBet) + ' minimum)' : S.round ? 'Finish this hand first' : 'You need ' + money(t.min) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
+      const bt = btn(ok ? 'Move to this table' : !bigEnough(i) ? 'Too small for a ' + LEVELS[rankNo()].name + ' (' + money(life().minBet) + ' minimum)' : S.round ? 'Finish this hand first' : 'You need ' + money(sitMin(i)) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
       row.append(bt);
     }
     list.append(row);
@@ -1983,37 +1980,19 @@ function tablesAfterHand(){
     let to = -1; for (let i = tableNo() + 1; i < TABLES.length; i++) if (bigEnough(i)){ to = i; break; }
     if (to >= 0){
       const from = tbl(), rk = LEVELS[rankNo()].name;
-      openList()[to] = true; moveTo(to); render();
+      moveTo(to); render();
       later(() => { guyOffer = false; fenceSheet('New table', '🥂', rk + 's bet at least ' + money(life().minBet) + ' a hand. The <span style="white-space:nowrap">' + deckTable(from.d) + '</span> only goes up to ' + money(from.max) + ', so you’re now at the <b style="white-space:nowrap">' + deckTable(TABLES[to].d) + '</b>.', [btn('OK', () => hideSheets(), { primary:true })]); });
       return true;
     }
   }
-  // newly opened tables
-  let opened = -1;
-  for (let i = 1; i < TABLES.length; i++){
-    const t = TABLES[i];
-    if (!openList()[i] && (S.bankroll + prestige() >= t.chipsNeed || betAtList()[i - 1] >= t.betNeed)){ openList()[i] = true; opened = i; }
-  }
-  if (opened >= 0){ S.invite = Math.max(S.invite || 0, opened); touch(); saveLocal(); saveCloudState(); }
-  // The offer to move up waits for the end of the shoe, so a move always starts with a fresh shuffle.
-  if (!S.invite) return false;
-  if (tableNo() >= S.invite){ S.invite = 0; saveLocal(); return false; }   // already moved up by hand
-  if (!needShuffle()) return false;
-  const up = S.invite, t = TABLES[up];
-  S.invite = 0; touch(); saveLocal(); saveCloudState();
-  later(() => { guyOffer = false; fenceSheet('New table open', '🥂',
-    'The <b>' + deckTable(t.d) + '</b> is open: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks give you better odds.',
-    [btn('Stay here', () => hideSheets()), btn('Move up', () => { moveTo(up); hideSheets(); render(); }, { primary:true, disabled: !canSit(up) })]); });
-  return true;
+  return false;
   function later(fn){ queueSheet(fn); }
 }
 
-// The next table to open, and what opens it, in one line.
+// The next rank and what it takes, in one line.
 function nextGoal(){
-  const i = openList().findIndex((o, k) => k > 0 && !o);
-  if (i < 0) return 'All four tables are open.';
-  const t = TABLES[i];
-  return 'Next goal: the ' + deckTable(t.d) + '. Have ' + money(t.chipsNeed) + ' in chips and prestige, or bet ' + money(t.betNeed) + ' in all at the ' + deckTable(TABLES[i - 1].d) + '.';
+  const i = rankNo(), nx = LEVELS[i + 1];
+  return nx ? 'Next goal: ' + nx.name + ', at ' + money(nx.at) + ' prestige. Every $4 you bet earns $1 of prestige.' : 'You’re at the top: Super Whale.';
 }
 
 /* ---------- welcome back: where you stand, each time the app is opened again ---------- */
@@ -2043,10 +2022,6 @@ function welcomeBack(){
   const lines = [whoYouAre()];
   const owed = cents((S.card || 0) + (S.shark || 0));
   lines.push('Chips: <b>' + money(S.bankroll) + '</b>' + (owed > 0 ? '. You owe ' + money(owed) + '.' : ''));
-  // a better table already open to you comes first, so the goal never skips past the table you could move to now
-  const up = openList().findIndex((o, k) => k > tableNo() && o);
-  if (up > 0) lines.push('The <b>' + deckTable(TABLES[up].d) + '</b> is open to you. Tap the Limits sign to move up.');
-  lines.push(nextGoal());
   guyOffer = false;
   fenceSheet('Welcome back', '🐋', lines.join('<br><br>'), [btn('Play', () => hideSheets(), { primary:true })]);
 }
@@ -2061,7 +2036,7 @@ addEventListener('visibilitychange', () => {
 function openBank(first, leave){
   $('bankH').textContent = first ? 'Vegas Whale' : leave ? 'Leave town?' : 'Start over?';
   $('bankNote').innerHTML = first
-    ? 'You start with $1,000.<br><br>Next goal: the ' + deckTable(TABLES[1].d) + '.'
+    ? 'You start with $1,000.<br><br>' + nextGoal() + '<br><br>Sit at any table whose minimum you can cover: tap the Limits sign.'
     : leave ? 'Everything is wiped: chips, debts, stuff, people and prestige. You start again from the beginning with $1,000. Your record is kept.'
     : 'You start again from the beginning with $1,000. Debts, stuff, people and prestige are cleared. Your record is kept.';
   $('bankStart').textContent = first ? 'Sit down with $1,000' : leave ? 'Leave town' : 'Start over with $1,000';
