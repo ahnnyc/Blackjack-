@@ -2961,6 +2961,8 @@ addEventListener('bj-fit', () => render());   // sent by the home-screen app aft
 addEventListener('keydown', e => { if (e.key !== 'Escape' || stuck()) return; if (!$('fenceSheet').hidden && guyOffer) guyDecline(); else hideSheets(); });
 
 /* ---------- boot ---------- */
+// The game never zooms: no double-tap zoom (the page's zoom setting and touch-action), and no pinch zoom on iPhone, which ignores the setting
+document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
 addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && S.updatedAt) saveLocal(); });
 addEventListener('pagehide', () => { if (S.updatedAt){ saveLocal(); saveHistLocal(); } });
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch (e) {}
