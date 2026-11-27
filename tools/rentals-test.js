@@ -41,6 +41,16 @@ fs.writeFileSync(dir + '/rn-page.html', '<!doctype html><html><head><meta charse
   check('penthouseBuy', /^Buy a penthouse \| Price: \$3,000,000\. \/ • Impresses the casino: gets you \d+% closer to Super Whale, where you can get everything comped[^/]*\/ • Also: no more paying for your room \(\$1,500 a day now\)\.$/.test(pent || '') && (await p.textContent('#fenceBtns button:last-child')) === 'Buy for $3,000,000', pent);
   await p.evaluate(() => __bj.hideSheets());
   check('limoBuy', /^Buy your own limo \| Price: \$400,000\. \/ • Impresses the casino: gets you 8% closer to Super Whale/.test(await offer('limo') || ''), await sheet()); await p.evaluate(() => __bj.hideSheets());
+  // a rental skipped at Shark comes back at Whale, re-priced for a Whale's villa: two thirds of $45,000
+  await p.evaluate(() => { __bj.S.deals = {}; __bj.S.stash = []; });
+  const back = await p.evaluate(() => __bj.availableOffers().filter(x => x.o.kind === 'save').map(x => x.o.id + ':' + x.o.price));
+  check('rentalsBackRepriced', back.includes('condorent:29500') && back.includes('carlease:15500') && back.includes('chefhire:19500') && !back.some(x => /^carrental/.test(x)), back);
+  const cond = await p.evaluate(() => { const x = __bj.availableOffers().find(x => x.o.id === 'condorent'); __bj.fenceOffer(x.o); return 1; }); await p.waitForTimeout(300);
+  check('repricedOfferText', /^Rent a condo for a month \| Price: \$29,500 for 30 days\. \/ • Covers your room for 30 days: \$45,000 of bills for \$29,500, saving \$15,500\.$/.test(await sheet() || ''), await sheet());
+  await p.evaluate(() => __bj.hideSheets());
+  // nothing to rent once everything is comped
+  await p.evaluate(() => { __bj.S.playPres = 6000000; __bj.render(); __bj.hideSheets(); });
+  check('noRentalsWhenComped', !(await p.evaluate(() => __bj.availableOffers().some(x => x.o.days))), await p.evaluate(() => __bj.availableOffers().map(x => x.o.id)));
   // retired offers never come up
   check('retiredNotOffered', !(await p.evaluate(() => __bj.availableOffers().some(x => ['apartment','usedcar','condo','newcar','chef','luxcar'].includes(x.o.id)))), await p.evaluate(() => __bj.availableOffers().map(x => x.o.id)));
   out.errors = errs; out.fails = fails; console.log(JSON.stringify(out, null, 1)); await b.close(); fs.unlinkSync(dir + '/rn-page.html');
