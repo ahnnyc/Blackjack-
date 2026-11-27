@@ -2579,29 +2579,29 @@ function creditPerk(o){
   const big = LUX_BIG.includes(o.id), lux = big || LUX_RENT.includes(o.id);
   if (!lux) return '';
   const id = rankNo() >= 5 ? 'marker2' : 'marker', m = OFFERS.find(x => x.id === id);
-  if (S.line && S.line.id === id && lineCut()) return 'The casino cut your ' + m.name.replace(/^(a|an) /, '') + ' in half because it sees you as a risk. This restores it: up to ' + money(m.limit) + ' again, at ' + pct(m.rate) + ' a day.';
-  if (S.line && S.line.id === id) return 'Keeps your ' + m.name.replace(/^(a|an) /, '') + ' at the full ' + money(m.limit) + ' and ' + pct(m.rate) + ' a day. The casino watches how you live.';
+  if (S.line && S.line.id === id && lineCut()) return ['Restores your casino marker to ' + money(m.limit) + ' at ' + pct(m.rate) + ' a day.'];
+  if (S.line && S.line.id === id) return ['Keeps your casino marker at ' + money(m.limit) + ' and ' + pct(m.rate) + ' a day.'];
   if (S.line && S.line.limit >= m.limit) return '';
-  return 'Living like this gets you the casino’s credit: ' + m.name + ' for up to ' + money(m.limit) + ' at ' + pct(m.rate) + ' a day, offered between hands. It stays at the full amount only while you have ' + needWords(id) + '.';
+  return ['Gets you a ' + money(m.limit) + ' casino marker at ' + pct(m.rate) + ' a day.', 'Let it go and the casino cuts the marker in half and charges ' + pct(CUT_RATE) + '.'];
 }
 function saveLines(o){
   const L = life(), per = o.covers === 'room' ? roomPrice(L) : o.covers === 'ride' ? L.ride : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0);
   const what = o.covers === 'room' ? 'your room' : o.covers === 'ride' ? 'getting around' : 'your meals';
   const out = o.keep ? prestigeLines(o.price) : [];   // a purchase: what it does for your rank comes first
   const cl = creditPerk(o);
-  if (cl) out.push(cl);   // a rental: first; a purchase: after what it does for your rank
+  if (cl) out.push(...cl);   // a rental: first; a purchase: after what it does for your rank
   if (o.keep){ out.push(covered(o.covers) || per <= 0 ? 'You pay nothing for ' + what + ' at the moment.' : 'Also: no more paying for ' + what + ' (' + money(per) + ' a day now).'); return out; }
   if (covered(o.covers)) out.push('You already pay nothing for ' + what + '.');
   else if (per <= 0) out.push('You pay nothing for ' + what + ' at this rank' + (o.keep ? ', but it keeps working when you rank up.' : '.'));
   else if (o.days){ const worth = per * o.days;
-    out.push(L.sponsor && !L.comped ? 'Covers ' + what + ' for ' + o.days + ' days (' + money(worth) + ' of bills). Your sponsor already pays 75% of your bills on days you play well, so it saves money only on days you don’t.'
+    out.push(L.sponsor && !L.comped ? 'Pays for ' + what + ' for ' + o.days + ' days (' + money(worth) + '). Your sponsor already covers 75% on days you play well.'
       : 'Covers ' + what + ' for ' + o.days + ' days: ' + money(worth) + ' of bills for ' + money(o.price) + (worth > o.price ? ', saving ' + money(worth - o.price) : '') + '.'); }
   else out.push('No more paying for ' + what + ' (now ' + money(per) + ' a day). Pays for itself in ' + Math.ceil(o.price / per).toLocaleString('en-US') + ' days, and keeps working when you rank up.');
   return out;
 }
 function creditLines(o){
+  if (MARKER_NEEDS[o.id]) return ['Borrow up to ' + money(o.limit) + ' at ' + pct(o.rate) + ' a day.', 'Lose your luxury items and it drops to ' + money(o.limit * CUT_SHARE) + ' at ' + pct(CUT_RATE) + '.', 'Each withdrawal costs ' + pct(CASH_FEE) + ' (at least ' + money(CASH_FEE_MIN) + ').'].concat(S.line ? ['Replaces ' + esc(S.line.name.replace(/^(a|an) /, 'your ')) + '. What you owe carries over.'] : []);
   const out = ['Borrow up to ' + (o.limit >= 1e11 ? 'any amount' : money(o.limit)) + ', at ' + pct(o.rate) + ' interest a day on what you owe.', 'Each cash withdrawal costs ' + pct(CASH_FEE) + ' (at least ' + money(CASH_FEE_MIN) + '), added to what you owe.'];
-  if (MARKER_NEEDS[o.id]) out.unshift('The casino offers it because you live the part: ' + esc(luxuryHeld(MARKER_NEEDS[o.id]).join(', ')) + '. It stays at the full amount while you have ' + needWords(o.id) + '. Give that up and the casino sees more risk: it cuts the limit in half, to ' + money(o.limit * CUT_SHARE) + ', and raises interest to ' + pct(CUT_RATE) + ' a day until you have one again.');
   if (S.line) out.push('Replaces ' + esc(S.line.name) + ' (' + (S.line.limit >= 1e11 ? 'no limit' : money(S.line.limit)) + ' at ' + pct(S.line.rate) + ' a day). What you owe carries over.');
   else out.push('Your first credit. Without it, only the juice man lends.');
   return out;
@@ -2687,7 +2687,7 @@ function fenceOffer(o){
   if ((o.price || 0) > S.bankroll) return pumpSheets(0);
   guyOffer = true;
   const nm = esc(o.name);
-  if (o.kind === 'credit') return fenceSheet(cap1(o.name.replace(/^(a|an) /, '')), o.art, 'A line of credit.' + bullets(creditLines(o)),
+  if (o.kind === 'credit') return fenceSheet(cap1(o.name.replace(/^(a|an) /, '')), o.art, (MARKER_NEEDS[o.id] ? 'Offered because you have ' + esc(luxuryHeld(MARKER_NEEDS[o.id]).join(', ').replace(/, ([^,]*)$/, ' and $1')) + '.' : 'A line of credit.') + bullets(creditLines(o)),
     [btn('No thanks', () => guyDecline()), btn('Take it', () => takeLine(o), { primary:true })]);
   const lines = o.kind === 'save' ? saveLines(o) : prestigeLines(o.price);
   fenceSheet(o.title || cap1(o.name.replace(/^(a|an) /, '')), o.art, 'Price: <b>' + money(o.price) + '</b>' + (o.days ? ' for ' + o.days + ' days' : '') + '.' + bullets(lines),

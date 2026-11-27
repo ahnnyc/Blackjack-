@@ -23,12 +23,12 @@ fs.writeFileSync(dir + '/cr-page.html', '<!doctype html><html><head><meta charse
   // 2. the lease offer says what it does for credit
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'carlease'))); await p.waitForTimeout(900);
   const lease = await sheet(); await shot('1-lease');
-  check('leaseSaysCredit', /gets you the casino’s credit: a casino marker for up to \$100,000 at 3% a day/.test(lease || '') && /saves money only on days you don’t/.test(lease || ''), lease);
+  check('leaseSaysCredit', /^Lease a luxury car for a month \| Price: \$6,000 for 30 days\. \/ • Gets you a \$100,000 casino marker at 3% a day\. \/ • Let it go and the casino cuts the marker in half and charges 5%\. \/ • Pays for getting around for 30 days \(\$9,000\)\. Your sponsor already covers 75% on days you play well\.$/.test(lease || ''), lease);
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(400);
   check('markerOffered', (await offerIds()).includes('marker'), await offerIds());
   await p.evaluate(() => { __bj.hideSheets(); __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'marker')); }); await p.waitForTimeout(900);
   const mk = await sheet(); await shot('2-marker');
-  check('markerSaysWhy', /because you live the part: a leased luxury car\. It stays at the full amount while you have a luxury rental/.test(mk || '') && /cuts the limit in half, to \$50,000, and raises interest to 5% a day/.test(mk || ''), mk);
+  check('markerSaysWhy', /^Casino marker \| Offered because you have a leased luxury car\. \/ • Borrow up to \$100,000 at 3% a day\. \/ • Lose your luxury items and it drops to \$50,000 at 5%\./.test(mk || ''), mk);
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(500);
   await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.card = 40000; __bj.creditWatch(); });
   check('openAt3', (await p.evaluate(() => [__bj.cardLimit(), __bj.cardRate()])).join() === '100000,0.03', await p.evaluate(() => [__bj.cardLimit(), __bj.cardRate()]));
@@ -39,7 +39,7 @@ fs.writeFileSync(dir + '/cr-page.html', '<!doctype html><html><head><meta charse
   check('halvedNumbers', (await p.evaluate(() => [__bj.cardLimit(), __bj.cardRate()])).join() === '50000,0.05', await p.evaluate(() => [__bj.cardLimit(), __bj.cardRate()]));
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(900);
   const again = await sheet(); await shot('4-renew');
-  check('renewOffered', /^Lease a luxury car for a month/.test(again || '') && /The casino cut your casino marker in half because it sees you as a risk\. This restores it: up to \$100,000 again/.test(again || ''), again);
+  check('renewOffered', /^Lease a luxury car for a month/.test(again || '') && /Restores your casino marker to \$100,000 at 3% a day\./.test(again || ''), again);
   await p.evaluate(() => __bj.hideSheets());
   await p.evaluate(() => __bj.openCashier()); await p.waitForTimeout(400);
   const note = await p.innerText('#cardNote');
