@@ -79,10 +79,10 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await p.evaluate(() => { const S = __bj.S, H = __bj.history; S.card = 1000; const last = H[H.length - 1]; while (H.filter(r => r.s === S.session).length < 149) H.push({ ...last, t: Date.now() }); S.staySeen = 149; S.settings.rules.stay = false; });
   await playHand(); await closeAll();
   check('dailyInterest', (await p.evaluate(() => __bj.S.card)) === 1050, await p.evaluate(() => __bj.S.card));
-  // 7) a rank's minimum bet: at Barracuda it's $25 even at the 8-deck table (debts cleared first, since they cost prestige)
+  // 7) no minimum by rank: a Barracuda at the 8-deck table can bet the table's $5
   await p.evaluate(() => { __bj.S.card = 0; __bj.S.playPres = 5000; __bj.render(); }); await closeAll();
-  check('rankMinimum', (await p.evaluate(() => __bj.minBet())) === 25, await p.evaluate(() => __bj.minBet()));
-  check('limitsSign', /\$25/.test(await p.textContent('#limitsV')), await p.textContent('#limitsV'));
+  check('rankMinimum', (await p.evaluate(() => [__bj.rankNo(), __bj.minBet()])).join() === '2,5', await p.evaluate(() => [__bj.rankNo(), __bj.minBet()]));
+  check('limitsSign', /\$5–\$500/.test(await p.textContent('#limitsV')), await p.textContent('#limitsV'));
   // 8) the loan shark: takes stuff when you can't pay, the grave when stuff can't cover it
   await p.evaluate(() => { const S = __bj.S; S.card = S.line.limit; S.shark = 2000; S.sharkNext = __bj.history.filter(x => x.s === S.session).length + 1; S.bankroll = 60; S.stash.push({ id: 'z', oid: 'watch', item: 'a gold watch', art: '⌚', paid: 2500 }); __bj.render(); });
   await playHand(); await p.waitForTimeout(500);
