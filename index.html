@@ -159,6 +159,7 @@ body.still :is(#levelBtn,.rankfish).lv6{animation:none}
 .exp .er{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:17px}
 .exp .er .what{min-width:0}
 .exp .er .what small{display:block;color:var(--muted);font-size:16px}
+.exp .er .what small.why{font-style:italic;margin-top:2px}
 .exp .er .amt{font-weight:700;white-space:nowrap;text-align:right}
 .exp .er.total{border-bottom:0;font-size:18px}
 .exp .er.total .what{font-weight:700}
@@ -635,7 +636,7 @@ const RULES = [
   { g:'Display', k:'sound', label:'Sounds', desc:'Chips click, cards snap as they’re dealt and flipped, the shoe riffles, and cards swish as they’re collected. Your iPhone’s silent switch mutes them.' },
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
-  { g:'Extras', k:'stay', label:'Daily costs and sponsors', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a friend’s couch, fast food and walking up to a villa, the chef’s table and a limo. Super Whales are comped. From Shark up, a sponsor pays 75% of the day’s bills at the end of each day if you made the right move on at least 95% of your hands.' },
+  { g:'Extras', k:'stay', label:'Daily costs and sponsors', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a friend’s couch, fast food and walking up to a villa, the chef’s table and a limo. Super Whales are comped. From Shark up, a sponsor pays 75% of the day’s bills at the end of each day if you made the right move on at least 95% of your hands and lived at your rank (a cheaper room, meals or ride chosen on the Expenses screen stops it).' },
   { g:'Extras', k:'host', label:'Eye candy and entourage', desc:'Offered from Shark up: eye candy ($300 a day) and an entourage from Whale up ($2,500 a day). Both raise your rank. Fees are charged at the end of each day. If you can’t pay, they leave.' },
   { g:'Extras', k:'fence', label:'Offers', desc:'Between hands you get one offer at a time, matched to your rank: something to raise your rank, something that saves money over time (a home, a car, a chef, a deal), or a line of credit. Each offer says what it does for you. You can sell things back for half what you paid.' },
 ];
@@ -1734,7 +1735,7 @@ function renderRecord(){
       const c = it.c;
       const title = { buy:'Bought ' + c.item, sell:'Sold ' + c.item, seized:'Security took ' + c.item,
         card:'Borrowed on your credit', cardpay:'Paid back your credit', cardint:'Interest on your credit',
-        shark:'Borrowed from the juice man', sharkpay:'Paid the juice man', vig:'The juice man’s cut', dead:'Killed by the juice man', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), cardfee:'Cash advance fee', gift:'Welcome gift for reaching ' + (c.what || 'a new rank'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left', sharktook:'The juice man took ' + (c.item || 'something'), sponsor:'Paid by your sponsor, ' + (c.what || ''), nosponsor:'No sponsor pay: under 95% right moves', line:'New credit: ' + (c.what || '') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
+        shark:'Borrowed from the juice man', sharkpay:'Paid the juice man', vig:'The juice man’s cut', dead:'Killed by the juice man', meal:'Paid for ' + (c.what || 'a meal'), room:'Paid for ' + (c.what || 'the room'), comp:'Comped: ' + (c.what || 'a bill'), cardfee:'Cash advance fee', gift:'Welcome gift for reaching ' + (c.what || 'a new rank'), fee:'Paid ' + (c.what || 'a fee') + ' for the day', left:'Your ' + (c.what || 'company') + ' left', sharktook:'The juice man took ' + (c.item || 'something'), sponsor:'Paid by your sponsor, ' + (c.what || ''), nosponsor:'No sponsor pay: under 95% right moves', nosponsorlive:'No sponsor pay: lived below your rank', line:'New credit: ' + (c.what || '') }[c.k] || (c.a > 0 ? 'Chips bought' : 'Chips cashed in');
       when.textContent = title + ' · ' + stamp(c.t);
       const amt = document.createElement('div'); amt.className = 'net num'; amt.textContent = c.a ? (c.a > 0 ? '+' : '−') + money(Math.abs(c.a)) : '—';
       const what = document.createElement('div'); what.className = 'what num';
@@ -1895,37 +1896,48 @@ function openCashier(){
 }
 function expenseRows(){
   const L = livingL(), rows = [];
-  const add = (what, note, amt, tap) => rows.push({ what, note, amt, tap });
+  const add = (what, note, amt, tap, why) => rows.push({ what, note, amt, tap, why });
+  // what each daily cost does for you
+  const r = rankNo(), Lr = LIFE[r], spon = !!Lr.sponsor && !Lr.comped, rname = LEVELS[r].name;
+  const why = w => {
+    if (covered(w)) return 'Covered, so it costs you nothing.';
+    if (chosenRank(w) < r) return spon ? 'Cheaper, but your sponsor won’t pay while you live below your rank.' : 'Cheaper than a ' + rname + '’s. Your rank stays the same.';
+    if (spon) return 'Keeps your sponsor paying.';
+    if (w === 'room') return Lr.roomComp ? 'Comped, because you stay at the casino.' : Lr.roomRate ? 'Half price, because you stay at the casino.' : Lr.room <= 0 ? 'Costs you nothing.' : 'The cheapest bed in town.';
+    if (w === 'meals') return Lr.freeMeal === 0 ? 'Breakfast is comped by the players’ club.' : 'Three meals a day.';
+    return Lr.ride <= 0 ? 'Costs you nothing.' : 'Gets you to the casino.';
+  };
   // what you have for each daily need: something you own, a rental, a deal, or the rank's own
   const has = (w, place) => { const o = coverOffer(w); if (!o) return ''; const bare = o.name.replace(/^(a|an|your own) /, '');
     return o.keep ? 'The ' + bare + ' you own' : o.anywhere ? cap1(o.name) : cap1(place) + ', on ' + coverName(w); };
-  if (L.comped) add('Room, meals and getting around', 'The penthouse, anywhere you like, your private car and driver', 'comped');
+  if (L.comped) add('Room, meals and getting around', 'The penthouse, anywhere you like, your private car and driver', 'comped', '', 'The casino pays for all of it.');
   else {
     const mealCost = [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0);
-    add('Room', has('room', L.stay) || cap1(L.stay) + (L.roomComp ? ', comped by the casino' : L.roomRate ? ', half price' : ''),
-      covered('room') || L.room <= 0 ? 'free' : L.roomComp ? 'comped' : money(roomPrice(L)), !covered('room') && choicesFor('room').length > 1 ? 'room' : '');
-    add('Meals', has('meals', L.eat) || cap1(L.eat) + (L.freeMeal === 0 ? ', breakfast comped' : ''), covered('meals') ? 'free' : money(mealCost), !covered('meals') && choicesFor('meals').length > 1 ? 'meals' : '');
-    add('Getting around', has('ride', L.go) || cap1(L.go), covered('ride') || L.ride <= 0 ? 'free' : money(L.ride), !covered('ride') && choicesFor('ride').length > 1 ? 'ride' : '');
+    add('Room', has('room', L.stay) || cap1(L.stay),
+      covered('room') || L.room <= 0 ? 'free' : L.roomComp ? 'comped' : money(roomPrice(L)), !covered('room') && choicesFor('room').length > 1 ? 'room' : '', why('room'));
+    add('Meals', has('meals', L.eat) || cap1(L.eat), covered('meals') ? 'free' : money(mealCost), !covered('meals') && choicesFor('meals').length > 1 ? 'meals' : '', why('meals'));
+    add('Getting around', has('ride', L.go) || cap1(L.go), covered('ride') || L.ride <= 0 ? 'free' : money(L.ride), !covered('ride') && choicesFor('ride').length > 1 ? 'ride' : '', why('ride'));
   }
   const p = people();
-  if (p.candy) add('Eye candy', 'with you', money(PEOPLE.candy.fee), 'candy');
-  if (p.crew) add('Entourage', 'with you', money(PEOPLE.crew.fee), 'crew');
-  if (canBringBack('candy')) rows.push({ what: 'Eye candy', note: 'sent home', amt: '$0', tap: 'candy', off: true });
-  if (canBringBack('crew')) rows.push({ what: 'Entourage', note: 'sent home', amt: '$0', tap: 'crew', off: true });
-  if (S.card > 0 && S.line) add('Interest', pct(cardRate()) + ' a day on the ' + money(S.card) + ' you owe on ' + lineName(), money(cardInterest()));
+  if (p.candy) add('Eye candy', 'with you', money(PEOPLE.candy.fee), 'candy', 'Raises your rank.');
+  if (p.crew) add('Entourage', 'with you', money(PEOPLE.crew.fee), 'crew', 'Raises your rank.');
+  if (canBringBack('candy')) rows.push({ what: 'Eye candy', note: 'sent home', amt: '$0', tap: 'candy', off: true, why: 'Brought back, they raise your rank.' });
+  if (canBringBack('crew')) rows.push({ what: 'Entourage', note: 'sent home', amt: '$0', tap: 'crew', off: true, why: 'Brought back, they raise your rank.' });
+  if (S.card > 0 && S.line) add('Interest', pct(cardRate()) + ' a day on the ' + money(S.card) + ' you owe on ' + lineName(), money(cardInterest()), '', 'The price of borrowing. Paying back what you owe ends it.');
   const total = cents((L.comped ? 0 : (covered('room') ? 0 : roomPrice(L)) + (covered('meals') ? 0 : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0)) + (covered('ride') ? 0 : L.ride))
     + (p.candy ? PEOPLE.candy.fee : 0) + (p.crew ? PEOPLE.crew.fee : 0) + (S.card > 0 && S.line ? cardInterest() : 0));
-  rows.push({ what: 'A day in all', note: L.sponsor && !L.comped ? 'your sponsor, ' + L.sponsor + ', pays back 75% on days you play well' : '', amt: money(total), total: true });
-  if (S.shark > 0) rows.push({ what: 'The juice man’s cut', note: 'every ' + SHARK_EVERY + ' hands until you pay him back', amt: money(sharkCut()) });
+  rows.push({ what: 'A day in all', note: spon ? 'your sponsor, ' + Lr.sponsor + (livingBelow().length ? ', pays nothing while you live below your rank' : ', pays back 75% on days you play well') : '', amt: money(total), total: true });
+  if (S.shark > 0) rows.push({ what: 'The juice man’s cut', note: 'every ' + SHARK_EVERY + ' hands until you pay him back', amt: money(sharkCut()), why: 'His price for the loan. Paying him back ends it.' });
   return rows;
 }
 function renderExpenses(){
   const box = $('expList'); box.replaceChildren();
   for (const x of expenseRows()){
     const row = document.createElement(x.tap ? 'button' : 'div'); row.className = 'er' + (x.total ? ' total' : '') + (x.tap ? ' tap' : '') + (x.off ? ' off' : '');
-    if (x.tap){ row.type = 'button'; row.addEventListener('click', () => openChoice(x.tap)); row.setAttribute('aria-label', x.off ? x.what + ', sent home. Tap for options.' : x.what + ', ' + x.amt + '. Tap to change.'); }
+    if (x.tap){ row.type = 'button'; row.addEventListener('click', () => openChoice(x.tap)); row.setAttribute('aria-label', (x.off ? x.what + ', sent home.' : x.what + ', ' + x.amt + '.') + (x.why ? ' ' + x.why : '') + ' Tap for what changes.'); }
     const w = document.createElement('div'); w.className = 'what'; w.textContent = x.what;
     if (x.note){ const sm = document.createElement('small'); sm.textContent = x.note; w.append(sm); }
+    if (x.why){ const sm = document.createElement('small'); sm.className = 'why'; sm.textContent = x.why; w.append(sm); }
     const a = document.createElement('div'); a.className = 'amt num'; a.textContent = x.amt + (x.tap ? ' ›' : '');
     row.append(w, a); box.append(row);
   }
@@ -1941,7 +1953,7 @@ function openChoice(what){
   }
   if (what === 'candy' || what === 'crew'){
     const x = PEOPLE[what], after = prestige(0, -x.prestige), r0 = levelOf(prestige()), r1 = levelOf(after);
-    fenceSheet(what === 'candy' ? 'Your eye candy' : 'Your entourage', x.art, 'They cost <b>' + money(x.fee) + '</b> a day.<br><br>Sending them home saves that, but you ' +
+    fenceSheet(what === 'candy' ? 'Your eye candy' : 'Your entourage', x.art, 'They raise your rank, and cost <b>' + money(x.fee) + '</b> a day.<br><br>Sending them home saves that, but you ' +
       (r1 < r0 ? 'drop to <b>' + LEVELS[r1].name + '</b>.' : 'fall back to ' + rankStand(after) + '.') + ' You can bring them back from this list.',
       [btn('Keep them', () => openCashier()), btn('Send home', () => { sendHome(what); touch(); saveLocal(); saveCloudState(); render(); openCashier(); }, { primary:true })]);
     return;
@@ -1961,7 +1973,9 @@ function openChoice(what){
   fenceSheet(head, what === 'room' ? '🛏️' : what === 'meals' ? '🍽️' : '🚕', '', [btn('Done', () => openCashier(), { primary:true })]);
   const t = $('fenceText'); t.append(box);
   const eff = document.createElement('p'); eff.className = 'eff';
-  eff.innerHTML = (L.sponsor ? 'Your sponsor pays back 75% of your bills on days you play well, so on those days you keep about a quarter of any saving. ' : '') + 'Your rank stays the same whatever you choose, and you can change back any time.';
+  const nm = LEVELS[rankNo()].name, perk = what === 'room' && (L.roomComp || L.roomRate) ? 'Your room is ' + (L.roomComp ? 'comped' : 'half price') + ' because you stay at the casino; anywhere else is full price. ' : what === 'meals' && L.freeMeal === 0 ? 'Your breakfast is comped by the players’ club; other choices are full price. ' : '';
+  eff.innerHTML = (L.sponsor && !L.comped ? 'Your sponsor pays back 75% of your bills on days you play well, but only while you live like a ' + nm + '. Choose anything cheaper and your sponsor pays nothing until you move back up. '
+    : perk + 'A cheaper choice just saves money. ') + 'Your rank stays the same whatever you choose, and you can change back any time.';
   t.append(eff);
 }
 function cashierLabels(){
@@ -2428,6 +2442,7 @@ const dayCost = L => roomPrice(L) + L.ride + [0, 1, 2].reduce((a, i) => a + meal
 // full price (a lower rank's perks don't come with it), never to something free. Your rank doesn't change; your sponsor
 // pays back 75% of smaller bills, so on good days you keep about a quarter of the saving. Comped Super Whales can't choose.
 const CHOICE_FIELDS = { room:['stay', 'on', 'room'], meals:['eat', 'meals'], ride:['go', 'ride'] };
+function livingBelow(){ return ['room', 'meals', 'ride'].filter(w => chosenRank(w) < rankNo() && !covered(w)); }   // cheaper than your rank, and not covered by something you own or rent
 function chosenRank(what){ const r = rankNo(), c = (S.choice || {})[what]; return c != null && c < r && !LIFE[r].comped ? c : r; }
 function livingL(){
   const r = rankNo(), L = Object.assign({}, LIFE[r]);
@@ -2454,6 +2469,7 @@ function stayBill(i, day){
   if (!rules().stay || S.dead || S.round) return pumpSheets(0);
   guyOffer = false;
   const L = livingL(), room = i === 3, d = S.day || (S.day = { ok:0, all:0, bills:0 });
+  if (livingBelow().length) d.below = 1;   // the sponsor only pays on days you live at your rank
   const title = room ? 'End of day ' + day : cap1(MEAL_NAMES[i]);
   const art = room ? '🛏️' : MEAL_ART[i];
   if (L.comped){
@@ -2497,6 +2513,11 @@ function sponsorDay(day){
   if (L.comped || !L.sponsor || !d.bills) return pumpSheets(0);
   const share = d.all ? d.ok / d.all : 0, good = d.all >= 10 && share >= SPONSOR_GOOD, pay = cents(d.bills * SPONSOR_SHARE);
   guyOffer = false;
+  if (d.below || livingBelow().length){
+    cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'nosponsorlive', what: L.sponsor, amt: pay });
+    fenceSheet('Your sponsor', '🤝', 'Your sponsor, ' + esc(L.sponsor) + ', pays only on days you live like a ' + LEVELS[rankNo()].name + '. Today you chose something cheaper, so nothing (' + money(pay) + ' missed). Tap Expenses to move back up.', [btn('OK', () => hideSheets(), { primary:true })]);
+    return;
+  }
   if (good){
     const before = moneyMove(pay, 'sponsor', { what: L.sponsor });
     render(); showMove(before, $('top'), $('bankAmt'));

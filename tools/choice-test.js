@@ -2,7 +2,7 @@
 // below (at their full price, never a free one), or move back up to your rank's own; send eye candy or the entourage
 // home. Bills follow the choice; the rank doesn't change. Usage: node tools/choice-test.js [shotsdir]
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname, shots = process.argv[2];
-const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openCashier, stayBill, rankNo, lifeLine, PEOPLE };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openCashier, stayBill, rankNo, lifeLine, PEOPLE, sponsorDay };\n";
 fs.writeFileSync(dir + '/ch-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace("function checkLevel(){", "function checkLevel(){ S.level = levelOf(prestige()); return;").replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 (async () => {
@@ -25,20 +25,30 @@ fs.writeFileSync(dir + '/ch-page.html', '<!doctype html><html><head><meta charse
   if (shots) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/choice-2-room.png' });
   await p.locator('#fenceText .opt .btn', { hasText: 'A tower suite' }).click(); await p.waitForTimeout(400);
   const r1 = await rows();
-  check('roomChanged', r1.some(x => /^\[tap\] Room \| A tower suite \| \$799 ›$/.test(x)) && (await p.evaluate(() => __bj.rankNo())) === 5, r1);
+  check('roomChanged', r1.some(x => /^\[tap\] Room \| A tower suite \| Cheaper, but your sponsor won’t pay while you live below your rank\. \| \$799 ›$/.test(x)) && (await p.evaluate(() => __bj.rankNo())) === 5, r1);
   await p.evaluate(() => { __bj.hideSheets(); __bj.S.day = { ok:0, all:0, bills:0 }; __bj.stayBill(3, 1); }); await p.waitForTimeout(300);
   check('billFollows', /A night in a tower suite: \$799/.test(await p.innerText('#fenceText')), await p.innerText('#fenceText'));
   check('lifeFollows', /You pay \$799 a night for a tower suite/.test(await p.evaluate(() => __bj.lifeLine(__bj.rankNo()))), await p.evaluate(() => __bj.lifeLine(__bj.rankNo())));
+  // the sponsor pays nothing on a day you lived below your rank
+  await p.evaluate(() => { __bj.hideSheets(); __bj.S.day = { ok:100, all:100, bills:1000, hands:0, below:1 }; __bj.sponsorDay(1); }); await p.waitForTimeout(900);
+  const sp1 = await p.innerText('#fenceText');
+  check('sponsorStops', /pays only on days you live like a Whale/.test(sp1), sp1);
+  if (shots) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/choice-6-sponsor.png' });
   // and back up
   await p.evaluate(() => { __bj.hideSheets(); __bj.openCashier(); }); await p.waitForTimeout(300);
   await p.locator('#expList button.er', { hasText: 'Room' }).click(); await p.waitForTimeout(900);
   await p.locator('#fenceText .opt .btn', { hasText: 'A villa' }).click(); await p.waitForTimeout(400);
-  check('backUp', (await rows()).some(x => /^\[tap\] Room \| A villa \| \$1,500 ›$/.test(x)), await rows());
+  check('backUp', (await rows()).some(x => /^\[tap\] Room \| A villa \| Keeps your sponsor paying\. \| \$1,500 ›$/.test(x)), await rows());
+  // at your rank again, the sponsor pays
+  const c0 = await p.evaluate(() => __bj.S.bankroll);
+  await p.evaluate(() => { __bj.hideSheets(); __bj.S.day = { ok:100, all:100, bills:1000, hands:0 }; __bj.sponsorDay(2); }); await p.waitForTimeout(900);
+  check('sponsorPays', (await p.evaluate(() => __bj.S.bankroll)) === c0 + 750, [c0, await p.evaluate(() => __bj.S.bankroll), await p.innerText('#fenceText')]);
+  await p.evaluate(() => { __bj.hideSheets(); __bj.openCashier(); }); await p.waitForTimeout(300);
   // send the entourage home
   await p.locator('#expList button.er', { hasText: 'Entourage' }).click(); await p.waitForTimeout(900);
   if (shots) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/choice-3-crew.png' });
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
-  check('sentHome', !(await p.evaluate(() => !!__bj.S.people.crew)) && (await rows()).some(x => /^\[tap\] Entourage \| sent home \| \$0 ›$/.test(x)), await rows());
+  check('sentHome', !(await p.evaluate(() => !!__bj.S.people.crew)) && (await rows()).some(x => /^\[tap\] Entourage \| sent home \| Brought back, they raise your rank\. \| \$0 ›$/.test(x)), await rows());
   if (shots) await p.locator('#cashSheet .panel').screenshot({ path: shots + '/choice-4-gone.png' });
   // bring them back: costs the first day now
   const chips0 = await p.evaluate(() => __bj.S.bankroll);
