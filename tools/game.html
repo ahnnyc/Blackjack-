@@ -131,6 +131,15 @@ body.still :is(#levelBtn,.rankfish).lv6{animation:none}
 #limits{justify-self:start;display:flex;flex-direction:column;align-items:center;padding:3px 8px;border:1.5px solid var(--gold);border-radius:8px;color:var(--gold);font-size:16px;line-height:1.2;background:rgba(0,0,0,.15)}
 #limits .lt{letter-spacing:.08em;text-transform:uppercase}
 #limits #limitsV{font-weight:700;white-space:nowrap}
+/* the Expenses screen: what each day costs, line by line */
+.exp{display:flex;flex-direction:column;gap:2px}
+.exp .er{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:17px}
+.exp .er .what{min-width:0}
+.exp .er .what small{display:block;color:var(--muted);font-size:16px}
+.exp .er .amt{font-weight:700;white-space:nowrap;text-align:right}
+.exp .er.total{border-bottom:0;font-size:18px}
+.exp .er.total .what{font-weight:700}
+.exp .er.total .what small{font-weight:400}
 #oweV{font-size:16px;font-weight:700;white-space:nowrap;color:var(--gold)}   /* what you owe, beside up/down */
 #shoeLabel{white-space:nowrap;text-align:center;font-size:16px;font-weight:600;color:var(--gold);line-height:1.1}
 #banner{position:absolute;left:50%;top:50%;z-index:4;transform:translate(-50%,-50%);pointer-events:none;
@@ -306,7 +315,7 @@ body.still .card.flip{animation:none}
 <div id="app">
   <header id="top">
     <button id="countBtn" type="button" aria-expanded="false" aria-controls="countBox">Count</button>
-    <button class="topbtn" id="openCashier" type="button">Loans</button>
+    <button class="topbtn" id="openCashier" type="button">Expenses</button>
     <button class="topbtn" id="openStuff" type="button">Stuff</button>
     <div id="topgap"></div>
     <button class="topbtn" id="openRules" type="button">Rules</button>
@@ -404,8 +413,11 @@ body.still .card.flip{animation:none}
 
 <div class="sheet" id="cashSheet" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="cashH">
-    <div class="phead"><h2 id="cashH">Loans</h2><button class="topbtn" type="button" data-close>Done</button></div>
+    <div class="phead"><h2 id="cashH">Expenses</h2><button class="topbtn" type="button" data-close>Done</button></div>
     <p class="note num" id="cashNow"></p>
+    <div class="gtitle">Each day</div>
+    <div class="exp" id="expList"></div>
+    <div class="gtitle">Borrowing</div>
     <p class="note">Tap amounts to add them up.</p>
     <div class="gtitle" id="cardH">Credit</div>
     <p class="note num" id="cardNote"></p>
@@ -1853,7 +1865,42 @@ function openCashier(){
   cashierLabels();
   $('cashSheet').hidden = false;
 }
+function expenseRows(){
+  const L = life(), rows = [];
+  const add = (what, note, amt) => rows.push({ what, note, amt });
+  // what you have for each daily need: something you own, a rental, a deal, or the rank's own
+  const has = (w, place) => { const o = coverOffer(w); if (!o) return ''; const bare = o.name.replace(/^(a|an|your own) /, '');
+    return o.keep ? 'The ' + bare + ' you own' : o.anywhere ? cap1(o.name) : cap1(place) + ', on ' + coverName(w); };
+  if (L.comped) add('Room, meals and getting around', 'The penthouse, anywhere you like, your private car and driver', 'comped');
+  else {
+    const mealCost = [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0);
+    add('Room', has('room', L.stay) || cap1(L.stay) + (L.roomComp ? ', comped by the casino' : L.roomRate ? ', half price' : ''),
+      covered('room') || L.room <= 0 ? 'free' : L.roomComp ? 'comped' : money(roomPrice(L)));
+    add('Meals', has('meals', L.eat) || cap1(L.eat) + (L.freeMeal === 0 ? ', breakfast comped' : ''), covered('meals') ? 'free' : money(mealCost));
+    add('Getting around', has('ride', L.go) || cap1(L.go), covered('ride') || L.ride <= 0 ? 'free' : money(L.ride));
+  }
+  const p = people();
+  if (p.candy) add('Eye candy', 'with you', money(PEOPLE.candy.fee));
+  if (p.crew) add('Entourage', 'with you', money(PEOPLE.crew.fee));
+  if (S.card > 0 && S.line) add('Interest', pct(cardRate()) + ' a day on the ' + money(S.card) + ' you owe on ' + lineName(), money(cardInterest()));
+  const total = cents((L.comped ? 0 : (covered('room') ? 0 : roomPrice(L)) + (covered('meals') ? 0 : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0)) + (covered('ride') ? 0 : L.ride))
+    + (p.candy ? PEOPLE.candy.fee : 0) + (p.crew ? PEOPLE.crew.fee : 0) + (S.card > 0 && S.line ? cardInterest() : 0));
+  rows.push({ what: 'A day in all', note: L.sponsor && !L.comped ? 'your sponsor, ' + L.sponsor + ', pays back 75% on days you play well' : '', amt: money(total), total: true });
+  if (S.shark > 0) rows.push({ what: 'The juice man’s cut', note: 'every ' + SHARK_EVERY + ' hands until you pay him back', amt: money(sharkCut()) });
+  return rows;
+}
+function renderExpenses(){
+  const box = $('expList'); box.replaceChildren();
+  for (const x of expenseRows()){
+    const row = document.createElement('div'); row.className = 'er' + (x.total ? ' total' : '');
+    const w = document.createElement('div'); w.className = 'what'; w.textContent = x.what;
+    if (x.note){ const sm = document.createElement('small'); sm.textContent = x.note; w.append(sm); }
+    const a = document.createElement('div'); a.className = 'amt num'; a.textContent = x.amt;
+    row.append(w, a); box.append(row);
+  }
+}
 function cashierLabels(){
+  renderExpenses();
   const ip = inPlay(), n = handsThisGame();
   $('cashNow').textContent = 'Your chips: ' + money(S.bankroll) + (ip ? ', plus ' + money(ip) + ' in play on this hand' : '') + '.';
   // credit card
