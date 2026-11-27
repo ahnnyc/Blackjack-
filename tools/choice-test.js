@@ -2,7 +2,7 @@
 // below (at their full price, never a free one), or move back up to your rank's own; send eye candy or the entourage
 // home. Bills follow the choice; the rank doesn't change. Usage: node tools/choice-test.js [shotsdir]
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname, shots = process.argv[2];
-const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openCashier, stayBill, rankNo, lifeLine };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openCashier, stayBill, rankNo, lifeLine, PEOPLE };\n";
 fs.writeFileSync(dir + '/ch-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace("function checkLevel(){", "function checkLevel(){ S.level = levelOf(prestige()); return;").replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 (async () => {
@@ -38,7 +38,25 @@ fs.writeFileSync(dir + '/ch-page.html', '<!doctype html><html><head><meta charse
   await p.locator('#expList button.er', { hasText: 'Entourage' }).click(); await p.waitForTimeout(900);
   if (shots) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/choice-3-crew.png' });
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
-  check('sentHome', !(await p.evaluate(() => !!__bj.S.people.crew)) && !(await rows()).some(x => /Entourage/.test(x)), await rows());
+  check('sentHome', !(await p.evaluate(() => !!__bj.S.people.crew)) && (await rows()).some(x => /^\[tap\] Entourage \| sent home \| Bring back ›$/.test(x)), await rows());
+  if (shots) await p.locator('#cashSheet .panel').screenshot({ path: shots + '/choice-4-gone.png' });
+  // bring them back: costs the first day now
+  const chips0 = await p.evaluate(() => __bj.S.bankroll);
+  await p.locator('#expList button.er', { hasText: 'Entourage' }).click(); await p.waitForTimeout(900);
+  if (shots) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/choice-5-back.png' });
+  check('backText', /bringing them back costs the first day now/.test(await p.innerText('#fenceText')), await p.innerText('#fenceText'));
+  await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(400);
+  check('broughtBack', (await p.evaluate(() => !!__bj.S.people.crew)) && (await p.evaluate(() => __bj.S.bankroll)) === chips0 - 2500 && (await rows()).some(x => /^\[tap\] Entourage \| with you/.test(x)), [await rows(), chips0, await p.evaluate(() => __bj.S.bankroll)]);
+  // can't afford it: the button is off and the message says why
+  await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; delete S.people.crew; S.gone = { crew: true }; S.bankroll = 100; __bj.render(); __bj.hideSheets(); __bj.openCashier(); }); await p.waitForTimeout(300);
+  await p.locator('#expList button.er', { hasText: 'Entourage' }).click(); await p.waitForTimeout(900);
+  check('shortOff', /You need \$2,500 in chips/.test(await p.innerText('#fenceText')) && await p.evaluate(() => document.querySelector('#fenceBtns button:last-child').disabled), await p.innerText('#fenceText'));
+  // below the rank that offers them: no bring-back row
+  await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.bankroll = 50000; S.playPres = 30000; __bj.render(); __bj.hideSheets(); __bj.openCashier(); }); await p.waitForTimeout(300);
+  check('belowRankHidden', !(await rows()).some(x => /Entourage/.test(x)), await rows());
+  // neutral pictures
+  check('neutralArt', await p.evaluate(() => !/[💃🕺👯]/u.test(JSON.stringify(__bj.PEOPLE))), '');
+  await p.evaluate(() => { __bj.S.people = {}; __bj.S.gone = {}; });
   // Super Whale: nothing to change
   await p.evaluate(() => { __bj.hideSheets(); __bj.S.playPres = 6000000; __bj.render(); __bj.hideSheets(); __bj.openCashier(); }); await p.waitForTimeout(300);
   check('superNoChoices', !(await rows()).some(x => x.startsWith('[tap]')), await rows());

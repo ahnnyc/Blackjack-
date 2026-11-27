@@ -135,6 +135,8 @@ body.still :is(#levelBtn,.rankfish).lv6{animation:none}
 .exp button.er{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:17px;cursor:pointer;width:100%}
 .exp button.er:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .exp button.er .amt{color:var(--gold)}
+.exp button.er.off .what{font-style:italic}
+.exp button.er.off .amt{font-weight:600;border:1px dashed var(--gold);border-radius:999px;padding:1px 10px}
 .opt{display:flex;flex-direction:column;gap:8px}
 .opt .btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:10px 14px;min-height:56px;font-size:17px}
 .opt .btn small{font-size:16px;font-weight:400;color:var(--muted)}
@@ -538,8 +540,8 @@ const DEBT_WEIGHT = 0.5;   // every $2 you owe (beyond what your things are wort
 // Sponsors pay this share of the day's bills when you made the right move on at least SPONSOR_GOOD of your hands.
 const SPONSOR_SHARE = 0.75, SPONSOR_GOOD = 0.95;
 const PEOPLE = {
-  candy: { name:'eye candy', fee:300,  prestige:5000,  art:'💃🕺' },
-  crew:  { name:'entourage', fee:2500, prestige:25000, art:'👯' },
+  candy: { name:'eye candy', fee:300,  prestige:5000,  art:'🥂' },
+  crew:  { name:'entourage', fee:2500, prestige:25000, art:'🧑‍🤝‍🧑🧑‍🤝‍🧑' },
 };
 // Offers, by rank. Below Whale, homes, cars and a chef are rentals for a set number of days (anywhere:true: they keep
 // working if you change rank, and don't count toward your rank); at Whale a penthouse and a limo are real purchases at
@@ -767,7 +769,7 @@ function migrate(){
 function freshState(amount = START){
   return { v:2, settings:{ decks:8, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
-    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, level:0, gifted:0, choice:{}, line:null, playPres:0, deals:{}, day:{ ok:0, all:0, bills:0 }, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
+    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, gone:{}, level:0, gifted:0, choice:{}, line:null, playPres:0, deals:{}, day:{ ok:0, all:0, bills:0 }, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
 const rules = () => S.settings.rules;
 
@@ -1889,6 +1891,8 @@ function expenseRows(){
   const p = people();
   if (p.candy) add('Eye candy', 'with you', money(PEOPLE.candy.fee), 'candy');
   if (p.crew) add('Entourage', 'with you', money(PEOPLE.crew.fee), 'crew');
+  if (canBringBack('candy')) rows.push({ what: 'Eye candy', note: 'sent home', amt: 'Bring back', tap: 'candy', off: true });
+  if (canBringBack('crew')) rows.push({ what: 'Entourage', note: 'sent home', amt: 'Bring back', tap: 'crew', off: true });
   if (S.card > 0 && S.line) add('Interest', pct(cardRate()) + ' a day on the ' + money(S.card) + ' you owe on ' + lineName(), money(cardInterest()));
   const total = cents((L.comped ? 0 : (covered('room') ? 0 : roomPrice(L)) + (covered('meals') ? 0 : [0, 1, 2].reduce((a, i) => a + mealPrice(L, i), 0)) + (covered('ride') ? 0 : L.ride))
     + (p.candy ? PEOPLE.candy.fee : 0) + (p.crew ? PEOPLE.crew.fee : 0) + (S.card > 0 && S.line ? cardInterest() : 0));
@@ -1899,8 +1903,8 @@ function expenseRows(){
 function renderExpenses(){
   const box = $('expList'); box.replaceChildren();
   for (const x of expenseRows()){
-    const row = document.createElement(x.tap ? 'button' : 'div'); row.className = 'er' + (x.total ? ' total' : '') + (x.tap ? ' tap' : '');
-    if (x.tap){ row.type = 'button'; row.addEventListener('click', () => openChoice(x.tap)); row.setAttribute('aria-label', x.what + ', ' + x.amt + '. Tap to change.'); }
+    const row = document.createElement(x.tap ? 'button' : 'div'); row.className = 'er' + (x.total ? ' total' : '') + (x.tap ? ' tap' : '') + (x.off ? ' off' : '');
+    if (x.tap){ row.type = 'button'; row.addEventListener('click', () => openChoice(x.tap)); row.setAttribute('aria-label', x.off ? x.what + ', sent home. Tap to bring them back.' : x.what + ', ' + x.amt + '. Tap to change.'); }
     const w = document.createElement('div'); w.className = 'what'; w.textContent = x.what;
     if (x.note){ const sm = document.createElement('small'); sm.textContent = x.note; w.append(sm); }
     const a = document.createElement('div'); a.className = 'amt num'; a.textContent = x.amt + (x.tap ? ' ›' : '');
@@ -1909,11 +1913,18 @@ function renderExpenses(){
 }
 // Tapping a daily expense: pick what you want, from cheap up to your rank's own (so you can move back up), or send people home
 function openChoice(what){
+  if ((what === 'candy' || what === 'crew') && !people()[what]){
+    const x = PEOPLE[what], after = prestige(0, x.prestige), r0 = levelOf(prestige()), r1 = levelOf(after), short = S.bankroll < x.fee;
+    fenceSheet(what === 'candy' ? 'Your eye candy' : 'Your entourage', x.art, 'You sent them home. They cost <b>' + money(x.fee) + '</b> a day, and bringing them back costs the first day now.<br><br>With them back, you ' +
+      (r1 > r0 ? 'rise to <b>' + LEVELS[r1].name + '</b>.' : 'move up to ' + rankStand(after) + '.') + (short ? '<br><br>You need ' + money(x.fee) + ' in chips to bring them back.' : ''),
+      [btn('Not now', () => openCashier()), btn('Bring back', () => { bringBack(what); openCashier(); }, { primary:true, disabled: short })]);
+    return;
+  }
   if (what === 'candy' || what === 'crew'){
     const x = PEOPLE[what], after = prestige(0, -x.prestige), r0 = levelOf(prestige()), r1 = levelOf(after);
     fenceSheet(what === 'candy' ? 'Your eye candy' : 'Your entourage', x.art, 'They cost <b>' + money(x.fee) + '</b> a day.<br><br>Sending them home saves that, but you ' +
-      (r1 < r0 ? 'drop to <b>' + LEVELS[r1].name + '</b>.' : 'fall back to ' + rankStand(after) + '.') + ' They can come back later as an offer.',
-      [btn('Keep them', () => openCashier()), btn('Send home', () => { delete people()[what]; touch(); saveLocal(); saveCloudState(); render(); openCashier(); }, { primary:true })]);
+      (r1 < r0 ? 'drop to <b>' + LEVELS[r1].name + '</b>.' : 'fall back to ' + rankStand(after) + '.') + ' You can bring them back from this list.',
+      [btn('Keep them', () => openCashier()), btn('Send home', () => { sendHome(what); touch(); saveLocal(); saveCloudState(); render(); openCashier(); }, { primary:true })]);
     return;
   }
   const L = LIFE[rankNo()], list = choicesFor(what), now = chosenRank(what);
@@ -2326,11 +2337,21 @@ function brokeAfterHand(){
 }
 
 /* ---------- people: eye candy and an entourage, offered between hands ---------- */
+// Whoever leaves (sent home, unpaid, or a low-bet day) is remembered in S.gone, so the Expenses list can offer them back
+function sendHome(k){ const p = people(); if (!p[k]) return; S.gone = S.gone || {}; S.gone[k] = p[k]; delete p[k]; }
+function canBringBack(k){ const o = OFFERS.find(x => x.id === k); return !!(S.gone || {})[k] && !people()[k] && rules().host && rankNo() >= o.rank; }
+function bringBack(k){
+  const x = PEOPLE[k]; if (!canBringBack(k) || S.bankroll < x.fee) return;
+  people()[k] = S.gone[k]; delete S.gone[k];
+  const before = moneyMove(-x.fee, 'fee', { what: x.name });
+  touch(); saveLocal(); saveCloudState(); render();
+  if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+}
 function hostOffer(k){
   if (!rules().host || people()[k]) return pumpSheets(0);
   guyOffer = false;
   const x = PEOPLE[k];
-  const hire = who => { people()[k] = who; touch(); saveLocal(); saveCloudState(); hideSheets(); render();
+  const hire = who => { people()[k] = who; if (S.gone) delete S.gone[k]; touch(); saveLocal(); saveCloudState(); hideSheets(); render();
     say((k === 'candy' ? 'Your eye candy (' + who + ') is at your side.' : 'Your entourage is with you.')); tablesAfterHand(); };
   const lines = [money(x.fee) + ' a day, charged at the end of each day.'].concat(prestigeLines(x.prestige, true));
   if (k === 'candy') fenceSheet('Eye candy', x.art,
@@ -2344,9 +2365,8 @@ function peopleFee(k, day){
   const p = people(); if (!p[k] || S.dead || S.round) return pumpSheets(0);
   guyOffer = false;
   const x = { ...PEOPLE[k] }, label = k === 'candy' ? 'Your eye candy' : 'Your entourage';
-  if (k === 'candy') x.art = p.candy === 'a man' ? '🕺' : '💃';
   if (S.bankroll < x.fee){
-    delete p[k]; touch(); saveLocal(); saveCloudState(); render();
+    sendHome(k); touch(); saveLocal(); saveCloudState(); render();
     cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'left', what: x.name });
     fenceSheet('End of day ' + day, x.art, label + '’s fee is ' + money(x.fee) + '. You can’t pay it, so they left.', [btn('OK', () => hideSheets(), { primary:true })]);
     return;
@@ -2355,7 +2375,7 @@ function peopleFee(k, day){
   render(); flyChips($('bankAmt'), $('top'), x.fee, { fade: true });
   if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
   fenceSheet('End of day ' + day, x.art, label + '’s fee for the day: <b>' + money(x.fee) + '</b>, taken from your chips.',
-    [btn('Send home', () => { delete people()[k]; touch(); saveLocal(); saveCloudState(); hideSheets(); render(); say((k === 'candy' ? 'Your eye candy went home.' : 'Your entourage went home.')); }),
+    [btn('Send home', () => { sendHome(k); touch(); saveLocal(); saveCloudState(); hideSheets(); render(); say((k === 'candy' ? 'Your eye candy went home.' : 'Your entourage went home.')); }),
      btn('OK', () => hideSheets(), { primary:true })]);
 }
 
@@ -2484,7 +2504,7 @@ function lowDay(d, avg, need){
     out.push('The casino stopped comping you: <b>' + money(d.comped) + '</b> for today’s room, meals and travel, taken from your chips.');
   }
   const p = people(), gone = [p.candy ? 'eye candy' : '', p.crew ? 'entourage' : ''].filter(Boolean);
-  if (gone.length){ delete p.candy; delete p.crew; out.push('Your ' + gone.join(' and ') + ' left.'); }
+  if (gone.length){ sendHome('candy'); sendHome('crew'); out.push('Your ' + gone.join(' and ') + ' left.'); }
   touch(); saveLocal(); saveCloudState(); render();
   fenceSheet('Low bets today', '📉', out.join('<br><br>'), [btn('OK', () => hideSheets(), { primary:true })]);
 }
