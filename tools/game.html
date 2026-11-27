@@ -1977,8 +1977,9 @@ function tablesAfterHand(){
     later(() => { guyOffer = false; fenceSheet('Moved down', '🎩', 'You can’t cover the ' + money(from.min) + ' minimum at the ' + deckTable(from.d) + '. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
     return true;
   }
-  // your rank's minimum is above this table's maximum: up to the smallest table that fits it
-  if (!bigEnough(tableNo())){
+  // your rank's minimum is above this table's maximum: up to the smallest table that fits it, once the shoe is done
+  // (until then you bet this table's maximum)
+  if (!bigEnough(tableNo()) && needShuffle()){
     let to = -1; for (let i = tableNo() + 1; i < TABLES.length; i++) if (bigEnough(i)){ to = i; break; }
     if (to >= 0){
       const from = tbl(), rk = LEVELS[rankNo()].name;
