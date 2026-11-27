@@ -219,6 +219,7 @@ body.still #banner.pop{animation:none}
 #fwCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}   /* over the message */
 #fenceSheet .panel{position:relative;z-index:1;transition:transform .45s cubic-bezier(.2,1.4,.4,1),opacity .3s}
 #fenceSheet.fw-wait .panel{opacity:0;transform:scale(.6);pointer-events:none}
+.sheet.arming .panel button{pointer-events:none}   /* a tap already on its way can't answer a message that just appeared */
 .panel > *, #sharkCtl > *{flex-shrink:0}   /* a long sheet scrolls; nothing in it gets squashed */
 .phead{display:flex;align-items:center;gap:10px}
 .phead h2{flex:1;margin:0;font-family:var(--f-display);font-size:26px;font-weight:700;color:var(--gold);text-wrap:balance}
@@ -918,7 +919,7 @@ function warnAbout(text, bestLabel, goAnyway, goBest){
   $('warnText').textContent = text;
   $('warnBest').textContent = bestLabel;
   pendingWarn = { goAnyway, goBest };
-  hideSheets(); $('warnSheet').hidden = false;
+  hideSheets(); $('warnSheet').hidden = false; armSheet($('warnSheet'));
   $('warnBest').focus();
 }
 
@@ -2453,6 +2454,7 @@ function fenceSheet(title, art, html, buttons){
   } else $('fenceArt').textContent = art;
   $('fenceBtns').replaceChildren(...buttons);
   $('fenceSheet').hidden = false;
+  armSheet($('fenceSheet'));
 }
 const esc = t => String(t).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
 function fenceOffer(o){
@@ -2587,6 +2589,14 @@ function cardFly(x){
   ], { duration: 2000, easing: 'ease-in-out' }).finished.then(() => el.remove(), () => el.remove());
 }
 
+// A message that pops up while you're tapping (Rebet, Deal, a move) mustn't be closed or answered by that same tap:
+// its buttons ignore taps for a moment after it appears, and pop-up messages don't close when you tap outside them.
+const ARM_MS = 700;
+let armTimer = 0;
+function armSheet(sh){
+  sh.classList.add('arming'); clearTimeout(armTimer);
+  armTimer = setTimeout(() => sh.classList.remove('arming'), ARM_MS);
+}
 function hideSheets(){ fwStop(); document.querySelectorAll('.sheet').forEach(s => s.hidden = true); pumpSheets(300); }
 // Things that pop up between hands (offers, bills, sponsors, a new table, the juice man's warning)
 // wait in line here. Each shows at the next pause; if you've already started the next hand, it waits for
@@ -2752,7 +2762,7 @@ $('openRules').addEventListener('click', () => { hideSheets(); renderRules(); $(
 $('openRecord').addEventListener('click', () => { hideSheets(); logShown = 50; $('recordSheet').hidden = false; renderRecord(); });
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', hideSheets));
 const stuck = () => !$('deadSheet').hidden || (!$('bankSheet').hidden && $('bankCancel').hidden);
-document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e => { if (e.target !== s || stuck()) return; if (s.id === 'fenceSheet' && guyOffer) guyDecline(); else hideSheets(); }));
+document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e => { if (e.target !== s || stuck() || s.id === 'fenceSheet' || s.id === 'warnSheet') return; hideSheets(); }));   // pop-ups close only from their own buttons
 $('bankCancel').addEventListener('click', hideSheets);
 $('resetRules').addEventListener('click', () => { S.settings.rules = { ...DEFAULT_RULES }; settingsChanged(); });
 $('scopeSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; scope = b.dataset.scope; logShown = 50; renderRecord(); });
