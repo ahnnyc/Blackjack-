@@ -43,10 +43,10 @@ fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charse
   check('whoSwordfish', /You stay in a deluxe room at the casino, comped, eat at a café and get around by taxis: \$131 a day in all\./.test(await p.evaluate(() => __bj.whoYouAre())), await p.evaluate(() => __bj.whoYouAre()));
   // the rank's fish badge, not a whale, on the new-rank message and on Welcome back
   await p.evaluate(() => { __bj.S.playPres = 30000; __bj.render(); }); await p.waitForTimeout(700);
-  check('badgeOnNewRank', (await p.$eval('#fenceArt', e => e.querySelector('.rankfish') ? e.querySelector('.rankfish').className + ' ' + e.textContent : e.textContent)) === 'rankfish lv4 Marlin', await p.$eval('#fenceArt', e => e.innerHTML));
+  check('badgeOnNewRank', (await p.$eval('#fenceArt', e => e.querySelector('.rankfish') ? e.querySelector('.rankfish').className + ' ' + e.textContent : e.textContent)) === 'rankfish lv4 Shark', await p.$eval('#fenceArt', e => e.innerHTML));
   if (shots) await p.screenshot({ path: shots + '/badge-marlin.png' });
   await p.evaluate(() => { __bj.hideSheets(); __bj.welcomeBack(); }); await p.waitForTimeout(300);
-  check('badgeOnWelcome', (await p.$eval('#fenceArt', e => e.textContent)) === 'Marlin' && !!(await p.$('#fenceArt .rankfish.lv4')), await p.$eval('#fenceArt', e => e.innerHTML));
+  check('badgeOnWelcome', (await p.$eval('#fenceArt', e => e.textContent)) === 'Shark' && !!(await p.$('#fenceArt .rankfish.lv4')), await p.$eval('#fenceArt', e => e.innerHTML));
   if (shots) await p.screenshot({ path: shots + '/badge-welcome.png' });
   await p.evaluate(() => __bj.hideSheets());
   await p.evaluate(() => { __bj.S.playPres = 10000; __bj.render(); }); await p.waitForTimeout(700); await p.evaluate(() => __bj.hideSheets());

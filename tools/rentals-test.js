@@ -21,7 +21,7 @@ fs.writeFileSync(dir + '/rn-page.html', '<!doctype html><html><head><meta charse
   await p.evaluate(() => { __bj.S.playPres = 12000; __bj.render(); __bj.hideSheets(); });
   check('carRental', /^Rent a car for a month \| Price: \$900 for 30 days\. \/ • Covers getting around for 30 days: \$1,080 of bills for \$900, saving \$180\.$/.test(await offer('carrental') || ''), await sheet());
   await p.evaluate(() => __bj.hideSheets());
-  // Marlin: rent a condo, which counts nothing toward rank
+  // Shark: rent a condo, which counts nothing toward rank
   await p.evaluate(() => { __bj.S.playPres = 30000; __bj.render(); __bj.hideSheets(); });
   const pres0 = await p.evaluate(() => __bj.prestige());
   check('condoRent', /^Rent a condo for a month \| Price: \$15,000 for 30 days\. \/ • Covers your room for 30 days: \$23,970 of bills for \$15,000, saving \$8,970\.$/.test(await offer('condorent', 'offer-condo') || ''), await sheet());
