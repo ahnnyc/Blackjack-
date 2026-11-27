@@ -493,13 +493,13 @@ const DAY = 150;
 const STAY_STOPS = [ { at:25, i:0 }, { at:75, i:1 }, { at:125, i:2 }, { at:0, i:3 } ];
 const MEAL_NAMES = ['breakfast', 'lunch', 'dinner'], MEAL_ART = ['🍳', '🥪', '🍽️'];
 // Each rank's life: where you stay, eat and how you get around, its daily costs, who sponsors you, and the average bet the
-// casino expects (level). Nobody is told the level: a day whose average bet falls under it costs the sponsor's pay, any comps
+// casino expects (level). No one sponsors a gambler below Marlin, so the lower ranks live cheaply. Nobody is told the level: a day whose average bet falls under it costs the sponsor's pay, any comps
 // and your eye candy and entourage, and the end-of-day message says why. Super Whale prices apply only on such a day.
 const LIFE = [
-  { stay:'a motel',       eat:'fast food',          go:'walking',                     room:49,   meals:[6, 8, 11],     ride:0,   level:5,    sponsor:'a local bar' },
-  { stay:'a hotel room',  eat:'the coffee shop',    go:'the city bus',                room:99,   meals:[12, 18, 30],   ride:10,  level:10,   sponsor:'a pawn shop' },
-  { stay:'a scenic room', eat:'a café',             go:'taxis',                       room:249,  meals:[30, 45, 75],   ride:60,  level:25,   sponsor:'a sports bar chain' },
-  { stay:'a suite',       eat:'the steakhouse',     go:'a rental car',                room:499,  meals:[60, 90, 150],  ride:120, level:50,   sponsor:'a sports-betting app' },
+  { stay:'a friend’s couch', on:true, eat:'fast food', go:'walking',                  room:0,    meals:[6, 8, 11],     ride:0,   level:5,    sponsor:null },
+  { stay:'a hostel bed',  eat:'fast food',          go:'the city bus',                room:22,   meals:[6, 8, 11],     ride:3,   level:10,   sponsor:null },
+  { stay:'a budget hotel', eat:'a diner',           go:'the city bus',                room:60,   meals:[10, 15, 20],   ride:10,  level:25,   sponsor:null },
+  { stay:'a hotel room',  eat:'a café',             go:'taxis',                       room:99,   meals:[20, 30, 45],   ride:36,  level:50,   sponsor:null },
   { stay:'a tower suite', eat:'fine dining',        go:'a car service',               room:799,  meals:[100, 150, 250],ride:300, level:250,  sponsor:'an energy drink' },
   { stay:'a villa',       eat:'the chef’s table',   go:'a limo with a driver',        room:1500, meals:[200, 300, 500],ride:800, level:2500, sponsor:'a watch brand' },
   { stay:'the penthouse', eat:'anywhere you like',  go:'your private car and driver', room:5000, meals:[500, 750, 1250],ride:1500, level:10000, sponsor:null, comped:true },
@@ -517,11 +517,11 @@ const PEOPLE = {
 // Offers, by rank. rank: raises your prestige; save: cuts a daily cost (homes, cars and the chef for good,
 // deals for a set number of days); credit: a line of credit; people: eye candy or an entourage.
 const OFFERS = [
-  { id:'motelweek', rank:0, kind:'save',   art:'🏨', name:'a weekly motel rate',        price:250,     covers:'room', days:7 },
+  { id:'mealdeal',  rank:0, kind:'save',   art:'🍔', name:'a weekly meal deal',         price:120,     covers:'meals', days:7 },
   { id:'shirt',     rank:0, kind:'rank',   art:'👕', name:'a sharp shirt',              price:150 },
   { id:'storecard', rank:0, kind:'credit', art:'💳', name:'a store card',               limit:2000,    rate:0.05 },
-  { id:'extstay',   rank:1, kind:'save',   art:'🏨', name:'an extended-stay deal',      price:450,     covers:'room', days:7 },
-  { id:'buspass',   rank:1, kind:'save',   art:'🚌', name:'a monthly bus pass',         price:150,     covers:'ride', days:30 },
+  { id:'extstay',   rank:1, kind:'save',   art:'🏨', name:'a weekly hostel rate',       price:120,     covers:'room', days:7 },
+  { id:'buspass',   rank:1, kind:'save',   art:'🚌', name:'a monthly bus pass',         price:60,      covers:'ride', days:30 },
   { id:'suit',      rank:1, kind:'rank',   art:'👔', name:'a tailored suit',            price:600 },
   { id:'card',      rank:1, kind:'credit', art:'💳', name:'a credit card',              limit:10000,   rate:0.05 },
   { id:'apartment', rank:2, kind:'save',   art:'🏢', name:'an apartment',               price:2500,    covers:'room', keep:true },
@@ -579,7 +579,7 @@ const RULES = [
   { g:'Display', k:'sound', label:'Sounds', desc:'Chips click, cards snap as they’re dealt and flipped, the shoe riffles, and cards swish as they’re collected. Your iPhone’s silent switch mutes them.' },
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
-  { g:'Extras', k:'stay', label:'Daily costs and sponsors', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a motel, fast food and walking up to a villa, the chef’s table and a limo. Super Whales are comped. At the end of each day a sponsor pays 75% of the day’s bills if you made the right move on at least 95% of your hands.' },
+  { g:'Extras', k:'stay', label:'Daily costs and sponsors', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a friend’s couch, fast food and walking up to a villa, the chef’s table and a limo. Super Whales are comped. From Marlin up, a sponsor pays 75% of the day’s bills at the end of each day if you made the right move on at least 95% of your hands.' },
   { g:'Extras', k:'host', label:'Eye candy and entourage', desc:'Offered from Marlin up: eye candy ($300 a day, $5,000 in prestige) and an entourage from Whale up ($2,500 a day, $25,000 in prestige). Fees are charged at the end of each day. If you can’t pay, they leave.' },
   { g:'Extras', k:'fence', label:'Offers', desc:'Between hands you get one offer at a time, matched to your rank: something to raise your rank, something that saves money over time (a home, a car, a chef, a deal), or a line of credit. Each offer says what it does for you. You can sell things back for half what you paid.' },
 ];
@@ -1359,7 +1359,7 @@ function stackEl(amount, max){
 function levelNote(i){
   const L = LIFE[i], nx = LEVELS[i + 1];
   const cost = L.room + L.ride + L.meals.reduce((a, b) => a + b, 0);
-  const how = L.comped ? ' Your room, meals and car are comped.' : ' You stay in ' + L.stay + ', eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat + ' and get around by ' + L.go.replace(/^(a|an) /, '') + ': ' + money(cost) + ' a day before savings.';
+  const how = L.comped ? ' Your room, meals and car are comped.' : ' You stay ' + stayAt(L) + ', eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat + ' and get around by ' + L.go.replace(/^(a|an) /, '') + ': ' + money(cost) + ' a day before savings.';
   return how + (nx ? ' Next level: ' + nx.name + ' at ' + money(nx.at) + ' prestige.' : ' This is the top level.');
 }
 function checkLevel(){
@@ -2012,8 +2012,9 @@ function whoYouAre(){
   else {
     const homeOwned = covered('room') && OFFERS.some(o => o.covers === 'room' && o.keep && owns(o.id));
     const carOwned = covered('ride') && OFFERS.some(o => o.covers === 'ride' && o.keep && owns(o.id));
-    const stay = homeOwned ? 'live in ' + coverName('room') : 'stay in ' + L.stay + (covered('room') ? ' on ' + coverName('room') : '');
-    const eat = covered('meals') ? 'have ' + coverName('meals') + ' cook for you' : 'eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat;
+    const stay = homeOwned ? 'live in ' + coverName('room') : 'stay ' + stayAt(L) + (covered('room') ? ' on ' + coverName('room') : '');
+    const chef = covered('meals') && OFFERS.some(o => o.covers === 'meals' && o.keep && owns(o.id));
+    const eat = chef ? 'have ' + coverName('meals') + ' cook for you' : 'eat ' + (/^(a |the )/.test(L.eat) ? 'at ' : '') + L.eat + (covered('meals') ? ' on ' + coverName('meals') : '');
     const go = carOwned ? 'get around in ' + coverName('ride') : L.ride <= 0 ? 'walk everywhere' : 'get around by ' + L.go.replace(/^(a|an) /, '') + (covered('ride') ? ' on ' + coverName('ride') : '');
     const cost = (covered('room') ? 0 : L.room) + (covered('ride') ? 0 : L.ride) + (covered('meals') ? 0 : L.meals.reduce((a, b) => a + b, 0));
     life_ = 'You ' + stay + ', ' + eat + ' and ' + go + ': ' + (cost > 0 ? money(cost) + ' a day.' : 'nothing to pay each day.');
@@ -2119,6 +2120,7 @@ function stayAfterHand(){
   S.staySeen = n; touch(); saveLocal();
 }
 const cap1 = t => t.charAt(0).toUpperCase() + t.slice(1);
+const stayAt = L => (L.on ? 'on ' : 'in ') + L.stay;   // in a motel, on a friend's couch
 // one bill: a meal, or the room and getting around at the end of the day
 function stayBill(i, day){
   if (!rules().stay || S.dead || S.round) return pumpSheets(0);
@@ -2136,11 +2138,11 @@ function stayBill(i, day){
   }
   const parts = [];   // [label, price, covered by]
   if (room){
-    parts.push(['A night in ' + L.stay, L.room, covered('room') ? coverName('room') : '']);
+    parts.push(['A night ' + stayAt(L), L.room, covered('room') ? coverName('room') : '']);
     if (L.ride > 0) parts.push(['Getting around by ' + L.go.replace(/^(a|an) /, ''), L.ride, covered('ride') ? coverName('ride') : '']);
   } else parts.push([cap1(MEAL_NAMES[i]) + ' at ' + L.eat, L.meals[i], covered('meals') ? coverName('meals') : '']);
   const due = parts.reduce((a, x) => a + (x[2] ? 0 : x[1]), 0);
-  const lines = parts.map(x => x[0] + ': ' + (x[2] ? '<b>free</b> (' + esc(x[2]) + ')' : '<b>' + money(x[1]) + '</b>'));
+  const lines = parts.map(x => x[0] + ': ' + (x[2] ? '<b>free</b> (' + esc(x[2]) + ')' : x[1] ? '<b>' + money(x[1]) + '</b>' : '<b>free</b>'));
   if (!due){ fenceSheet(title, art, lines.join('<br>'), [btn('OK', () => hideSheets(), { primary:true })]); return; }
   if (rankNo() <= 1 && ownChips() < START){   // new players who are struggling get their bills comped
     d.comped = cents((d.comped || 0) + due);
