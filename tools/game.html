@@ -406,9 +406,12 @@ body.still .card.flip{animation:none}
     </div>
     <p class="note num" id="sessionNote"></p>
     <div class="stats" id="stats"></div>
-    <div class="gtitle">Every hand, newest first</div>
-    <div class="log" id="log"></div>
-    <button class="btn" type="button" id="moreLog" hidden>Show 50 more</button>
+    <button class="btn" type="button" id="histBtn" aria-expanded="false" aria-controls="histBox">Hands Played History</button>
+    <div id="histBox" hidden>
+      <div class="gtitle">Every hand, newest first</div>
+      <div class="log" id="log"></div>
+      <button class="btn" type="button" id="moreLog" hidden>Show 50 more</button>
+    </div>
     <button class="btn" type="button" id="newBankBtn">Start over</button>
     <p class="note" id="syncNote"></p>
   </div>
@@ -3055,7 +3058,10 @@ $('warnGo').addEventListener('click', () => { const w = pendingWarn; pendingWarn
 $('warnBest').addEventListener('click', () => { const w = pendingWarn; pendingWarn = null; hideSheets(); if (w) w.goBest(); });
 $('countBtn').addEventListener('click', () => { countOpen = !countOpen; renderCount(); });
 $('openRules').addEventListener('click', () => { hideSheets(); renderRules(); $('rulesSheet').hidden = false; });
-$('openRecord').addEventListener('click', () => { hideSheets(); logShown = 50; $('recordSheet').hidden = false; renderRecord(); });
+// The list of every hand stays folded away behind a button (Mike, 2026-11-28) and folds again each time Record opens.
+function showHist(on){ $('histBox').hidden = !on; $('histBtn').setAttribute('aria-expanded', String(on)); $('histBtn').textContent = on ? 'Hide Hands Played History' : 'Hands Played History'; }
+$('histBtn').addEventListener('click', () => showHist($('histBox').hidden));
+$('openRecord').addEventListener('click', () => { hideSheets(); logShown = 50; showHist(false); $('recordSheet').hidden = false; renderRecord(); });
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', hideSheets));
 const stuck = () => !$('deadSheet').hidden || (!$('bankSheet').hidden && $('bankCancel').hidden);
 document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e => { if (e.target !== s || stuck() || s.id === 'fenceSheet' || s.id === 'warnSheet') return; hideSheets(); }));   // pop-ups close only from their own buttons
