@@ -41,10 +41,10 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('prestigeFromPlay', s1.pres === 1.25 && s1.min === 5 && s1.level === 'Guppy', s1);
   // 2) a store card from Guy, then borrowing on it through the real cashier
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'storecard'))); await p.waitForTimeout(200);
-  check('creditOffer', /^Store card \| A line of credit/.test(await sheet() || ''), await sheet());
+  check('creditOffer', /^Players club card \| A line of credit from the casino’s players club\./.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
   // taking the line opens the cashier with the whole line filled in, and only amounts you can borrow on offer
-  check('cashierOpensFilled', (await p.isVisible('#cashSheet')) && (await p.inputValue('#cardInput')) === '1904' && (await p.textContent('#cardH')) === 'Store card'
+  check('cashierOpensFilled', (await p.isVisible('#cashSheet')) && (await p.inputValue('#cardInput')) === '1904' && (await p.textContent('#cardH')) === 'Players club card'
     && JSON.stringify(await p.$$eval('#cardPresets button', bs => bs.map(x => x.textContent))) === '["+$1,000","All $1,904"]',
     { open: await p.isVisible('#cashSheet'), filled: await p.inputValue('#cardInput'), head: await p.textContent('#cardH'), presets: await p.$$eval('#cardPresets button', bs => bs.map(x => x.textContent)) });
   check('feeOnButton', (await p.textContent('#cardBorrow')) === 'Borrow $1,904 (+$95 fee)', await p.textContent('#cardBorrow'));
@@ -53,7 +53,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('borrowed', s2.owed === 1050, s2);   // $1,000 plus the 5% cash-advance fee
   // 3) things bought while owing don't count until the debt is paid
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'shirt'))); await p.waitForTimeout(200);
-  check('shirtOffer', /^Sharp shirt \| Price: \$150\. \/ • It won’t raise your rank until your debts are paid \(you owe \$1,050\)\.( \/ • Counts as [\d,]+ hands[^/]*)?$/.test(await sheet() || ''), await sheet());
+  check('shirtOffer', /^Sharp shirt \| From the casino’s [^/.]+\. \/ Price: \$150\. \/ • It won’t raise your rank until your debts are paid \(you owe \$1,050\)\.( \/ • Counts as [\d,]+ hands[^/]*)?$/.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(500); await closeAll();
   const s3 = await p.evaluate(() => ({ prestige: __bj.prestige(), stash: __bj.S.stash.map(x => x.item) }));
   check('shirtCountsLater', s3.prestige === 0 &&   // $1,000 owed: the $150 shirt cancels $150 of it, the other $850 costs $425, so 0
@@ -63,7 +63,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('shirtCountsWhenPaid', (await p.evaluate(() => __bj.prestige())) === 151, await p.evaluate(() => __bj.prestige()));
   // with no debts, a thing says what it does for you in words: how much closer to the next rank, and what that rank gets you
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'shirt'))); await p.waitForTimeout(200);
-  check('shirtBenefit', /^Sharp shirt \| Price: \$150\. \/ • Impresses the casino: gets you 15% closer to Minnow, where you can get \$100 in free chips, breakfast comped every day and a \$10,000 credit card\.( \/ • Counts as [\d,]+ hands[^/]*)?$/.test(await sheet() || ''), await sheet());
+  check('shirtBenefit', /^Sharp shirt \| From the casino’s [^/.]+\. \/ Price: \$150\. \/ • Impresses the casino: gets you 15% closer to Minnow, where you can get \$100 in free chips, breakfast comped every day and \$10,000 of casino credit\.( \/ • Counts as [\d,]+ hands[^/]*)?$/.test(await sheet() || ''), await sheet());
   check('rankUnderBadge', (await p.textContent('#levelPct')) === '15% to Minnow', await p.textContent('#levelPct'));
   await p.evaluate(() => __bj.hideSheets());
   // 4) a deal: the weekly meal deal makes meals free for a week
@@ -71,7 +71,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('dealOffer', /Covers your meals for 7 days: \$175 of bills for \$120, saving \$55/.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300); await closeAll();
   await p.evaluate(() => { __bj.S.settings.rules.stay = true; __bj.S.day = { ok: 0, all: 0, bills: 0 }; __bj.stayBill(2, 1); }); await p.waitForTimeout(200);
-  check('mealFree', /free \(your weekly meal deal\)/.test(await sheet() || ''), await sheet());
+  check('mealFree', /free \(your weekly food court pass\)/.test(await sheet() || ''), await sheet());
   await closeAll();
   // 5) the room on a friend's couch is free; once the deal is gone a meal is charged; no sponsor below Shark
   await p.evaluate(() => { __bj.S.deals = {}; __bj.S.day = { ok: 0, all: 0, bills: 0 }; __bj.stayBill(3, 1); }); await p.waitForTimeout(200);

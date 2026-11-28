@@ -16,8 +16,8 @@ fs.writeFileSync(dir + '/who-page.html', '<!doctype html><html><head><meta chars
   const show = async (name, set) => { await p.evaluate(set); await p.evaluate(() => { __bj.hideSheets(); __bj.render(); __bj.welcomeBack(); }); await p.waitForTimeout(300);
     if (shots) await p.screenshot({ path: shots + '/who-' + name + '.png' });
     return (await p.textContent('#fenceH')) + ' | ' + (await p.innerText('#fenceText')).replace(/\n+/g, ' / '); };
-  check('guppy', /^Welcome back \| You’re a Guppy, 0% of the way to Minnow\. \/ You sleep on a friend’s couch for free, eat fast food and walk everywhere: \$25 a day in all\. \/ Chips: \$1,000$/, await show('guppy', () => {}));
-  check('barracuda', /You’re a Barracuda, 60% of the way to Swordfish.*You live in the apartment you own, eat at a diner and ride in the used car you own: \$45 a day in all\. \/ Chips: \$20,000\. You owe \$3,000\./,
+  check('guppy', /^Welcome back \| You’re a Guppy, 0% of the way to Minnow\. \/ You sleep on a friend’s couch for free, eat at the casino food court and walk everywhere: \$25 a day in all\. \/ Chips: \$1,000$/, await show('guppy', () => {}));
+  check('barracuda', /You’re a Barracuda, 60% of the way to Swordfish.*You live in the apartment you own, eat at the casino’s diner and ride in the used car you own: \$45 a day in all\. \/ Chips: \$20,000\. You owe \$3,000\./,
     await show('barracuda', () => { const S = __bj.S; S.playPres = 2000; S.bankroll = 20000; S.card = 3000; S.line = { id:'card2', name:'a gold card', limit:25000, rate:0.05 };
       S.stash = [{ item:'an apartment', paid:2500, oid:'apartment' }, { item:'a used car', paid:4000, oid:'usedcar' }, { item:'a gold watch', paid:2500, oid:'watch' }]; }));
   check('whale', /You’re a Whale.*You pay \$375 a night for a villa \(75% comped\), have the personal chef you employ cook for you and get around by limo with a driver: \$575 a day in all\. With you: eye candy and an entourage\./,

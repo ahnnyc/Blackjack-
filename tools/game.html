@@ -534,9 +534,9 @@ const MEAL_NAMES = ['breakfast', 'lunch', 'dinner'], MEAL_ART = ['🍳', '🥪',
 // (freeMeal), the room at half price at Barracuda (roomRate) and comped at Swordfish (roomComp). Nobody is told the level: a day whose average bet falls under it costs the sponsor's pay, any comps
 // and your eye candy and entourage, and the end-of-day message says why. Super Whale prices apply only on such a day.
 const LIFE = [
-  { stay:'a friend’s couch', on:true, eat:'fast food', go:'walking',                  room:0,    meals:[6, 8, 11],     ride:0,   level:5,    sponsor:null },
-  { stay:'a hostel bed',  eat:'fast food',          go:'the city bus',                room:22,   meals:[6, 8, 11],     ride:3,   level:10,   sponsor:null, freeMeal:0, gift:100 },
-  { stay:'a standard room at the casino', eat:'a diner',           go:'the city bus',                room:60,   meals:[10, 15, 20],   ride:10,  level:25,   sponsor:null, roomRate:0.5, gift:500 },
+  { stay:'a friend’s couch', on:true, eat:'the casino food court', go:'walking',                  room:0,    meals:[6, 8, 11],     ride:0,   level:5,    sponsor:null },
+  { stay:'the casino’s motel', eat:'the casino food court', go:'the casino shuttle',                room:22,   meals:[6, 8, 11],     ride:3,   level:10,   sponsor:null, freeMeal:0, gift:100 },
+  { stay:'a standard room at the casino', eat:'the casino’s diner', go:'the casino shuttle',                room:60,   meals:[10, 15, 20],   ride:10,  level:25,   sponsor:null, roomRate:0.5, gift:500 },
   { stay:'a deluxe room at the casino', eat:'a café',             go:'taxis',                       room:99,   meals:[20, 30, 45],   ride:36,  level:50,   sponsor:null, roomComp:true, gift:1000 },
   { stay:'a tower suite', eat:'fine dining',        go:'a car service',               room:799,  meals:[100, 150, 250],ride:300, level:250,  sponsor:'an energy drink', comp:0.75 },
   { stay:'a villa',       eat:'the chef’s table',   go:'a limo with a driver',        room:1500, meals:[200, 300, 500],ride:800, level:2500, sponsor:'a watch brand', comp:0.75 },
@@ -560,37 +560,53 @@ const PEOPLE = {
 // real prices, which count toward your rank. retired: no longer offered, but still works for anyone who already has it.
 // rank: raises your prestige; save: cuts a daily cost (homes, cars and the chef for good,
 // deals for a set number of days); credit: a line of credit; people: eye candy or an entourage.
+// Everything offered is sold by the casino (Mike, 2026-11-28): its shops, kitchens, hotel, shows and cage. from: who sells it.
+// Treats (kind 'treat') are used once: they don't raise your rank, can't be sold back, and only count toward opening tables.
 const OFFERS = [
-  { id:'mealdeal',  rank:0, kind:'save',   art:'🍔', name:'a weekly meal deal',         price:120,     covers:'meals', days:7 },
-  { id:'shirt',     rank:0, kind:'rank',   art:'👕', name:'a sharp shirt',              price:150 },
-  { id:'storecard', rank:0, kind:'credit', art:'💳', name:'a store card',               limit:2000,    rate:0.05 },
-  { id:'extstay',   rank:1, kind:'save',   art:'🏨', name:'a weekly hostel rate',       price:120,     covers:'room', days:7 },
-  { id:'buspass',   rank:1, kind:'save',   art:'🚌', name:'a monthly bus pass',         price:60,      covers:'ride', days:30 },
-  { id:'suit',      rank:1, kind:'rank',   art:'👔', name:'a tailored suit',            price:600 },
-  { id:'card',      rank:1, kind:'credit', art:'💳', name:'a credit card',              limit:10000,   rate:0.05 },
-  { id:'dinerplan', rank:2, kind:'save',   art:'🍽️', name:'a weekly meal plan at the diner', price:250, covers:'meals', days:7 },
+  { id:'mealdeal',  rank:0, kind:'save',   art:'🍔', name:'a weekly food court pass', from:'the casino food court', price:120, covers:'meals', days:7 },
+  { id:'shirt',     rank:0, kind:'rank',   art:'👕', name:'a sharp shirt',  from:'the casino’s boutique', price:150 },
+  { id:'storecard', rank:0, kind:'credit', art:'💳', name:'a players club card', from:'the casino’s players club', limit:2000, rate:0.05 },
+  { id:'comedy',    rank:0, kind:'treat',  art:'🎤', name:'a ticket to the comedy club', from:'the casino’s comedy club', price:40 },
+  { id:'cigar',     rank:0, kind:'treat',  art:'🚬', name:'a cigar', from:'the casino’s cigar lounge', price:25 },
+  { id:'extstay',   rank:1, kind:'save',   art:'🏨', name:'a weekly motel rate', from:'the casino’s motel', price:120, covers:'room', days:7 },
+  { id:'buspass',   rank:1, kind:'save',   art:'🚌', name:'a monthly shuttle pass', from:'the casino shuttle', price:60, covers:'ride', days:30 },
+  { id:'suit',      rank:1, kind:'rank',   art:'👔', name:'a tailored suit', from:'the casino’s boutique', price:600 },
+  { id:'card',      rank:1, kind:'credit', art:'💳', name:'casino credit', from:'the casino cage', limit:10000, rate:0.05 },
+  { id:'magic',     rank:1, kind:'treat',  art:'🎩', name:'a ticket to the magic show', from:'the casino’s theatre', price:90 },
+  { id:'pianobar',  rank:1, kind:'treat',  art:'🍸', name:'a night at the piano bar', from:'the casino’s piano bar', price:75 },
+  { id:'dinerplan', rank:2, kind:'save',   art:'🍽️', name:'a weekly diner meal plan', from:'the casino’s diner', price:250, covers:'meals', days:7 },
   { id:'apartment', rank:2, retired:true, kind:'save',   art:'🏢', name:'an apartment',               price:2500,    covers:'room', keep:true },
   { id:'usedcar',   rank:2, retired:true, kind:'save',   art:'🚗', name:'a used car',                 price:4000,    covers:'ride', keep:true },
-  { id:'watch',     rank:2, kind:'rank',   art:'⌚', name:'a gold watch',               price:2500 },
-  { id:'card2',     rank:2, kind:'credit', art:'💳', name:'a bigger credit card',       limit:25000,   rate:0.05 },
-  { id:'carrental', rank:3, kind:'save',   art:'🚗', name:'a rental car', title:'Rent a car for a month', verb:'Rent', thing:'a car', price:900, covers:'ride', days:30, anywhere:true },
+  { id:'watch',     rank:2, kind:'rank',   art:'⌚', name:'a gold watch', from:'the casino’s jeweller', price:2500 },
+  { id:'card2',     rank:2, kind:'credit', art:'💳', name:'more casino credit', from:'the casino cage', limit:25000, rate:0.05 },
+  { id:'musical',   rank:2, kind:'treat',  art:'🎭', name:'a ticket to the musical', from:'the casino’s theatre', price:180 },
+  { id:'massage',   rank:2, kind:'treat',  art:'💆', name:'a massage', from:'the casino’s spa', price:150 },
+  { id:'carrental', rank:3, kind:'save',   art:'🚗', name:'a rental car', title:'Rent a car for a month', verb:'Rent', thing:'a car', from:'the casino’s rental desk', price:900, covers:'ride', days:30, anywhere:true },
   { id:'condo',     rank:3, retired:true, kind:'save',   art:'🏙️', name:'a condo',                    price:8000,    covers:'room', keep:true },
   { id:'newcar',    rank:3, retired:true, kind:'save',   art:'🚙', name:'a new car',                  price:30000,   covers:'ride', keep:true },
-  { id:'ring',      rank:3, kind:'rank',   art:'💍', name:'a diamond ring',             price:8000 },
-  { id:'gold',      rank:3, kind:'credit', art:'💳', name:'a gold card',                limit:50000,   rate:0.04 },
-  { id:'condorent', rank:4, kind:'save',   art:'🏙️', name:'a rented condo', title:'Rent a condo for a month', verb:'Rent', thing:'a condo', price:3750, covers:'room', days:30, anywhere:true },
-  { id:'carlease',  rank:4, kind:'save',   art:'🏎️', name:'a leased luxury car', title:'Lease a luxury car for a month', verb:'Lease', thing:'a luxury car', price:1500, covers:'ride', days:30, anywhere:true },
-  { id:'chefhire',  rank:4, kind:'save',   art:'🧑‍🍳', name:'a hired chef', title:'Hire a personal chef for a month', verb:'Hire', thing:'a personal chef', price:2250, covers:'meals', days:30, anywhere:true },
+  { id:'ring',      rank:3, kind:'rank',   art:'💍', name:'a diamond ring', from:'the casino’s jeweller', price:8000 },
+  { id:'gold',      rank:3, kind:'credit', art:'💳', name:'VIP casino credit', from:'the casino cage', limit:50000, rate:0.04 },
+  { id:'cigarbox',  rank:3, kind:'treat',  art:'🚬', name:'a box of cigars', from:'the casino’s cigar lounge', price:400 },
+  { id:'spaday',    rank:3, kind:'treat',  art:'🧖', name:'a day at the spa', from:'the casino’s spa', price:600 },
+  { id:'condorent', rank:4, kind:'save',   art:'🏙️', name:'a rented condo', title:'Rent a condo for a month', verb:'Rent', thing:'a condo', from:'the casino’s condo tower', price:3750, covers:'room', days:30, anywhere:true },
+  { id:'carlease',  rank:4, kind:'save',   art:'🏎️', name:'a leased luxury car', title:'Lease a luxury car for a month', verb:'Lease', thing:'a luxury car', from:'the casino’s car dealership', price:1500, covers:'ride', days:30, anywhere:true },
+  { id:'chefhire',  rank:4, kind:'save',   art:'🧑‍🍳', name:'a hired chef', title:'Hire a personal chef for a month', verb:'Hire', thing:'a personal chef', from:'the casino’s kitchens', price:2250, covers:'meals', days:30, anywhere:true },
   { id:'chef',      rank:4, retired:true, kind:'save',   art:'🧑‍🍳', name:'a personal chef',           price:15000,   covers:'meals', keep:true },
   { id:'luxcar',    rank:4, retired:true, kind:'save',   art:'🏎️', name:'a luxury car',               price:90000,   covers:'ride', keep:true },
   { id:'candy',     rank:4, kind:'people' },
-  { id:'marker',    rank:4, kind:'credit', art:'📜', name:'a casino marker',            limit:100000,  rate:0.03 },
-  { id:'penthouse', rank:5, kind:'save',   art:'🌆', name:'a penthouse', title:'Buy a penthouse', price:3000000,  covers:'room', keep:true },
-  { id:'limo',      rank:5, kind:'save',   art:'🚘', name:'your own limo', title:'Buy your own limo', price:400000,  covers:'ride', keep:true },
+  { id:'marker',    rank:4, kind:'credit', art:'📜', name:'a casino marker', from:'the casino cage', limit:100000, rate:0.03 },
+  { id:'bottle',    rank:4, kind:'treat',  art:'🍾', name:'bottle service', from:'the casino’s nightclub', price:2500 },
+  { id:'ringside',  rank:4, kind:'treat',  art:'🥊', name:'ringside seats at the fight', from:'the casino’s arena', price:5000 },
+  { id:'penthouse', rank:5, kind:'save',   art:'🌆', name:'a penthouse', title:'Buy a penthouse', from:'the casino’s condo tower', price:3000000, covers:'room', keep:true },
+  { id:'limo',      rank:5, kind:'save',   art:'🚘', name:'your own limo', title:'Buy your own limo', from:'the casino’s limo fleet', price:400000, covers:'ride', keep:true },
   { id:'crew',      rank:5, kind:'people' },
-  { id:'marker2',   rank:5, kind:'credit', art:'📜', name:'a bigger casino marker',     limit:1000000, rate:0.03 },
-  { id:'jet',       rank:6, kind:'rank',   art:'🛩️', name:'a private jet',              price:5000000 },
-  { id:'openmarker',rank:6, kind:'credit', art:'📜', name:'an open marker',             limit:1e12,    rate:0.02 },
+  { id:'marker2',   rank:5, kind:'credit', art:'📜', name:'a bigger casino marker', from:'the casino cage', limit:1000000, rate:0.03 },
+  { id:'headliner', rank:5, kind:'treat',  art:'🎶', name:'a VIP table at the headliner’s show', from:'the casino’s showroom', price:25000 },
+  { id:'locker',    rank:5, kind:'treat',  art:'🚬', name:'a year in a private cigar locker', from:'the casino’s cigar lounge', price:15000 },
+  { id:'jet',       rank:6, retired:true, kind:'rank',   art:'🛩️', name:'a private jet',              price:5000000 },
+  { id:'piano',     rank:6, kind:'rank',   art:'🎹', name:'Liberace’s piano', from:'the casino’s auction', price:5000000 },
+  { id:'openmarker',rank:6, kind:'credit', art:'📜', name:'an open marker', from:'the casino cage', limit:1e12, rate:0.02 },
+  { id:'buyout',    rank:6, kind:'treat',  art:'🎟️', name:'the whole theatre for a night', from:'the casino’s theatre', price:250000 },
 ];
 // Luxury and the casino's credit: more luxuries, more credit. The casino's marker (Shark $100,000, Whale $1,000,000) is
 // offered once you have one luxury: a condo, a luxury car or a chef, rented or owned (a penthouse counts as a home, a
@@ -652,9 +668,9 @@ const RULES = [
   { g:'Display', k:'sound', label:'Sounds', desc:'Chips click, cards snap as they’re dealt and flipped, the shoe riffles, and cards swish as they’re collected. Your iPhone’s silent switch mutes them.' },
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
-  { g:'Extras', k:'stay', label:FEATURES.sponsors ? 'Daily costs and sponsors' : 'Daily costs', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a friend’s couch, fast food and walking up to a villa, the chef’s table and a limo. From Shark up the casino comps 75% of your own room, meals and car (anything cheaper you choose is full price). Super Whales are comped.' + (FEATURES.sponsors ? ' From Shark up, a sponsor pays 75% of the day’s bills at the end of each day if you made the right move on at least 95% of your hands and lived at your rank (a cheaper room, meals or ride chosen on the Expenses screen stops it).' : '') },
+  { g:'Extras', k:'stay', label:FEATURES.sponsors ? 'Daily costs and sponsors' : 'Daily costs', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a friend’s couch, the casino food court and walking up to a villa, the chef’s table and a limo. From Shark up the casino comps 75% of your own room, meals and car (anything cheaper you choose is full price). Super Whales are comped.' + (FEATURES.sponsors ? ' From Shark up, a sponsor pays 75% of the day’s bills at the end of each day if you made the right move on at least 95% of your hands and lived at your rank (a cheaper room, meals or ride chosen on the Expenses screen stops it).' : '') },
   { g:'Extras', k:'host', label:'Eye candy and entourage', desc:'Offered from Shark up: eye candy ($300 a day) and an entourage from Whale up ($2,500 a day). Both raise your rank. Fees are charged at the end of each day. If you can’t pay, they leave.' },
-  { g:'Extras', k:'fence', label:'Offers', desc:'Between hands you get one offer at a time, matched to your rank: something to raise your rank, something that saves money over time (a home, a car, a chef, a deal), or a line of credit. Each offer says what it does for you. You can sell things back for half what you paid. The casino’s marker (from Shark up) is offered once you have a luxury: a condo, a luxury car or a chef, rented or owned. The more of the three you have, the more you can borrow and the lower the rate (all three: the full marker at 3%); lose one and the casino lowers it.' },
+  { g:'Extras', k:'fence', label:'Offers', desc:'Between hands you get one offer at a time from the casino, matched to your rank: something from its shops to raise your rank, something that saves money over time (a home, a car, a chef, a deal), a show or a treat, or a line of credit. Every $10 you spend counts as a hand toward opening the next table. Each offer says what it does for you. You can sell things back for half what you paid. The casino’s marker (from Shark up) is offered once you have a luxury: a condo, a luxury car or a chef, rented or owned. The more of the three you have, the more you can borrow and the lower the rate (all three: the full marker at 3%); lose one and the casino lowers it.' },
 ];
 const SUITS = ['♠','♥','♦','♣'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
@@ -879,8 +895,8 @@ function rankPct(p = prestige()){
 }
 function rankStand(p = prestige()){ const nx = LEVELS[levelOf(p) + 1]; return nx ? rankPct(p) + '% of the way to ' + nx.name : 'the top rank'; }
 // What reaching each rank gets you (its offers and its life), said in offers so a purchase has a reason.
-const RANK_GETS = ['', '$100 in free chips, breakfast comped every day and a $10,000 credit card', '$500 in free chips, your room at half price and a $25,000 credit card',
-  '$1,000 in free chips, your room comped and a $50,000 gold card', (FEATURES.sponsors ? 'a sponsor who pays most of your bills, ' : '75% of your room, meals and car comped, ') + 'eye candy, a condo, car and chef to rent by the month, and a $100,000 casino marker',
+const RANK_GETS = ['', '$100 in free chips, breakfast comped every day and $10,000 of casino credit', '$500 in free chips, your room at half price and $25,000 of casino credit',
+  '$1,000 in free chips, your room comped and $50,000 of VIP casino credit', (FEATURES.sponsors ? 'a sponsor who pays most of your bills, ' : '75% of your room, meals and car comped, ') + 'eye candy, a condo, car and chef to rent by the month, and a $100,000 casino marker',
   'a penthouse and a limo of your own to buy, an entourage and a $1,000,000 casino marker', 'everything comped: the penthouse, your meals and a private car and driver'];
 function debtCost(){
   const things = (S.stash || []).reduce((a, x) => a + (x.paid || 0), 0);
@@ -889,7 +905,7 @@ function debtCost(){
 // what covers a daily cost: a home or car you own, a chef, or a deal still running
 const owns = id => (S.stash || []).some(x => x.oid === id);
 const dealOn = id => S.deals && S.deals[id] > handsThisGame();
-// a deal covers only the place it was bought for: the hostel rate pays for the hostel, not a room at the casino
+// a deal covers only the place it was bought for: the motel rate pays for the motel, not a room at the casino
 const COVER_FIELD = { room:'stay', ride:'go', meals:'eat' };
 const dealHere = o => dealOn(o.id) && (o.anywhere || LIFE[o.rank][COVER_FIELD[o.covers]] === life()[COVER_FIELD[o.covers]]);
 const coversNow = o => o.keep ? owns(o.id) : dealHere(o);
@@ -2433,10 +2449,10 @@ function hostOffer(k){
     say((k === 'candy' ? 'Your eye candy is at your side.' : 'Your entourage is with you.')); tablesAfterHand(); };
   const lines = [money(x.fee) + ' a day, charged at the end of each day.'].concat(prestigeLines(x.prestige, true));
   if (k === 'candy') fenceSheet('Eye candy', x.art,
-    'A companion at your side at the table.' + bullets(lines),
+    'Your casino host can arrange a companion at your side at the table.' + bullets(lines),
     [btn('No thanks', () => hideSheets()), btn('Hire', () => hire(true), { primary:true })]);
   else fenceSheet('An entourage', x.art,
-    'A group of friends who follow you around the casino.' + bullets(lines),
+    'Your casino host can arrange a group of friends who follow you around the casino.' + bullets(lines),
     [btn('No thanks', () => hideSheets()), btn('Hire', () => hire(true), { primary:true })]);
 }
 function peopleFee(k, day){
@@ -2687,6 +2703,7 @@ function availableOffers(){
       return offerAtRank(o, r).price <= S.bankroll;
     }
     if (o.kind === 'save' || o.kind === 'rank') return !owns(o.id) && o.price <= S.bankroll;
+    if (o.kind === 'treat') return o.rank >= r - 1 && o.price <= S.bankroll && TABLES.some((t, i) => !tableOpen(i));
     return false;
   }).map(o => ({ o: offerAtRank(o, r), w: o.rank === r ? 3 : 1 }));
 }
@@ -2747,15 +2764,15 @@ function fenceOffer(o){
   if ((o.price || 0) > S.bankroll) return pumpSheets(0);
   guyOffer = true;
   const nm = esc(o.name);
-  if (o.kind === 'credit') return fenceSheet(cap1(o.name.replace(/^(a|an) /, '')), o.art, (MARKER_NEEDS[o.id] ? 'The casino has been watching how you live: ' + esc(andList(luxuryHeld())) + '. It’s offering you credit.' : 'A line of credit.') + bullets(creditLines(o)),
+  if (o.kind === 'credit') return fenceSheet(cap1(o.name.replace(/^(a|an) /, '')), o.art, (MARKER_NEEDS[o.id] ? 'The casino has been watching how you live: ' + esc(andList(luxuryHeld())) + '. It’s offering you credit.' : 'A line of credit from ' + esc(o.from || 'the casino') + '.') + bullets(creditLines(o)),
     [btn('No thanks', () => guyDecline()), btn('Take it', () => takeLine(o), { primary:true })]);
-  const lines = o.kind === 'save' ? saveLines(o) : prestigeLines(o.price);
+  const lines = o.kind === 'save' ? saveLines(o) : o.kind === 'treat' ? ['Used once: it doesn’t raise your rank and can’t be sold back.'] : prestigeLines(o.price);
   const next = TABLES.findIndex((t, i) => !tableOpen(i)), hh = Math.floor(o.price / SPEND_PER_HAND);
   if (next > 0 && hh > 0){
     const opens = TABLES.map((t, i) => i).filter(i => !tableOpen(i) && handsPlayed() + hh >= UNLOCK[i]).map(i => TABLES[i].d + '-deck');
     lines.push('Counts as ' + hh.toLocaleString('en-US') + ' hands' + (opens.length ? ': enough to open the ' + andList(opens) + ' table' + (opens.length > 1 ? 's' : '') : ' toward opening the ' + deckTable(TABLES[next].d)) + '.');
   }
-  fenceSheet(o.title || cap1(o.name.replace(/^(a|an) /, '')), o.art, 'Price: <b>' + money(o.price) + '</b>' + (o.days ? ' for ' + o.days + ' days' : '') + '.' + bullets(lines),
+  fenceSheet(o.title || cap1(o.name.replace(/^(a|an) /, '')), o.art, (o.from ? 'From ' + esc(o.from) + '.<br>' : '') + 'Price: <b>' + money(o.price) + '</b>' + (o.days ? ' for ' + o.days + ' days' : '') + '.' + bullets(lines),
     [btn('No thanks', () => guyDecline()), btn((o.verb || 'Buy') + ' for ' + money(o.price), () => fenceBuy(o), { primary:true })]);
 }
 function guyDecline(){ guyOffer = false; hideSheets(); }
@@ -2772,13 +2789,20 @@ function fenceBuy(o){
   if (o.price > S.bankroll || S.round) { hideSheets(); return; }
   const before = moneyMove(-o.price, 'buy', { item: o.name });
   S.spent = cents((S.spent || 0) + o.price);   // buying speeds up opening tables (this game only)
+  if (o.kind === 'treat'){
+    touch(); saveLocal(); saveCloudState(); hideSheets(); render();
+    flyChips($('bankAmt'), $('top'), o.price, { fade: true });
+    if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
+    say('You bought ' + o.name + ' for ' + money(o.price) + '.');
+    tablesAfterHand(); return;
+  }
   if (o.kind === 'save' && !o.keep){
     S.deals[o.id] = handsThisGame() + o.days * DAY;
     touch(); saveLocal(); saveCloudState(); hideSheets(); render();
     flyChips($('bankAmt'), $('top'), o.price, { fade: true });
     if (!(R && R.countFrom != null)) countUp(before, S.bankroll);
     say(o.verb ? 'You ' + { Rent:'rented', Lease:'leased', Hire:'hired' }[o.verb] + ' ' + o.thing + ' for ' + o.days + ' days.' : 'You bought ' + o.name + ': it runs for ' + o.days + ' days.');
-    return;
+    tablesAfterHand(); return;
   }
   const x = { id: Date.now() + '' + Math.floor(Math.random() * 1000), oid: o.id, item: o.name, art: o.art, paid: o.price, t: Date.now(), game: S.session, hand: handsThisGame() };
   stashList().push(x);
