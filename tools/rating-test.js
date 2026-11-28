@@ -37,8 +37,8 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await p.evaluate(() => { const S = __bj.S; S.settings.rules.motion = false; __bj.applyMotion(); S.fenceLast = 1e9; S.settings.rules.fence = false; });
   // every table open from the start; nothing says what a rank must bet
   await p.evaluate(() => __bj.openTables()); await p.waitForTimeout(200);
-  const rows = await p.$$eval('#tablesList [data-t]', rs => rs.map(r => r.getAttribute('aria-label')));
-  check('allOpen', /You’re here/.test(rows[0]) && /Tap to sit here/.test(rows[1]) && /Tap to sit here/.test(rows[2]) && /Need \$2,500 in chips/.test(rows[3]), rows);
+  const rows = await p.$$eval('#tablesList .trow', rs => rs.map(r => r.innerText.replace(/\n+/g, ' / ')));
+  check('allOpen', /You’re here/i.test(rows[0]) && /Move to this table/.test(rows[1]) && /Move to this table/.test(rows[2]) && /You need \$2,500 to sit here/.test(rows[3]), rows);
   await p.evaluate(() => __bj.hideSheets());
   await playHand(); await sheets();
   // a Whale may sit at the 6-deck table and bet $5

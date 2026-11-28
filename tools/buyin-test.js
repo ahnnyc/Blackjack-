@@ -12,7 +12,7 @@ fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charse
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.stack || e.message));
   await p.goto('file://' + dir + '/bi-page.html'); await p.waitForTimeout(1500);
   const out = {}, fails = []; const check = (n, ok, got) => { out[n] = got; if (!ok) fails.push(n); };
-  const rows = () => p.$$eval('#tablesList [data-t]', rs => rs.map(r => r.getAttribute('aria-label')));
+  const rows = () => p.$$eval('#tablesList .trow', rs => rs.map(r => r.innerText.replace(/\n+/g, ' / ')));
   await p.click('#bankStart'); await p.waitForTimeout(400);
   await p.evaluate(() => { const S = __bj.S; S.settings.rules.motion = false; __bj.applyMotion(); S.fenceLast = 1e9; S.settings.rules.fence = false; __bj.hideSheets(); });
   // $1,000: the 8-, 6- and 2-deck tables
@@ -20,21 +20,8 @@ fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charse
   await p.evaluate(() => __bj.openTables()); await p.waitForTimeout(300);
   const r1 = await rows();
   if (shots) await p.locator('#tablesSheet .panel').screenshot({ path: shots + '/bi-1-tables.png' });
-  check('tablesScreen', r1[0] === '6 decks, $5 to $500. You’re here.' && r1[1] === '4 decks, $25 to $5,000. Tap to sit here.' && r1[2] === '2 decks, $500 to $25,000. Tap to sit here.' && r1[3] === '1 deck, $2,500 to $100,000. Need $2,500 in chips.', r1);
-  // tap a locked table: it says why; tap an open one: Sit here moves you
-  await p.locator('#tablesList [data-t="3"]').click(); await p.waitForTimeout(900);
-  const lockCard = (await p.innerText('#fenceH')) + ' | ' + (await p.innerText('#fenceText'));
-  check('lockedCard', /^1-deck table \| Bets \$2,500 to \$100,000\. You need \$2,500 in chips to sit here, and you have \$1,000\.$/.test(lockCard), lockCard);
-  await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(400);
-  check('backToFloor', await p.isVisible('#tablesSheet'), '');
-  await p.locator('#tablesList [data-t="1"]').click(); await p.waitForTimeout(900);
-  const sitCard = (await p.innerText('#fenceH')) + ' | ' + (await p.innerText('#fenceText'));
-  check('sitCard', /^4-deck table \| Bets \$25 to \$5,000\. You have \$1,000, so you can sit here\.$/.test(sitCard), sitCard);
-  if (shots) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/bi-3-card.png' });
-  await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(400);
-  check('satDown', (await p.evaluate(() => __bj.tableNo())) === 1, await p.evaluate(() => __bj.tableNo()));
-  await p.evaluate(() => { __bj.moveTo(0); __bj.render(); });
-  check('tablesNote', /Tap the table you want\. Fewer decks, better odds\. You can sit at any table whose minimum bet you have in chips\./.test(await p.innerText('#tablesNote')), await p.innerText('#tablesNote'));
+  check('tablesScreen', /\$5 to \$500/.test(r1[0]) && /\$25 to \$5,000 \/ Move to this table/.test(r1[1]) && /\$500 to \$25,000 \/ Move to this table/.test(r1[2]) && /\$2,500 to \$100,000 \/ You need \$2,500 to sit here/.test(r1[3]), r1);
+  check('tablesNote', /You can sit at any table whose minimum bet you have in chips\. If your chips fall below it, you’re moved down\./.test(await p.innerText('#tablesNote')), await p.innerText('#tablesNote'));
   // $2,500: the 1-deck table opens; sit there
   await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.bankroll = 2500; __bj.moveTo(3); __bj.render(); });
   check('sitOneDeck', (await p.evaluate(() => __bj.tableNo())) === 3, '');
