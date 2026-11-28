@@ -2195,10 +2195,10 @@ function renderTables(){
 function tableCard(i){
   const t = TABLES[i], st = tableState(i), back = () => openTables();
   const title = deckWord(t.d).replace(' ', '-').replace('decks', 'deck') + ' table', range = 'Bets ' + money(t.min) + ' to ' + money(t.max) + '.';
-  if (st === 'here') return fenceSheet(title, '', range + ' You’re sitting here.', [btn('OK', back, { primary:true })]);
-  if (S.round) return fenceSheet(title, '', range + ' Finish this hand first, then you can move.', [btn('OK', back, { primary:true })]);
+  if (st === 'here') return fenceSheet(title, '🃏', range + ' You’re sitting here.', [btn('OK', back, { primary:true })]);
+  if (S.round) return fenceSheet(title, '🃏', range + ' Finish this hand first, then you can move.', [btn('OK', back, { primary:true })]);
   if (st === 'locked') return fenceSheet(title, '🔒', range + ' You need ' + money(buyIn(i)) + ' in chips to sit here, and you have ' + money(S.bankroll + S.bet) + '.', [btn('OK', back, { primary:true })]);
-  fenceSheet(title, '', range + ' You have ' + money(S.bankroll + S.bet) + ', so you can sit here.', [btn('Cancel', back), btn('Sit here', () => { moveTo(i); hideSheets(); render(); }, { primary:true })]);
+  fenceSheet(title, '🃏', range + ' You have ' + money(S.bankroll + S.bet) + ', so you can sit here.', [btn('Cancel', back), btn('Sit here', () => { moveTo(i); hideSheets(); render(); }, { primary:true })]);
 }
 // After each hand: cut you off (move you down) if your chips fell below this table's buy-in.
 function tablesAfterHand(){
