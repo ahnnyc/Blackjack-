@@ -322,7 +322,6 @@ body.still #banner.pop{animation:none}
 .trow .st{font-size:16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .trow .need{font-size:16px;color:var(--muted);line-height:1.4}
 .trow .btn{min-height:44px}
-.betnote{margin:0 0 6px;font-size:16px;line-height:1.3;color:var(--gold);text-align:center}
 .trow .prog{height:12px;border:1.5px solid var(--gold);border-radius:7px;overflow:hidden}
 .trow .prog i{display:block;height:100%;background:var(--gold)}
 #limits, #shoeBox{cursor:pointer}
@@ -811,7 +810,6 @@ function migrate(){
   if (!(st.fix >= 2)){ S.table = 0; S.open = [true, false, false, false]; S.betAt = [0, 0, 0, 0]; st.fix = 2; }
   if (S.line && S.line.id === 'marker2' && S.line.limit < 1000000) S.line.limit = 1000000;   // the Whale marker grew to $1,000,000
   if (S.settings && TABLES[tableNo()] && S.settings.decks !== TABLES[tableNo()].d){ S.settings.decks = TABLES[tableNo()].d; }   // the tables changed (no more 8 decks): your seat's decks
-  if (S.action == null) S.action = UNLOCK[tableNo()];   // a game from before tables opened by play keeps its table
   if (S.line === undefined){ S.line = S.card > 0 ? { id:'card', name:'a credit card', limit: Math.max(10000, S.card), rate: 0.05 } : null; }   // the old credit card becomes a line
   if (!S.deals) S.deals = {};
   if (!S.day) S.day = { ok:0, all:0, bills:0 };
@@ -821,7 +819,7 @@ function migrate(){
 function freshState(amount = START){
   return { v:2, settings:{ decks:6, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
-    action:0, card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, gone:{}, level:0, gifted:0, choice:{}, line:null, playPres:0, deals:{}, day:{ ok:0, all:0, bills:0 }, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
+    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, gone:{}, level:0, gifted:0, choice:{}, line:null, playPres:0, deals:{}, day:{ ok:0, all:0, bills:0 }, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
 const rules = () => S.settings.rules;
 
@@ -1016,9 +1014,6 @@ async function deal(){
   R = { uid:1, hands:[newHand(bet)], dealer:[], hole:true, active:0, phase:'deal', ins:0, insRet:0, pendingPeek:false, peekDone:false, offerEM:false, msg:'', ghost:true };
   seen = new Set(); flipped = false;
   if (needShuffle()){ newShoe(); R.msg = 'Shuffling a fresh shoe of ' + S.settings.decks + (S.settings.decks === 1 ? ' deck' : ' decks') + '.'; render(); await shuffleAnim(); }
-  const opened = TABLES.map((t, i) => tableOpen(i));
-  if (bet <= ACTION_SHARE * S.bankroll + 1e-9) S.action = cents((S.action || 0) + bet);   // only sensible bets open tables
-  S.justOpened = TABLES.findIndex((t, i) => !opened[i] && tableOpen(i));
   S.bankroll = cents(S.bankroll - bet); S.lastBet = bet;
   S.round = R;
   R.msg = 'Dealing…';
@@ -1676,12 +1671,6 @@ function renderControls(){
         c.addEventListener('click', () => addChip(v, c));
         chips.append(c);
       });
-      // a bet too big to count toward opening tables says so before it's dealt
-      if (S.bet > ACTION_SHARE * S.bankroll + 1e-9 && TABLES.some((t, i) => !tableOpen(i))){
-        const note = document.createElement('p'); note.className = 'betnote'; note.id = 'betNote';
-        note.textContent = 'Over ' + pct(ACTION_SHARE) + ' of your chips: this bet won’t count toward opening new tables.';
-        a.append(note);
-      }
       a.append(chips);
       const canRe = S.lastBet >= minBet() && !S.bet && Math.min(S.lastBet, maxBet()) <= S.bankroll;
       a.append(row(
@@ -2161,13 +2150,13 @@ function sitDown(){
 // To sit at a table you need chips for its minimum bet; the 2- and 1-deck tables' minimums ($500, $2,500) keep a new
 // player from jumping straight to their better odds. Fall below a table's minimum and you're cut off: moved down.
 const buyIn = i => TABLES[i].min;
-// Tables open as you play: bet UNLOCK[i] in all this game to open table i. Only bets of up to ACTION_SHARE of your chips
-// count, and starting over resets it, so max betting and starting over is the slowest way up (simulated, 300 players:
-// steady play opens 4 decks in about 200 hands, 2 decks in 1,200 and 1 deck in 7,000-9,000; max betting with restarts
-// 300, 5,500 and 13,000 hands, half never reaching 1 deck in 30,000 hands and needing about 400 restarts; today's
-// rules let it reach 1 deck in 4 hands).
-const UNLOCK = [0, 5000, 25000, 100000], ACTION_SHARE = 0.05;
-const tableOpen = i => (S.action || 0) >= UNLOCK[i];
+// Tables open as you play: table i opens after UNLOCK[i] hands in all, counted across every game (starting over keeps
+// them), whatever you bet, so volume is rewarded and no betting trick or restart opens a table sooner. Simulated: they
+// open long before a climbing player needs the bigger bets, so the climb to Super Whale is unchanged (median about
+// 17,700 hands); a player who won every hand would still need about 1,100 to 1,650.
+const UNLOCK = [0, 200, 1000, 5000];
+const handsPlayed = () => history.length;
+const tableOpen = i => handsPlayed() >= UNLOCK[i];
 function canSit(i){ return tableOpen(i) && S.bankroll + S.bet >= buyIn(i); }
 function moveTo(i){
   if (S.round || i === tableNo()) return;
@@ -2181,7 +2170,7 @@ function openTables(){
 }
 function renderTables(){
   const here = tableNo(), list = $('tablesList'); list.replaceChildren();
-  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Tables open as you play: only bets of ' + pct(ACTION_SHARE) + ' of your chips or less count, and starting over starts again from zero.';
+  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Tables open as you play: every hand counts, whatever you bet, and tables stay open if you start over.';
   TABLES.forEach((t, i) => {
     const open = tableOpen(i), row = document.createElement('div');
     row.className = 'trow' + (i === here ? ' here' : '') + (open ? '' : ' locked');
@@ -2191,11 +2180,11 @@ function renderTables(){
     th.append(b, sp); row.append(th);
     if (i === here){ const st = document.createElement('div'); st.className = 'st'; st.textContent = '✓ You’re here'; row.append(st); }
     if (!open){   // how far along you are
-      const done = Math.min(S.action || 0, UNLOCK[i]), bar = document.createElement('div'); bar.className = 'prog';
+      const done = Math.min(handsPlayed(), UNLOCK[i]), bar = document.createElement('div'); bar.className = 'prog';
       bar.setAttribute('role', 'progressbar'); bar.setAttribute('aria-valuemin', '0'); bar.setAttribute('aria-valuemax', String(UNLOCK[i])); bar.setAttribute('aria-valuenow', String(done));
       const fill = document.createElement('i'); fill.style.width = (100 * done / UNLOCK[i]).toFixed(1) + '%'; bar.append(fill);
       const need = document.createElement('div'); need.className = 'need num';
-      need.textContent = '🔒 Opens after ' + money(UNLOCK[i]) + ' in bets. You’ve bet ' + money(done) + '.';
+      need.textContent = '🔒 Opens after ' + UNLOCK[i].toLocaleString('en-US') + ' hands. You’ve played ' + done.toLocaleString('en-US') + '.';
       row.append(need, bar);
     } else if (i !== here){
       const ok = canSit(i) && !S.round;
@@ -2208,9 +2197,11 @@ function renderTables(){
 // After each hand: cut you off (move you down) if your chips fell below this table's buy-in.
 function tablesAfterHand(){
   if (S.round || S.dead) return false;
-  if (S.justOpened >= 0){
-    const t = TABLES[S.justOpened]; S.justOpened = -1;
-    queueSheet(() => { guyOffer = false; fenceSheet('A new table is open', '🎉', 'You’ve bet ' + money(UNLOCK[TABLES.indexOf(t)]) + ' this game, so the <b>' + deckTable(t.d) + '</b> is open to you: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks, better odds.' + (canSit(TABLES.indexOf(t)) ? '' : ' You need ' + money(t.min) + ' in chips to sit there.'), [btn('Not now', () => hideSheets()), btn('See tables', () => openTables(), { primary:true })]); });
+  const nOpen = TABLES.filter((t, i) => tableOpen(i)).length;
+  if (S.openSeen == null) S.openSeen = nOpen;   // a game from before this: no message for tables already open
+  if (nOpen > S.openSeen){
+    const k = nOpen - 1, t = TABLES[k]; S.openSeen = nOpen;
+    queueSheet(() => { guyOffer = false; fenceSheet('A new table is open', '🎉', 'You’ve played ' + UNLOCK[k].toLocaleString('en-US') + ' hands, so the <b>' + deckTable(t.d) + '</b> is open to you: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks, better odds.' + (canSit(k) ? '' : ' You need ' + money(t.min) + ' in chips to sit there.'), [btn('Not now', () => hideSheets()), btn('See tables', () => openTables(), { primary:true })]); });
   }
   // can't cover the minimum here: down to the best open table you can afford
   if (tableNo() > 0 && S.bankroll + S.bet < buyIn(tableNo())){   // only chips can move you down; an opened table stays open

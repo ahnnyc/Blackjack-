@@ -38,7 +38,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   // tables open as you play; nothing says what a rank must bet
   await p.evaluate(() => __bj.openTables()); await p.waitForTimeout(200);
   const rows = await p.$$eval('#tablesList .trow', rs => rs.map(r => r.innerText.replace(/\n+/g, ' / ')));
-  check('allOpen', /You’re here/i.test(rows[0]) && /Opens after \$5,000 in bets/.test(rows[1]) && /Opens after \$25,000 in bets/.test(rows[2]) && /Opens after \$100,000 in bets/.test(rows[3]), rows);
+  check('allOpen', /You’re here/i.test(rows[0]) && /Opens after 200 hands/.test(rows[1]) && /Opens after 1,000 hands/.test(rows[2]) && /Opens after 5,000 hands/.test(rows[3]), rows);
   await p.evaluate(() => __bj.hideSheets());
   await playHand(); await sheets();
   // a Whale may sit at the 6-deck table and bet $5
