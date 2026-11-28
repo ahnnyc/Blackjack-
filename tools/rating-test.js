@@ -35,21 +35,21 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
     while (H.filter(r => r.s === S.session).length < 149) H.push({ ...last, t: Date.now() }); S.staySeen = 149; S.day = day; }, day);
   await p.click('#bankStart'); await p.waitForTimeout(400);
   await p.evaluate(() => { const S = __bj.S; S.settings.rules.motion = false; __bj.applyMotion(); S.fenceLast = 1e9; S.settings.rules.fence = false; });
-  // every table open from the start; nothing says what a rank must bet
+  // tables open as you play; nothing says what a rank must bet
   await p.evaluate(() => __bj.openTables()); await p.waitForTimeout(200);
   const rows = await p.$$eval('#tablesList .trow', rs => rs.map(r => r.innerText.replace(/\n+/g, ' / ')));
-  check('allOpen', /You’re here/i.test(rows[0]) && /Move to this table/.test(rows[1]) && /Move to this table/.test(rows[2]) && /You need \$2,500 to sit here/.test(rows[3]), rows);
+  check('allOpen', /You’re here/i.test(rows[0]) && /Opens after \$5,000 in bets/.test(rows[1]) && /Opens after \$25,000 in bets/.test(rows[2]) && /Opens after \$100,000 in bets/.test(rows[3]), rows);
   await p.evaluate(() => __bj.hideSheets());
   await playHand(); await sheets();
   // a Whale may sit at the 6-deck table and bet $5
   await p.evaluate(() => { const S = __bj.S; S.playPres = 300000; S.bankroll = 200000; S.people = { candy:true, crew:true }; __bj.render(); });
-  check('whaleAnyBet', (await p.evaluate(() => [__bj.rankNo(), __bj.tableNo(), __bj.minBet(), __bj.maxBet()])).join() === '5,0,5,500', await p.evaluate(() => [__bj.rankNo(), __bj.tableNo(), __bj.minBet(), __bj.maxBet()]));
-  // a low day: averaging $500 as a Whale
-  await endOfDay({ ok:149, all:149, bills:1000, bet:149 * 500, hands:149, lvl:2500 });
-  await playHand(500);
+  check('whaleAnyBet', (await p.evaluate(() => [__bj.rankNo(), __bj.tableNo(), __bj.minBet(), __bj.maxBet()])).join() === '5,0,5,250', await p.evaluate(() => [__bj.rankNo(), __bj.tableNo(), __bj.minBet(), __bj.maxBet()]));
+  // a low day: averaging $250 as a Whale
+  await endOfDay({ ok:149, all:149, bills:1000, bet:149 * 250, hands:149, lvl:2500 });
+  await playHand(250);
   const low = await sheets('low-whale');
   const lowMsg = low.find(s => /^Low bets/.test(s)) || '';
-  check('lowDay', /Your average bet today was \$500, under what the casino expects from a Whale \(\$2,500\)\. \/ Your sponsor, a watch brand, paid nothing \(\$[\d,.]+ missed\)\. \/ The casino stopped comping you: \$[\d,]+ for today’s room, meals and travel, taken from your chips\. \/ Your eye candy and entourage left\.$/.test(lowMsg), low);
+  check('lowDay', /Your average bet today was \$250, under what the casino expects from a Whale \(\$2,500\)\. \/ Your sponsor, a watch brand, paid nothing \(\$[\d,.]+ missed\)\. \/ The casino stopped comping you: \$[\d,]+ for today’s room, meals and travel, taken from your chips\. \/ Your eye candy and entourage left\.$/.test(lowMsg), low);
   check('peopleGone', JSON.stringify(await p.evaluate(() => __bj.S.people)) === '{}', await p.evaluate(() => __bj.S.people));
   check('noWarningBefore', !low.some(s => /expects|average bet/.test(s) && !/^Low bets/.test(s)), low);
   // a good day at the Whale's level: the sponsor pays

@@ -95,7 +95,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   // 7) no minimum by rank: a Barracuda at the 6-deck table can bet the table's $5
   await p.evaluate(() => { __bj.S.card = 0; __bj.S.playPres = 5000; __bj.render(); }); await closeAll();
   check('rankMinimum', (await p.evaluate(() => [__bj.rankNo(), __bj.minBet()])).join() === '2,5', await p.evaluate(() => [__bj.rankNo(), __bj.minBet()]));
-  check('limitsSign', /\$5–\$500/.test(await p.textContent('#limitsV')), await p.textContent('#limitsV'));
+  check('limitsSign', /\$5–\$250/.test(await p.textContent('#limitsV')), await p.textContent('#limitsV'));
   // 8) the juice man: takes stuff when you can't pay, the grave when stuff can't cover it
   await p.evaluate(() => { const S = __bj.S; S.card = S.line.limit; S.shark = 2000; S.sharkNext = __bj.history.filter(x => x.s === S.session).length + 1; S.bankroll = 60; S.stash.push({ id: 'z', oid: 'watch', item: 'a gold watch', art: '⌚', paid: 2500 }); __bj.render(); });
   await playHand(); await p.waitForTimeout(500);
