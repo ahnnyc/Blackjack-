@@ -20,7 +20,7 @@ fs.writeFileSync(dir + '/who-page.html', '<!doctype html><html><head><meta chars
   check('barracuda', /You’re a Barracuda, 60% of the way to Swordfish.*You live in the apartment you own, eat at a diner and ride in the used car you own: \$45 a day in all\. \/ Chips: \$20,000\. You owe \$3,000\./,
     await show('barracuda', () => { const S = __bj.S; S.playPres = 2000; S.bankroll = 20000; S.card = 3000; S.line = { id:'card2', name:'a gold card', limit:25000, rate:0.05 };
       S.stash = [{ item:'an apartment', paid:2500, oid:'apartment' }, { item:'a used car', paid:4000, oid:'usedcar' }, { item:'a gold watch', paid:2500, oid:'watch' }]; }));
-  check('whale', /You’re a Whale.*You pay \$1,500 a night for a villa, have the personal chef you employ cook for you and get around by limo with a driver: \$2,300 a day in all\. With you: eye candy and an entourage\./,
+  check('whale', /You’re a Whale.*You pay \$375 a night for a villa \(75% comped\), have the personal chef you employ cook for you and get around by limo with a driver: \$575 a day in all\. With you: eye candy and an entourage\./,
     await show('whale', () => { const S = __bj.S; S.card = 0; S.playPres = 250000; S.stash = [{ item:'a personal chef', paid:15000, oid:'chef' }]; S.people = { candy:true, crew:true }; S.bankroll = 400000; }));
   check('super', /You’re a Super Whale\. \/ You stay in the penthouse, eat anywhere you like and get around in your private car and driver, all comped\./,
     await show('super', () => { const S = __bj.S; S.playPres = 6000000; S.stash = []; S.people = {}; }));

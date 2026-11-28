@@ -21,14 +21,14 @@ fs.writeFileSync(dir + '/ch-page.html', '<!doctype html><html><head><meta charse
   if (shots) await p.locator('#cashSheet .panel').screenshot({ path: shots + '/choice-1-list.png' });
   await p.locator('#expList button.er', { hasText: 'Room' }).click(); await p.waitForTimeout(900);
   const opts = await p.$$eval('#fenceText .opt .btn', bs => bs.map(b => b.innerText.replace(/\n+/g, ' | ')));
-  check('roomChoices', /^Room|Your room/.test(await p.textContent('#fenceH')) && opts.some(x => /^A villa \| ✓ Now \| \$1,500 a night, a Whale’s$/.test(x)) && opts.some(x => /^A tower suite \| \$799 a night$/.test(x)) && !opts.some(x => /couch/.test(x)), opts);
+  check('roomChoices', /^Room|Your room/.test(await p.textContent('#fenceH')) && opts.some(x => /^A villa \| ✓ Now \| \$375 a night, a Whale’s, 75% comped$/.test(x)) && opts.some(x => /^A tower suite \| \$200 a night, 75% comped$/.test(x)) && !opts.some(x => /couch/.test(x)), opts);
   if (shots) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/choice-2-room.png' });
   await p.locator('#fenceText .opt .btn', { hasText: 'A tower suite' }).click(); await p.waitForTimeout(400);
   const r1 = await rows();
-  check('roomChanged', r1.some(x => /^\[tap\] Room \| A tower suite \| Cheaper, but your sponsor won’t pay while you live below your rank\. \| \$799 ›$/.test(x)) && (await p.evaluate(() => __bj.rankNo())) === 5, r1);
+  check('roomChanged', r1.some(x => /^\[tap\] Room \| A tower suite \| Cheaper, but your sponsor won’t pay while you live below your rank\. \| \$200 ›$/.test(x)) && (await p.evaluate(() => __bj.rankNo())) === 5, r1);
   await p.evaluate(() => { __bj.hideSheets(); __bj.S.day = { ok:0, all:0, bills:0 }; __bj.stayBill(3, 1); }); await p.waitForTimeout(300);
-  check('billFollows', /A night in a tower suite: \$799/.test(await p.innerText('#fenceText')), await p.innerText('#fenceText'));
-  check('lifeFollows', /You pay \$799 a night for a tower suite/.test(await p.evaluate(() => __bj.lifeLine(__bj.rankNo()))), await p.evaluate(() => __bj.lifeLine(__bj.rankNo())));
+  check('billFollows', /A night in a tower suite: \$200 \(the casino comps \$599\)/.test(await p.innerText('#fenceText')), await p.innerText('#fenceText'));
+  check('lifeFollows', /You pay \$200 a night for a tower suite \(75% comped\)/.test(await p.evaluate(() => __bj.lifeLine(__bj.rankNo()))), await p.evaluate(() => __bj.lifeLine(__bj.rankNo())));
   // the sponsor pays nothing on a day you lived below your rank
   await p.evaluate(() => { __bj.hideSheets(); __bj.S.day = { ok:100, all:100, bills:1000, hands:0, below:1 }; __bj.sponsorDay(1); }); await p.waitForTimeout(900);
   const sp1 = await p.innerText('#fenceText');
@@ -38,7 +38,7 @@ fs.writeFileSync(dir + '/ch-page.html', '<!doctype html><html><head><meta charse
   await p.evaluate(() => { __bj.hideSheets(); __bj.openCashier(); }); await p.waitForTimeout(300);
   await p.locator('#expList button.er', { hasText: 'Room' }).click(); await p.waitForTimeout(900);
   await p.locator('#fenceText .opt .btn', { hasText: 'A villa' }).click(); await p.waitForTimeout(400);
-  check('backUp', (await rows()).some(x => /^\[tap\] Room \| A villa \| Keeps your sponsor paying\. \| \$1,500 ›$/.test(x)), await rows());
+  check('backUp', (await rows()).some(x => /^\[tap\] Room \| A villa \| Keeps your sponsor paying\. \| \$375 ›$/.test(x)), await rows());
   // at your rank again, the sponsor pays
   const c0 = await p.evaluate(() => __bj.S.bankroll);
   await p.evaluate(() => { __bj.hideSheets(); __bj.S.day = { ok:100, all:100, bills:1000, hands:0 }; __bj.sponsorDay(2); }); await p.waitForTimeout(900);

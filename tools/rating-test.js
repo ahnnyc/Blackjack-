@@ -49,7 +49,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   await playHand(500);
   const low = await sheets('low-whale');
   const lowMsg = low.find(s => /^Low bets/.test(s)) || '';
-  check('lowDay', /Your average bet today was \$500, under what the casino expects from a Whale \(\$2,500\)\. \/ Your sponsor, a watch brand, paid nothing \(\$[\d,]+ missed\)\. \/ Your eye candy and entourage left\.$/.test(lowMsg), low);
+  check('lowDay', /Your average bet today was \$500, under what the casino expects from a Whale \(\$2,500\)\. \/ Your sponsor, a watch brand, paid nothing \(\$[\d,.]+ missed\)\. \/ The casino stopped comping you: \$[\d,]+ for today’s room, meals and travel, taken from your chips\. \/ Your eye candy and entourage left\.$/.test(lowMsg), low);
   check('peopleGone', JSON.stringify(await p.evaluate(() => __bj.S.people)) === '{}', await p.evaluate(() => __bj.S.people));
   check('noWarningBefore', !low.some(s => /expects|average bet/.test(s) && !/^Low bets/.test(s)), low);
   // a good day at the Whale's level: the sponsor pays
