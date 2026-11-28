@@ -819,7 +819,7 @@ function migrate(){
 function freshState(amount = START){
   return { v:2, settings:{ decks:6, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
-    card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, gone:{}, level:0, gifted:0, choice:{}, line:null, playPres:0, deals:{}, day:{ ok:0, all:0, bills:0 }, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
+    spent:0, card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, gone:{}, level:0, gifted:0, choice:{}, line:null, playPres:0, deals:{}, day:{ ok:0, all:0, bills:0 }, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
 const rules = () => S.settings.rules;
 
@@ -2150,12 +2150,14 @@ function sitDown(){
 // To sit at a table you need chips for its minimum bet; the 2- and 1-deck tables' minimums ($500, $2,500) keep a new
 // player from jumping straight to their better odds. Fall below a table's minimum and you're cut off: moved down.
 const buyIn = i => TABLES[i].min;
-// Tables open as you play: table i opens after UNLOCK[i] hands in all, counted across every game (starting over keeps
-// them), whatever you bet, so volume is rewarded and no betting trick or restart opens a table sooner. Simulated: they
-// open long before a climbing player needs the bigger bets, so the climb to Super Whale is unchanged (median about
-// 17,700 hands); a player who won every hand would still need about 1,100 to 1,650.
-const UNLOCK = [0, 200, 1000, 5000];
-const handsPlayed = () => history.length;
+// Tables open as you play: table i opens after UNLOCK[i] hands this game, whatever you bet, so volume is rewarded. What
+// you buy speeds it up: every SPEND_PER_HAND dollars spent on things counts as a hand, at the risk of running short.
+// STANDING RULE (Mike, 2026-11-28): starting over loses everything, hands, tables and purchases included, so no restart
+// ever opens a table sooner. Simulated: tables open long before a climbing player needs the bigger bets, so the climb to
+// Super Whale is unchanged (median about 17,700 hands); a player who won every hand would still need 1,100 to 1,650.
+const UNLOCK = [0, 200, 1000, 5000], SPEND_PER_HAND = 10;
+const boughtHands = () => Math.floor((S.spent || 0) / SPEND_PER_HAND);
+const handsPlayed = () => handsThisGame() + boughtHands();
 const tableOpen = i => handsPlayed() >= UNLOCK[i];
 function canSit(i){ return tableOpen(i) && S.bankroll + S.bet >= buyIn(i); }
 function moveTo(i){
@@ -2170,7 +2172,7 @@ function openTables(){
 }
 function renderTables(){
   const here = tableNo(), list = $('tablesList'); list.replaceChildren();
-  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Tables open as you play: every hand counts, whatever you bet, and tables stay open if you start over.';
+  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Tables open as you play: every hand counts, whatever you bet, and every ' + money(SPEND_PER_HAND) + ' you spend on things counts as a hand. Starting over starts everything from zero.';
   TABLES.forEach((t, i) => {
     const open = tableOpen(i), row = document.createElement('div');
     row.className = 'trow' + (i === here ? ' here' : '') + (open ? '' : ' locked');
@@ -2184,7 +2186,7 @@ function renderTables(){
       bar.setAttribute('role', 'progressbar'); bar.setAttribute('aria-valuemin', '0'); bar.setAttribute('aria-valuemax', String(UNLOCK[i])); bar.setAttribute('aria-valuenow', String(done));
       const fill = document.createElement('i'); fill.style.width = (100 * done / UNLOCK[i]).toFixed(1) + '%'; bar.append(fill);
       const need = document.createElement('div'); need.className = 'need num';
-      need.textContent = '🔒 Opens after ' + UNLOCK[i].toLocaleString('en-US') + ' hands. You’ve played ' + done.toLocaleString('en-US') + '.';
+      need.textContent = '🔒 Opens after ' + UNLOCK[i].toLocaleString('en-US') + ' hands. You’ve played ' + handsThisGame().toLocaleString('en-US') + (boughtHands() ? ', plus ' + boughtHands().toLocaleString('en-US') + ' from what you’ve bought' : '') + '.';
       row.append(need, bar);
     } else if (i !== here){
       const ok = canSit(i) && !S.round;
@@ -2201,7 +2203,7 @@ function tablesAfterHand(){
   if (S.openSeen == null) S.openSeen = nOpen;   // a game from before this: no message for tables already open
   if (nOpen > S.openSeen){
     const k = nOpen - 1, t = TABLES[k]; S.openSeen = nOpen;
-    queueSheet(() => { guyOffer = false; fenceSheet('A new table is open', '🎉', 'You’ve played ' + UNLOCK[k].toLocaleString('en-US') + ' hands, so the <b>' + deckTable(t.d) + '</b> is open to you: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks, better odds.' + (canSit(k) ? '' : ' You need ' + money(t.min) + ' in chips to sit there.'), [btn('Not now', () => hideSheets()), btn('See tables', () => openTables(), { primary:true })]); });
+    queueSheet(() => { guyOffer = false; fenceSheet('A new table is open', '🎉', 'You’ve reached ' + UNLOCK[k].toLocaleString('en-US') + ' hands' + (boughtHands() ? ' (counting what you’ve bought)' : '') + ', so the <b>' + deckTable(t.d) + '</b> is open to you: bets ' + money(t.min) + ' to ' + money(t.max) + '. Fewer decks, better odds.' + (canSit(k) ? '' : ' You need ' + money(t.min) + ' in chips to sit there.'), [btn('Not now', () => hideSheets()), btn('See tables', () => openTables(), { primary:true })]); });
   }
   // can't cover the minimum here: down to the best open table you can afford
   if (tableNo() > 0 && S.bankroll + S.bet < buyIn(tableNo())){   // only chips can move you down; an opened table stays open
@@ -2402,9 +2404,9 @@ addEventListener('visibilitychange', () => {
 function openBank(first, leave){
   $('bankH').textContent = first ? 'Vegas Whale' : leave ? 'Leave town?' : 'Start over?';
   $('bankNote').innerHTML = first
-    ? 'You start with $1,000.<br><br>' + nextGoal() + '<br><br>Fewer decks mean better odds. To sit at one, you need its minimum bet in chips: tap the Limits sign.'
-    : leave ? 'Everything is wiped: chips, debts, stuff, people and rank. You start again from the beginning with $1,000. Your record is kept.'
-    : 'You start again from the beginning with $1,000. Debts, stuff, people and rank are cleared. Your record is kept.';
+    ? 'You start with $1,000.<br><br>' + nextGoal() + '<br><br>Fewer decks mean better odds. More tables open as you play: tap the Limits sign.'
+    : leave ? 'Everything is wiped: chips, debts, stuff, people, rank and the tables you’ve opened. You start again from the beginning with $1,000. Your record is kept.'
+    : 'You lose everything: chips, debts, stuff, people, rank and the tables you’ve opened. You start again from the beginning with $1,000. Your record is kept.';
   $('bankStart').textContent = first ? 'Sit down with $1,000' : leave ? 'Leave town' : 'Start over with $1,000';
   $('bankCancel').hidden = !!first;
   hideSheets(); $('bankSheet').hidden = false;
@@ -2761,6 +2763,11 @@ function fenceOffer(o){
   if (o.kind === 'credit') return fenceSheet(cap1(o.name.replace(/^(a|an) /, '')), o.art, (MARKER_NEEDS[o.id] ? 'The casino has been watching how you live: ' + esc(andList(luxuryHeld())) + '. It’s offering you credit.' : 'A line of credit.') + bullets(creditLines(o)),
     [btn('No thanks', () => guyDecline()), btn('Take it', () => takeLine(o), { primary:true })]);
   const lines = o.kind === 'save' ? saveLines(o) : prestigeLines(o.price);
+  const next = TABLES.findIndex((t, i) => !tableOpen(i)), hh = Math.floor(o.price / SPEND_PER_HAND);
+  if (next > 0 && hh > 0){
+    const opens = TABLES.map((t, i) => i).filter(i => !tableOpen(i) && handsPlayed() + hh >= UNLOCK[i]).map(i => TABLES[i].d + '-deck');
+    lines.push('Counts as ' + hh.toLocaleString('en-US') + ' hands' + (opens.length ? ': enough to open the ' + andList(opens) + ' table' + (opens.length > 1 ? 's' : '') : ' toward opening the ' + deckTable(TABLES[next].d)) + '.');
+  }
   fenceSheet(o.title || cap1(o.name.replace(/^(a|an) /, '')), o.art, 'Price: <b>' + money(o.price) + '</b>' + (o.days ? ' for ' + o.days + ' days' : '') + '.' + bullets(lines),
     [btn('No thanks', () => guyDecline()), btn((o.verb || 'Buy') + ' for ' + money(o.price), () => fenceBuy(o), { primary:true })]);
 }
@@ -2777,6 +2784,7 @@ function fenceBuy(o){
   guyOffer = false;
   if (o.price > S.bankroll || S.round) { hideSheets(); return; }
   const before = moneyMove(-o.price, 'buy', { item: o.name });
+  S.spent = cents((S.spent || 0) + o.price);   // buying speeds up opening tables (this game only)
   if (o.kind === 'save' && !o.keep){
     S.deals[o.id] = handsThisGame() + o.days * DAY;
     touch(); saveLocal(); saveCloudState(); hideSheets(); render();

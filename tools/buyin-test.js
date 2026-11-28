@@ -1,8 +1,8 @@
-// Tables open as you play: 4 decks after 200 hands in all, 2 decks after 1,000, 1 deck after 5,000. Every hand counts,
-// whatever you bet, and starting over keeps them. You also need a table's minimum in chips to sit, and
+// Tables open as you play: 4 decks after 200 hands this game, 2 decks after 1,000, 1 deck after 5,000. Every hand counts,
+// whatever you bet; every $10 spent on things counts as a hand; starting over loses everything (a standing rule). You also need a table's minimum in chips to sit, and
 // falling below it moves you down. The 6-deck table is $5 to $250. Usage: node tools/buyin-test.js [shotsdir]
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname, shots = process.argv[2];
-const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, hideSheets, render, applyMotion, openTables, moveTo, tableNo, tablesAfterHand, canSit, migrate, TABLES, newGame, maxBet };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, hideSheets, render, applyMotion, openTables, moveTo, tableNo, tablesAfterHand, canSit, migrate, TABLES, newGame, maxBet, fenceOffer, OFFERS };\n";
 fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 (async () => {
@@ -47,13 +47,13 @@ fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charse
   if (shots) await p.locator('#tablesSheet .panel').screenshot({ path: shots + '/bi-1-tables.png' });
   check('tablesScreen', /^6 decks \/ \$5 to \$250 \/ ✓ YOU’RE HERE$/i.test(r1[0]) && r1[1] === '4 decks / $25 to $5,000 / 🔒 Opens after 200 hands. You’ve played 140.' && /Opens after 1,000 hands\. You’ve played 140\./.test(r1[2]) && /Opens after 5,000 hands/.test(r1[3]), r1);
   check('progressBar', (await p.evaluate(() => document.querySelector('#tablesList .trow:nth-child(2) .prog').getAttribute('aria-valuenow'))) === '140', '');
-  check('tablesNote', /Tables open as you play: every hand counts, whatever you bet, and tables stay open if you start over\./.test(await p.innerText('#tablesNote')), await p.innerText('#tablesNote'));
+  check('tablesNote', /Tables open as you play: every hand counts, whatever you bet, and every \$10 you spend on things counts as a hand\. Starting over starts everything from zero\./.test(await p.innerText('#tablesNote')), await p.innerText('#tablesNote'));
   // the 200th hand opens the 4-deck table, with a message
   await p.evaluate(() => { __bj.hideSheets(); __bj.S.bankroll = 1000; }); await pad(199);
   await playHand(25); await p.waitForTimeout(800);
   const opened = await sheet();
   if (shots && opened) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/bi-2-opened.png' });
-  check('openedMessage', /^A new table is open \| You’ve played 200 hands, so the 4-deck table is open to you: bets \$25 to \$5,000\./.test(opened || '') && (await p.evaluate(() => __bj.canSit(1))), opened);
+  check('openedMessage', /^A new table is open \| You’ve reached 200 hands, so the 4-deck table is open to you: bets \$25 to \$5,000\./.test(opened || '') && (await p.evaluate(() => __bj.canSit(1))), opened);
   await p.evaluate(() => { __bj.hideSheets(); __bj.openTables(); }); await p.waitForTimeout(300);
   if (shots) await p.locator('#tablesSheet .panel').screenshot({ path: shots + '/bi-3-tables-open.png' });
   check('moveRow', /Move to this table/.test((await rows())[1]), await rows());
@@ -64,9 +64,20 @@ fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charse
   const cut = await sheet();
   check('cutOff', (await p.evaluate(() => __bj.tableNo())) === 2 && /^Cut off \| The 1-deck table’s minimum bet is \$2,500, and you have less than that\. You’re now at the 2-deck table/.test(cut || ''), [await p.evaluate(() => __bj.tableNo()), cut]);
   await p.evaluate(() => __bj.hideSheets());
-  // starting over keeps the tables you've opened (only chips limit where you sit)
+  // starting over loses everything, opened tables included
   await p.evaluate(() => { __bj.newGame(false); }); await p.waitForTimeout(400);
-  check('startOverKeeps', (await p.evaluate(() => [__bj.tableNo(), __bj.canSit(1), __bj.canSit(2), __bj.canSit(3)])).join() === '0,true,true,false', await p.evaluate(() => [__bj.tableNo(), __bj.canSit(1), __bj.canSit(2), __bj.canSit(3)]));
+  check('startOverLosesTables', (await p.evaluate(() => [__bj.tableNo(), __bj.canSit(1), __bj.canSit(2), __bj.canSit(3), __bj.S.spent])).join() === '0,false,false,false,0', await p.evaluate(() => [__bj.tableNo(), __bj.canSit(1), __bj.canSit(2), __bj.canSit(3), __bj.S.spent]));
+  // buying things counts: a $600 suit is 60 hands, and its offer says so
+  await p.evaluate(() => { __bj.hideSheets(); __bj.S.bankroll = 1000; __bj.S.settings.rules.fence = true; __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'suit')); }); await p.waitForTimeout(900);
+  const suit = await sheet();
+  check('offerSaysHands', /Counts as 60 hands toward opening the 4-deck table\./.test(suit || ''), suit);
+  if (shots && suit) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/bi-4-suit.png' });
+  await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(500);
+  await p.evaluate(() => { __bj.hideSheets(); __bj.openTables(); }); await p.waitForTimeout(300);
+  const r4 = await rows();
+  if (shots) await p.locator('#tablesSheet .panel').screenshot({ path: shots + '/bi-5-bought.png' });
+  check('boughtCounts', r4[1] === '4 decks / $25 to $5,000 / 🔒 Opens after 200 hands. You’ve played 0, plus 60 from what you’ve bought.', r4);
+  await p.evaluate(() => __bj.hideSheets());
   // a game saved before this keeps the table it was at; the tables are 6, 4, 2 and 1 deck
   await p.evaluate(() => { const S = __bj.S; S.table = 2; S.settings.decks = 8; __bj.migrate(); });
   check('oldSave', (await p.evaluate(() => [__bj.S.settings.decks, __bj.TABLES.map(t => t.d).join('')])).join() === '2,6421', await p.evaluate(() => [__bj.S.settings.decks, __bj.TABLES.map(t => t.d).join('')]));

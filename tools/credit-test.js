@@ -23,7 +23,7 @@ fs.writeFileSync(dir + '/cr-page.html', '<!doctype html><html><head><meta charse
   // 2. the lease offer says what it does for credit
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'carlease'))); await p.waitForTimeout(900);
   const lease = await sheet(); await shot('1-lease');
-  check('leaseSaysCredit', /^Lease a luxury car for a month \| Price: \$1,500 for 30 days\. \/ • A luxury car tells the casino you’re a big player, so it may offer you more credit at a better rate\. \/ • Covers getting around for 30 days: \$2,250 of bills for \$1,500, saving \$750\.$/.test(lease || ''), lease);
+  check('leaseSaysCredit', /^Lease a luxury car for a month \| Price: \$1,500 for 30 days\. \/ • A luxury car tells the casino you’re a big player, so it may offer you more credit at a better rate\. \/ • Covers getting around for 30 days: \$2,250 of bills for \$1,500, saving \$750\.( \/ • Counts as [\d,]+ hands[^/]*)?$/.test(lease || ''), lease);
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(400);
   check('markerOffered', (await offerIds()).includes('marker'), await offerIds());
   await p.evaluate(() => { __bj.hideSheets(); __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'marker')); }); await p.waitForTimeout(900);
