@@ -1,6 +1,6 @@
 // The casino rates your bets: no minimum by rank, but a day whose average bet is under what your rank is expected to bet
 // costs the sponsor's pay, comps, and eye candy and the entourage, and the end-of-day message says why. Nobody is warned
-// beforehand. Ranking up mid-day is rated against the lower level. Every table is open to anyone who can cover its minimum.
+// beforehand. Ranking up mid-day is rated against the lower level. A table needs 20 times its minimum bet in chips to sit (the 8-deck table only its minimum).
 // Usage: node tools/rating-test.js   (reads tools/game.html)
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
 const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, prestige, minBet, maxBet, rankNo, hideSheets, render, applyMotion, openTables, tableNo, moveTo };\n";
@@ -38,7 +38,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   // every table open from the start; nothing says what a rank must bet
   await p.evaluate(() => __bj.openTables()); await p.waitForTimeout(200);
   const rows = await p.$$eval('#tablesList .trow', rs => rs.map(r => r.innerText.replace(/\n+/g, ' / ')));
-  check('allOpen', /You’re here/i.test(rows[0]) && rows.slice(1).every(r => /Move to this table/.test(r)), rows);
+  check('allOpen', /You’re here/i.test(rows[0]) && /Move to this table/.test(rows[1]) && /You need \$2,000 to sit here/.test(rows[2]) && /You need \$10,000 to sit here/.test(rows[3]), rows);
   await p.evaluate(() => __bj.hideSheets());
   await playHand(); await sheets();
   // a Whale may sit at the 8-deck table and bet $5
