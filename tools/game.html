@@ -297,16 +297,9 @@ body.still #banner.pop{animation:none}
 .scard.fly{position:fixed;z-index:60;pointer-events:none;width:150px}
 .scard.fly .art{font-size:58px} .scard.fly .nm{font-size:16px} .scard.fly .pd{font-size:15px}
 #stuffNav span{flex:none;min-width:70px;text-align:center;align-self:center;font-size:17px;font-weight:600}
-.tlist{display:flex;flex-direction:column;gap:10px}
-.trow{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
-.trow.here{border:3px solid var(--gold)}
-.trow.locked{border-style:dashed}
-.trow .th{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-.trow .th b{font-size:20px}
-.trow .th span{font-size:17px;font-weight:600}
-.trow .st{font-size:16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
-.trow .need{font-size:16px;color:var(--muted);line-height:1.4}
-.trow .btn{min-height:44px}
+.tlist svg{display:block;width:100%;height:auto;border-radius:10px}
+.tlist [data-t]{cursor:pointer;outline:none}
+.tlist [data-t]:focus-visible .tfocus{stroke:#fff;stroke-width:3}
 #limits, #shoeBox{cursor:pointer}
 .fence-art{font-size:64px;line-height:1;text-align:center;margin:4px 0}
 .fence-say{font-size:19px;line-height:1.4;margin:0}
@@ -2143,26 +2136,69 @@ function moveTo(i){
 function openTables(){
   hideSheets(); renderTables(); $('tablesSheet').hidden = false;
 }
+// The Tables screen is a casino floor seen from above, one table of each kind; tap a table to sit there.
+const FELT = [['#5f7a5a','#3d5139'], ['#2f62a8','#1b3d70'], ['#3a3a42','#1c1c22'], ['#b0222f','#6d0f18']];
+const FLOOR_DEFS = `<filter id="tmShadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".6"/></filter>
+<filter id="tmNoise" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3" result="n"/><feColorMatrix in="n" type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .22"/></feComponentTransfer><feComposite in2="SourceGraphic" operator="in"/><feBlend in="SourceGraphic" mode="multiply"/></filter>
+<pattern id="tmCarpet" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#4b1419"/><path d="M20 4 C 28 12, 28 12, 36 20 C 28 28, 28 28, 20 36 C 12 28, 12 28, 4 20 C 12 12, 12 12, 20 4 Z" fill="none" stroke="#8a5a26" stroke-width="1.4" opacity=".8"/><circle cx="20" cy="20" r="3.5" fill="#a87a35" opacity=".8"/><circle cx="0" cy="0" r="2" fill="#6e2a24"/><circle cx="40" cy="0" r="2" fill="#6e2a24"/><circle cx="0" cy="40" r="2" fill="#6e2a24"/><circle cx="40" cy="40" r="2" fill="#6e2a24"/></pattern>
+<pattern id="tmTiles" width="36" height="36" patternUnits="userSpaceOnUse"><rect width="36" height="36" fill="#26252b"/><rect width="18" height="18" fill="#2f2d34"/><rect x="18" y="18" width="18" height="18" fill="#2f2d34"/><path d="M0 0 H36 V36" fill="none" stroke="#8a6d2e" stroke-width=".8" opacity=".7"/></pattern>
+<linearGradient id="tmWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4a26"/><stop offset=".5" stop-color="#4a2a14"/><stop offset="1" stop-color="#2d180a"/></linearGradient>
+<radialGradient id="tmStool" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#a0523a"/><stop offset=".7" stop-color="#5a2416"/><stop offset="1" stop-color="#2a0f08"/></radialGradient>
+<radialGradient id="tmGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe2a0" stop-opacity=".5"/><stop offset="1" stop-color="#ffe2a0" stop-opacity="0"/></radialGradient>
+<linearGradient id="tmBrass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6dc95"/><stop offset=".5" stop-color="#b88a2e"/><stop offset="1" stop-color="#e9c66d"/></linearGradient>` + FELT.map((f, i) => `<radialGradient id="tmFelt${i}" cx=".5" cy=".15" r=".9"><stop offset="0" stop-color="${f[0]}"/><stop offset="1" stop-color="${f[1]}"/></radialGradient>`).join('');
+const tmKidney = (r, h) => `M ${-r} 0 L ${r} 0 A ${r} ${h} 0 0 1 ${-r} 0 Z`;
+function tmTable(i, x, y, w){   // one blackjack table from above: stools, wooden rail, felt, betting spots, chip tray, shoe
+  const r = w / 2, h = w * 0.58, f = FELT[i];
+  let g = `<g transform="translate(${x},${y})">`;
+  for (let k = 0; k < 5; k++){ const a = Math.PI * (0.16 + 0.17 * k); g += `<circle cx="${Math.cos(a) * (r + 7)}" cy="${Math.sin(a) * (h + 7)}" r="${w * 0.062}" fill="url(#tmStool)" stroke="#c89a50" stroke-width="1.1" filter="url(#tmShadow)"/>`; }
+  g += `<path d="${tmKidney(r, h)}" fill="url(#tmWood)" filter="url(#tmShadow)"/><path d="${tmKidney(r - 7, h - 7)}" fill="url(#tmFelt${i})"/><path d="${tmKidney(r - 7, h - 7)}" fill="${f[1]}" filter="url(#tmNoise)" opacity=".55"/>`;
+  for (let k = 0; k < 5; k++){ const a = Math.PI * (0.16 + 0.17 * k); g += `<ellipse cx="${Math.cos(a) * r * 0.66}" cy="${Math.sin(a) * h * 0.66}" rx="${w * 0.05}" ry="${w * 0.04}" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="1.2"/>`; }
+  const tw = w * 0.32; g += `<rect x="${-tw / 2}" y="2" width="${tw}" height="${w * 0.09}" rx="2" fill="#141414" stroke="#888" stroke-width=".8"/>`;
+  ['#c0392b', '#2e86de', '#27ae60', '#111', '#8e44ad'].forEach((c, k) => g += `<rect x="${-tw / 2 + 2 + k * (tw - 4) / 5}" y="4" width="${(tw - 4) / 5 - 1.5}" height="${w * 0.09 - 4}" fill="${c}"/>`);
+  g += `<rect x="${r * 0.45}" y="4" width="${w * 0.09}" height="${w * 0.13}" rx="2" fill="#0d0d0d" stroke="#555"/>`;
+  return g + '</g>';
+}
+const TABLE_SPOTS = [ { x:180, y:462, w:160 }, { x:180, y:300, w:150 }, { x:90, y:64, w:130 }, { x:266, y:70, w:140 } ];   // 6, 4, 2 and 1 deck
+function tableState(i){ return i === tableNo() ? 'here' : canSit(i) ? 'open' : 'locked'; }
 function renderTables(){
-  const here = tableNo(), list = $('tablesList'); list.replaceChildren();
-  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. You can sit at any table whose minimum bet you have in chips. If your chips fall below it, you’re moved down.';
+  const list = $('tablesList'), W = 360, H = 650, gold = '#e4c57e';
+  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Tap the table you want. Fewer decks, better odds. You can sit at any table whose minimum bet you have in chips.';
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="The casino floor"><defs>${FLOOR_DEFS}</defs><rect width="${W}" height="${H}" fill="url(#tmCarpet)"/>`;
+  // the whale room: a marble corner of the same floor behind a velvet rope
+  s += `<path d="M 182 10 H 350 V 250 H 182 Z" fill="url(#tmTiles)"/><ellipse cx="266" cy="120" rx="82" ry="100" fill="url(#tmGlow)"/><path d="M 182 190 V 250 H 350 V 10 H 182 V 110" fill="none" stroke="url(#tmBrass)" stroke-width="5"/>`;
+  s += `<g transform="translate(266,226)"><rect x="-64" y="-13" width="128" height="26" rx="5" fill="url(#tmBrass)" stroke="#6b5014"/><text x="0" y="6" text-anchor="middle" font-size="16" font-weight="800" fill="#2a1d05" letter-spacing="1.5">WHALE ROOM</text></g>`;
+  s += `<path d="M 182 110 Q 170 150 182 190" fill="none" stroke="#b01e2a" stroke-width="4" stroke-linecap="round"/><circle cx="182" cy="110" r="6" fill="url(#tmBrass)" stroke="#6b5014"/><circle cx="182" cy="190" r="6" fill="url(#tmBrass)" stroke="#6b5014"/>`;
+  s += `<rect x="124" y="${H - 32}" width="112" height="26" rx="5" fill="#1a1a1a" stroke="${gold}"/><text x="180" y="${H - 13}" text-anchor="middle" font-size="16" font-weight="700" fill="${gold}">ENTRANCE</text>`;
   TABLES.forEach((t, i) => {
-    const row = document.createElement('div');
-    row.className = 'trow' + (i === here ? ' here' : '');
-    const th = document.createElement('div'); th.className = 'th';
-    const b = document.createElement('b'); b.textContent = deckWord(t.d);
-    const sp = document.createElement('span'); sp.className = 'num'; sp.textContent = money(t.min) + ' to ' + money(t.max);
-    th.append(b, sp); row.append(th);
-    const st = document.createElement('div'); st.className = 'st';
-    st.textContent = i === here ? '✓ You’re here' : '';
-    row.append(st);
-    if (i !== here){
-      const ok = canSit(i) && !S.round;
-      const bt = btn(ok ? 'Move to this table' : S.round ? 'Finish this hand first' : 'You need ' + money(buyIn(i)) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
-      row.append(bt);
-    }
-    list.append(row);
+    const p = TABLE_SPOTS[i], st = tableState(i), h = p.w * 0.58, cy = p.y + h * 0.5;
+    const label = deckWord(t.d) + ', ' + money(t.min) + ' to ' + money(t.max) + '. ' + (st === 'here' ? 'You’re here.' : st === 'locked' ? 'Need ' + money(buyIn(i)) + ' in chips.' : 'Tap to sit here.');
+    let g = `<g data-t="${i}" role="button" tabindex="0" aria-label="${esc(label)}">` + tmTable(i, p.x, p.y, p.w);
+    const rim = `M ${p.x - p.w / 2 - 4} ${p.y} L ${p.x + p.w / 2 + 4} ${p.y} A ${p.w / 2 + 4} ${h + 4} 0 0 1 ${p.x - p.w / 2 - 4} ${p.y} Z`;
+    if (st === 'here') g += `<path d="${rim}" fill="none" stroke="${gold}" stroke-width="4"/>`;
+    if (st === 'locked') g += `<path d="${rim}" fill="#000" fill-opacity=".55" stroke="#ddd" stroke-width="2" stroke-dasharray="6 4"/>`;
+    g += `<path class="tfocus" d="${rim}" fill="transparent" stroke="none"/>`;
+    g += `<text x="${p.x}" y="${cy - 2}" text-anchor="middle" font-size="18" font-weight="800" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke">${deckWord(t.d).toUpperCase()}</text>`;
+    g += `<text x="${p.x}" y="${cy + 18}" text-anchor="middle" font-size="16" font-weight="700" fill="#fff" stroke="#000" stroke-width="3" paint-order="stroke">${money(t.min)} – ${money(t.max)}</text>`;
+    const tag = st === 'here' ? ['✓ YOU', 74, gold, '#1b1b1b', ''] : st === 'locked' ? ['🔒 Need ' + money(buyIn(i)), 150, 'none', '#eee', 'stroke-dasharray="4 3"'] : ['Sit here ›', 100, 'rgba(0,0,0,.6)', gold, ''];
+    const ty = p.y + h + 24;
+    g += `<rect x="${p.x - tag[1] / 2}" y="${ty - 14}" width="${tag[1]}" height="28" rx="14" fill="${tag[2]}" stroke="${st === 'locked' ? '#ddd' : gold}" ${tag[4]}/><text x="${p.x}" y="${ty + 6}" text-anchor="middle" font-size="16" font-weight="800" fill="${tag[3]}">${tag[0]}</text>`;
+    s += g + '</g>';
   });
+  list.innerHTML = s + '</svg>';
+  list.querySelectorAll('[data-t]').forEach(el => {
+    const go = () => tableCard(Number(el.dataset.t));
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
+  });
+}
+// tapping a table: what it is, and sit there (or why you can't)
+function tableCard(i){
+  const t = TABLES[i], st = tableState(i), back = () => openTables();
+  const title = deckWord(t.d).replace(' ', '-').replace('decks', 'deck') + ' table', range = 'Bets ' + money(t.min) + ' to ' + money(t.max) + '.';
+  if (st === 'here') return fenceSheet(title, '🃏', range + ' You’re sitting here.', [btn('OK', back, { primary:true })]);
+  if (S.round) return fenceSheet(title, '🃏', range + ' Finish this hand first, then you can move.', [btn('OK', back, { primary:true })]);
+  if (st === 'locked') return fenceSheet(title, '🔒', range + ' You need ' + money(buyIn(i)) + ' in chips to sit here, and you have ' + money(S.bankroll + S.bet) + '.', [btn('OK', back, { primary:true })]);
+  fenceSheet(title, '🃏', range + ' You have ' + money(S.bankroll + S.bet) + ', so you can sit here.', [btn('Cancel', back), btn('Sit here', () => { moveTo(i); hideSheets(); render(); }, { primary:true })]);
 }
 // After each hand: cut you off (move you down) if your chips fell below this table's buy-in.
 function tablesAfterHand(){
