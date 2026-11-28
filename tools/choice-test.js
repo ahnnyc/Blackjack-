@@ -2,7 +2,7 @@
 // below (at their full price, never a free one), or move back up to your rank's own; send eye candy or the entourage
 // home. Bills follow the choice; the rank doesn't change. Usage: node tools/choice-test.js [shotsdir]
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname, shots = process.argv[2];
-const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openCashier, stayBill, rankNo, lifeLine, PEOPLE, sponsorDay };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openCashier, stayBill, rankNo, lifeLine, PEOPLE, sponsorDay }; FEATURES.sponsors = true;   /* these checks cover the sponsor, which is on hold in the game */\n";
 fs.writeFileSync(dir + '/ch-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace("function checkLevel(){", "function checkLevel(){ S.level = levelOf(prestige()); return;").replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 (async () => {

@@ -3,7 +3,7 @@
 // beforehand. Ranking up mid-day is rated against the lower level. A table needs 20 times its minimum bet in chips to sit (the 8-deck table only its minimum).
 // Usage: node tools/rating-test.js   (reads tools/game.html)
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
-const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, prestige, minBet, maxBet, rankNo, hideSheets, render, applyMotion, openTables, tableNo, moveTo };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, prestige, minBet, maxBet, rankNo, hideSheets, render, applyMotion, openTables, tableNo, moveTo }; FEATURES.sponsors = true;   /* these checks cover the sponsor, which is on hold in the game */\n";
 fs.writeFileSync(dir + '/rt-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace("function checkLevel(){", "function checkLevel(){ S.level = levelOf(prestige()); return;").replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);

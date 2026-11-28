@@ -543,6 +543,9 @@ const PRESTIGE_PLAY = 0.25;
 const DEBT_WEIGHT = 0.5;   // every $2 you owe (beyond what your things are worth) costs $1 of prestige
 // Sponsors pay this share of the day's bills when you made the right move on at least SPONSOR_GOOD of your hands.
 const SPONSOR_SHARE = 0.75, SPONSOR_GOOD = 0.95;
+// Sponsors are on hold (Mike, 2026-11-28): no sponsor pays, and nothing mentions one. Set sponsors back to true to restore them.
+const FEATURES = { sponsors: false };
+const sponsorOf = L => FEATURES.sponsors && !L.comped ? L.sponsor : null;
 const PEOPLE = {
   candy: { name:'eye candy', fee:300,  prestige:5000,  art:'🥂' },
   crew:  { name:'entourage', fee:2500, prestige:25000, art:'🧑‍🤝‍🧑🧑‍🤝‍🧑' },
@@ -635,7 +638,7 @@ const RULES = [
   { g:'Display', k:'sound', label:'Sounds', desc:'Chips click, cards snap as they’re dealt and flipped, the shoe riffles, and cards swish as they’re collected. Your iPhone’s silent switch mutes them.' },
   { g:'Display', k:'motion', label:'Animations', desc:'Cards fly from the shoe and flip, and chips move on and off the table. Works even with the iPhone’s Reduce Motion turned on.' },
   { g:'Display', k:'totals', label:'Show hand totals', desc:'Off: count the cards yourself, as at a real table. Blackjack and Bust still show.' },
-  { g:'Extras', k:'stay', label:'Daily costs and sponsors', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a friend’s couch, fast food and walking up to a villa, the chef’s table and a limo. Super Whales are comped. From Shark up, a sponsor pays 75% of the day’s bills at the end of each day if you made the right move on at least 95% of your hands and lived at your rank (a cheaper room, meals or ride chosen on the Expenses screen stops it).' },
+  { g:'Extras', k:'stay', label:FEATURES.sponsors ? 'Daily costs and sponsors' : 'Daily costs', desc:'Every 150 hands is a day. You pay for breakfast, lunch and dinner, a room, and getting around, and what you pay follows your rank: from a friend’s couch, fast food and walking up to a villa, the chef’s table and a limo. Super Whales are comped.' + (FEATURES.sponsors ? ' From Shark up, a sponsor pays 75% of the day’s bills at the end of each day if you made the right move on at least 95% of your hands and lived at your rank (a cheaper room, meals or ride chosen on the Expenses screen stops it).' : '') },
   { g:'Extras', k:'host', label:'Eye candy and entourage', desc:'Offered from Shark up: eye candy ($300 a day) and an entourage from Whale up ($2,500 a day). Both raise your rank. Fees are charged at the end of each day. If you can’t pay, they leave.' },
   { g:'Extras', k:'fence', label:'Offers', desc:'Between hands you get one offer at a time, matched to your rank: something to raise your rank, something that saves money over time (a home, a car, a chef, a deal), or a line of credit. Each offer says what it does for you. You can sell things back for half what you paid. The casino’s marker (from Shark up) is offered only while you have a luxury rental or a home, car or chef you own; give them up and the casino halves the limit and raises interest to 5% until you have one again.' },
 ];
@@ -862,7 +865,7 @@ function rankPct(p = prestige()){
 function rankStand(p = prestige()){ const nx = LEVELS[levelOf(p) + 1]; return nx ? rankPct(p) + '% of the way to ' + nx.name : 'the top rank'; }
 // What reaching each rank gets you (its offers and its life), said in offers so a purchase has a reason.
 const RANK_GETS = ['', '$100 in free chips, breakfast comped every day and a $10,000 credit card', '$500 in free chips, your room at half price and a $25,000 credit card',
-  '$1,000 in free chips, your room comped and a $50,000 gold card', 'a sponsor who pays most of your bills, eye candy, a condo, car and chef to rent by the month, and a $100,000 casino marker',
+  '$1,000 in free chips, your room comped and a $50,000 gold card', (FEATURES.sponsors ? 'a sponsor who pays most of your bills, ' : '') + 'eye candy, a condo, car and chef to rent by the month, and a $100,000 casino marker',
   'a penthouse and a limo of your own to buy, an entourage and a $1,000,000 casino marker', 'everything comped: the penthouse, your meals and a private car and driver'];
 function debtCost(){
   const things = (S.stash || []).reduce((a, x) => a + (x.paid || 0), 0);
@@ -1722,7 +1725,7 @@ function renderRecord(){
   add('Chips now', money(S.bankroll)); add('Credit owed', money(S.card)); add('Shark owed', money(S.shark));
   add('Shark’s cut paid', money(vigPaid)); add('Spent on offers', money(goodsSpent)); add('Sold back', money(goodsSold));
   add('Meals', money(mealsPaid)); add('Room and travel', money(roomsPaid)); add('Comped', money(comped));
-  add('Sponsors paid', money(sponsorPaid)); add('Credit interest', money(interestPaid)); add('Rank', LEVELS[levelOf(prestige())].name + (LEVELS[levelOf(prestige()) + 1] ? ', ' + rankStand() : ''));
+  if (FEATURES.sponsors || sponsorPaid) add('Sponsors paid', money(sponsorPaid)); add('Credit interest', money(interestPaid)); add('Rank', LEVELS[levelOf(prestige())].name + (LEVELS[levelOf(prestige()) + 1] ? ', ' + rankStand() : ''));
   const log = $('log'); log.replaceChildren();
   const items = list.map((r, i) => ({ t: r.t, r, num: i + 1 })).concat(cs.map(c => ({ t: c.t, c }))).sort((a, b) => b.t - a.t);
   if (!items.length){ const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'No hands yet. Every bet you place will be listed here.'; log.append(e); }
@@ -1897,11 +1900,12 @@ function expenseRows(){
   const L = livingL(), rows = [];
   const add = (what, note, amt, tap, why) => rows.push({ what, note, amt, tap, why });
   // what each daily cost does for you
-  const r = rankNo(), Lr = LIFE[r], spon = !!Lr.sponsor && !Lr.comped, rname = LEVELS[r].name;
+  const r = rankNo(), Lr = LIFE[r], spon = !!sponsorOf(Lr), rname = LEVELS[r].name;
   const why = w => {
     if (covered(w)) return 'Covered, so it costs you nothing.';
     if (chosenRank(w) < r) return spon ? 'Cheaper, but your sponsor won’t pay while you live below your rank.' : 'Cheaper than a ' + rname + '’s. Your rank stays the same.';
     if (spon) return 'Keeps your sponsor paying.';
+    if (r >= 4) return { room:'Where a ' + rname + ' stays.', meals:'How a ' + rname + ' eats.', ride:'How a ' + rname + ' gets around.' }[w];
     if (w === 'room') return Lr.roomComp ? 'Comped, because you stay at the casino.' : Lr.roomRate ? 'Half price, because you stay at the casino.' : Lr.room <= 0 ? 'Costs you nothing.' : 'The cheapest bed in town.';
     if (w === 'meals') return Lr.freeMeal === 0 ? 'Breakfast is comped by the players’ club.' : 'Three meals a day.';
     return Lr.ride <= 0 ? 'Costs you nothing.' : 'Gets you to the casino.';
@@ -1973,7 +1977,7 @@ function openChoice(what){
   const t = $('fenceText'); t.append(box);
   const eff = document.createElement('p'); eff.className = 'eff';
   const nm = LEVELS[rankNo()].name, perk = what === 'room' && (L.roomComp || L.roomRate) ? 'Your room is ' + (L.roomComp ? 'comped' : 'half price') + ' because you stay at the casino; anywhere else is full price. ' : what === 'meals' && L.freeMeal === 0 ? 'Your breakfast is comped by the players’ club; other choices are full price. ' : '';
-  eff.innerHTML = (L.sponsor && !L.comped ? 'Your sponsor pays back 75% of your bills on days you play well, but only while you live like a ' + nm + '. Choose anything cheaper and your sponsor pays nothing until you move back up. '
+  eff.innerHTML = (sponsorOf(L) ? 'Your sponsor pays back 75% of your bills on days you play well, but only while you live like a ' + nm + '. Choose anything cheaper and your sponsor pays nothing until you move back up. '
     : perk + 'A cheaper choice just saves money. ') + 'Your rank stays the same whatever you choose, and you can change back any time.';
   t.append(eff);
 }
@@ -2296,7 +2300,7 @@ function whoYouAre(){
   const i = rankNo(), L = LIFE[i], nx = LEVELS[i + 1], pres = prestige();
   let t = 'You’re a <b>' + LEVELS[i].name + '</b>' + (nx ? ', ' + rankStand(pres) : '') + '.';
   let life_ = lifeLine(i);
-  if (!L.comped && L.sponsor) life_ += ' Your sponsor is ' + L.sponsor + '.';
+  if (sponsorOf(L)) life_ += ' Your sponsor is ' + L.sponsor + '.';
   const pp = people(), with_ = [pp.candy ? 'eye candy' : '', pp.crew ? 'an entourage' : ''].filter(Boolean).join(' and ');
   if (with_) life_ += ' With you: ' + with_ + '.';
   return t + '<br><br>' + life_;
@@ -2515,7 +2519,7 @@ function sponsorDay(day){
   if (S.dead) return pumpSheets(0);
   const avg = d.hands ? cents(d.bet / d.hands) : 0, need = d.lvl != null && isFinite(d.lvl) ? d.lvl : L.level;
   if (d.hands && avg < need) return lowDay(d, avg, need);
-  if (L.comped || !L.sponsor || !d.bills) return pumpSheets(0);
+  if (!sponsorOf(L) || !d.bills) return pumpSheets(0);
   const share = d.all ? d.ok / d.all : 0, good = d.all >= 10 && share >= SPONSOR_GOOD, pay = cents(d.bills * SPONSOR_SHARE);
   guyOffer = false;
   if (d.below || livingBelow().length){
@@ -2539,7 +2543,7 @@ function lowDay(d, avg, need){
   guyOffer = false;
   const L = life(), who = LEVELS[Math.max(0, LIFE.findIndex(x => x.level === need))].name;
   const out = ['Your average bet today was <b>' + money(avg) + '</b>, under what the casino expects from a ' + who + ' (' + money(need) + ').'];
-  if (L.sponsor && d.bills){
+  if (sponsorOf(L) && d.bills){
     const pay = cents(d.bills * SPONSOR_SHARE);
     cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'nosponsor', what: L.sponsor, amt: pay });
     out.push('Your sponsor, ' + esc(L.sponsor) + ', paid nothing (' + money(pay) + ' missed).');
@@ -2599,7 +2603,7 @@ function saveLines(o){
   if (covered(o.covers)) out.push('You already pay nothing for ' + what + '.');
   else if (per <= 0) out.push('You pay nothing for ' + what + ' at this rank' + (o.keep ? ', but it keeps working when you rank up.' : '.'));
   else if (o.days){ const worth = per * o.days;
-    out.push(L.sponsor && !L.comped ? 'Pays for ' + what + ' for ' + o.days + ' days.'
+    out.push(sponsorOf(L) ? 'Pays for ' + what + ' for ' + o.days + ' days.'
       : 'Covers ' + what + ' for ' + o.days + ' days: ' + money(worth) + ' of bills for ' + money(o.price) + (worth > o.price ? ', saving ' + money(worth - o.price) : '') + '.'); }
   else out.push('No more paying for ' + what + ' (now ' + money(per) + ' a day). Pays for itself in ' + Math.ceil(o.price / per).toLocaleString('en-US') + ' days, and keeps working when you rank up.');
   return out;
