@@ -53,7 +53,7 @@ fs.writeFileSync(dir + '/treat-page.html', '<!doctype html><html><head><meta cha
   // a Super Whale sees Liberace's piano
   await p.evaluate(() => { __bj.hideSheets(); __bj.S.bankroll = 6000000; __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'piano')); }); await p.waitForTimeout(700);
   const pi = await sheet();
-  check('pianoOffer', /^Liberace’s piano \| From the casino’s auction\. \/ Price: \$5,000,000\./.test(pi || ''), pi);
+  check('pianoOffer', /^Liberace’s piano \| From the casino’s auction\. \/ Price: \$5,000,000\..*\/ • Opens the 4-deck, 2-deck and 1-deck tables straight away\.$/.test(pi || ''), pi);
   if (shots) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/treat-3-piano.png' });
   // once every table is open, shows and treats stop coming (they would only cost money)
   await p.evaluate(() => { __bj.hideSheets(); __bj.S.bankroll = 1000; __bj.S.spent = 60000; });

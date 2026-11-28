@@ -53,7 +53,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('borrowed', s2.owed === 1050, s2);   // $1,000 plus the 5% cash-advance fee
   // 3) things bought while owing don't count until the debt is paid
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'shirt'))); await p.waitForTimeout(200);
-  check('shirtOffer', /^Sharp shirt \| From the casino’s [^/.]+\. \/ Price: \$150\. \/ • It won’t raise your rank until your debts are paid \(you owe \$1,050\)\.( \/ • Counts as [\d,]+ hands[^/]*)?$/.test(await sheet() || ''), await sheet());
+  check('shirtOffer', /^Sharp shirt \| From the casino’s [^/.]+\. \/ Price: \$150\. \/ • It won’t raise your rank until your debts are paid \(you owe \$1,050\)\.( \/ • (Counts as [\d,]+ hands|Opens the )[^/]*)?$/.test(await sheet() || ''), await sheet());
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(500); await closeAll();
   const s3 = await p.evaluate(() => ({ prestige: __bj.prestige(), stash: __bj.S.stash.map(x => x.item) }));
   check('shirtCountsLater', s3.prestige === 0 &&   // $1,000 owed: the $150 shirt cancels $150 of it, the other $850 costs $425, so 0
@@ -63,7 +63,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   check('shirtCountsWhenPaid', (await p.evaluate(() => __bj.prestige())) === 151, await p.evaluate(() => __bj.prestige()));
   // with no debts, a thing says what it does for you in words: how much closer to the next rank, and what that rank gets you
   await p.evaluate(() => __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'shirt'))); await p.waitForTimeout(200);
-  check('shirtBenefit', /^Sharp shirt \| From the casino’s [^/.]+\. \/ Price: \$150\. \/ • Impresses the casino: gets you 15% closer to Minnow, where you can get \$100 in free chips, breakfast comped every day and \$10,000 of casino credit\.( \/ • Counts as [\d,]+ hands[^/]*)?$/.test(await sheet() || ''), await sheet());
+  check('shirtBenefit', /^Sharp shirt \| From the casino’s [^/.]+\. \/ Price: \$150\. \/ • Impresses the casino: gets you 15% closer to Minnow, where you can get \$100 in free chips, breakfast comped every day and \$10,000 of casino credit\.( \/ • (Counts as [\d,]+ hands|Opens the )[^/]*)?$/.test(await sheet() || ''), await sheet());
   check('rankUnderBadge', (await p.textContent('#levelPct')) === '15% to Minnow', await p.textContent('#levelPct'));
   await p.evaluate(() => __bj.hideSheets());
   // 4) a deal: the weekly meal deal makes meals free for a week

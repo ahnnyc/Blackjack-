@@ -2786,7 +2786,8 @@ function fenceOffer(o){
   const next = TABLES.findIndex((t, i) => !tableOpen(i)), hh = Math.floor(o.price / SPEND_PER_HAND);
   if (next > 0 && hh > 0){
     const opens = TABLES.map((t, i) => i).filter(i => !tableOpen(i) && handsPlayed() + hh >= UNLOCK[i]).map(i => TABLES[i].d + '-deck');
-    lines.push('Counts as ' + hh.toLocaleString('en-US') + ' hands' + (opens.length ? ': enough to open the ' + andList(opens) + ' table' + (opens.length > 1 ? 's' : '') : ' toward opening the ' + deckTable(TABLES[next].d)) + '.');
+    // a purchase that opens a table says so plainly, not how far past it goes (Mike, 2026-11-28: "Liberace piano 500k hands?")
+    lines.push(opens.length ? 'Opens the ' + andList(opens) + ' table' + (opens.length > 1 ? 's' : '') + ' straight away.' : 'Counts as ' + hh.toLocaleString('en-US') + ' hands toward opening the ' + deckTable(TABLES[next].d) + '.');
   }
   fenceSheet(o.title || cap1(o.name.replace(/^(a|an) /, '')), o.art, (o.from ? 'From ' + esc(o.from) + '.<br>' : '') + 'Price: <b>' + money(o.price) + '</b>' + (o.days ? ' for ' + o.days + ' days' : '') + '.' + bullets(lines),
     [btn('No thanks', () => guyDecline()), btn((o.verb || 'Buy') + ' for ' + money(o.price), () => fenceBuy(o), { primary:true })]);
