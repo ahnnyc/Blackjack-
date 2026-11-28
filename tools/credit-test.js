@@ -3,7 +3,7 @@
 // half and raises interest to 5%, with a message that says why; getting one back reopens it. Selling the last one
 // warns first, and a rental that runs out is offered again. Usage: node tools/credit-test.js [shotsdir]
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname, shots = process.argv[2];
-const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openCashier, availableOffers, creditWatch, fenceOffer, OFFERS, cardLimit, cardRate, fenceSellOffer, handsThisGame };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openCashier, availableOffers, creditWatch, fenceOffer, OFFERS, cardLimit, cardRate, fenceSellOffer, handsThisGame, stayAfterHand, get history(){ return history; } };\n";
 fs.writeFileSync(dir + '/cr-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace("function checkLevel(){", "function checkLevel(){ S.level = levelOf(prestige()); return;").replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 (async () => {
@@ -64,6 +64,14 @@ fs.writeFileSync(dir + '/cr-page.html', '<!doctype html><html><head><meta charse
   await p.evaluate(() => { const S = __bj.S; S.playPres = 40000; S.stash = []; S.deals = {}; S.line = { id:'marker', name:'a casino marker', limit:100000, rate:0.03 }; delete S.luxN; delete S.luxSeen; __bj.render(); __bj.hideSheets(); __bj.creditWatch(); }); await p.waitForTimeout(900);
   const old = await sheet();
   check('oldSave', /^The casino noticed \| The casino gives its best credit to players who live the part, and you have no luxuries\./.test(old || ''), old);
+  // the day's interest gets its own message
+  await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S, H = __bj.history; S.line = { id:'gold', name:'a gold card', limit:50000, rate:0.04 }; S.card = 10000; S.settings.rules.stay = false;
+    const last = H[H.length - 1] || { s: S.session, t: Date.now() }; while (H.filter(r => r.s === S.session).length < 150) H.push({ ...last, s: S.session, t: Date.now() }); S.staySeen = 149; __bj.stayAfterHand(); });
+  await p.waitForTimeout(1200);
+  const intr = (await p.isVisible('#fenceSheet')) ? (await p.innerText('#fenceH')) + ' | ' + (await p.innerText('#fenceText')).replace(/\n+/g, ' / ') : null;
+  if (shots && intr) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/cr-9-interest.png' });
+  check('interestMessage', /^End of day 1 \| Interest on your gold card: \$400 \(4% of the \$10,000 you owe\), added to what you owe\. You now owe \$10,400\.$/.test(intr || ''), intr);
+  await p.evaluate(() => __bj.hideSheets());
   // 7. ordinary cards and the open marker never freeze
   await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.line = { id:'gold', name:'a gold card', limit:50000, rate:0.04 }; S.card = 0; });
   check('cardsUnaffected', (await p.evaluate(() => [__bj.cardLimit(), __bj.cardRate()])).join() === '50000,0.04', '');

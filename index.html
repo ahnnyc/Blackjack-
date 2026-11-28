@@ -2448,6 +2448,12 @@ function peopleFee(k, day){
 }
 
 /* ---------- the day: meals, the room, getting around, interest and sponsors ---------- */
+// interest is added to what you owe, not taken from your chips, but it still gets its own message
+function interestNote(day, amt, base, rate){
+  if (S.dead) return pumpSheets(0);
+  guyOffer = false;
+  fenceSheet('End of day ' + day, '💳', 'Interest on ' + esc(lineName()) + ': <b>' + money(amt) + '</b> (' + pct(rate) + ' of the ' + money(base) + ' you owe), added to what you owe. You now owe ' + money(S.card) + '.', [btn('OK', () => hideSheets(), { primary:true })]);
+}
 function stayAfterHand(){
   if (S.dead || S.round) return;
   const n = handsThisGame();
@@ -2459,7 +2465,7 @@ function stayAfterHand(){
     if (m % DAY === 0){
       const day = m / DAY;
       ['candy', 'crew'].forEach(k => { if (people()[k]) queueSheet(() => peopleFee(k, day)); });
-      if (S.card > 0 && S.line){ const i = cardInterest(); if (i > 0){ S.card = cents(S.card + i); cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'cardint', amt: i }); } }
+      if (S.card > 0 && S.line){ const i = cardInterest(), base = S.card, rate = cardRate(); if (i > 0){ S.card = cents(S.card + i); cashList().push({ t: Date.now(), s: S.session, a: 0, b: S.bankroll, k: 'cardint', amt: i }); queueSheet(() => interestNote(day, i, base, rate)); } }
       if (rules().stay) queueSheet(() => sponsorDay(day));
     }
   }
