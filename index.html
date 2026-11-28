@@ -2082,7 +2082,8 @@ function debtsAfterHand(){
       const before = moneyMove(-cut, 'vig');
       S.sharkNext = n + SHARK_EVERY;
       render(); showMove(before, $('bankAmt'), $('openCashier'));
-      say('The juice man took his cut: ' + money(cut) + '.');
+      const owed = S.shark, rate = sharkRate();
+      queueSheet(() => { guyOffer = false; fenceSheet('The juice man', '🕴️', 'He took his cut: <b>' + money(cut) + '</b> (' + pct(rate) + ' of the ' + money(owed) + ' you owe him), taken from your chips. It doesn’t lower what you owe. His next cut is in ' + SHARK_EVERY + ' hands.', [btn('OK', () => hideSheets(), { primary:true })]); });
     } else if (stashList().reduce((a, x) => a + (x.paid || 0), 0) >= cut){
       // he takes stuff instead, the most valuable first, until it covers his cut (he keeps any extra)
       const list = stashList().slice().sort((a, b) => (b.paid || 0) - (a.paid || 0)), took = [];
