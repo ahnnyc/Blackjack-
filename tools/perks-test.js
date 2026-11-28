@@ -22,16 +22,16 @@ fs.writeFileSync(dir + '/pk-page.html', '<!doctype html><html><head><meta charse
   // Minnow: $100, breakfast comped
   let b0 = await bank();
   const m = await rankTo(1000, 'rank-minnow');
-  check('minnowGift', /^New rank \| You are now a Minnow\. \/ Welcome gift from the casino: \$100 in free chips\. Your breakfast is comped from now on\. \/ You pay \$22 a night for a hostel bed, eat fast food \(breakfast comped\) and get around by the city bus: \$44 a day in all\./.test(m || '') && (await bank()) === b0 + 100, [m, await bank() - b0]);
-  check('breakfastComped', /^Breakfast \| Breakfast at fast food: comped by the players’ club$/.test(await bill(0) || ''), await bill(0));
-  check('lunchCharged', /^Lunch \| Lunch at fast food: \$8, taken from your chips\.$/.test(await bill(1) || ''), await bill(1));
+  check('minnowGift', /^New rank \| You are now a Minnow\. \/ Welcome gift from the casino: \$100 in free chips\. Your breakfast is comped from now on\. \/ You pay \$22 a night for the casino’s motel, eat at the casino food court \(breakfast comped\) and get around by the casino shuttle: \$44 a day in all\./.test(m || '') && (await bank()) === b0 + 100, [m, await bank() - b0]);
+  check('breakfastComped', /^Breakfast \| Breakfast at the casino food court: comped by the players’ club$/.test(await bill(0) || ''), await bill(0));
+  check('lunchCharged', /^Lunch \| Lunch at the casino food court: \$8, taken from your chips\.$/.test(await bill(1) || ''), await bill(1));
   // a deal covers only its own place: the hostel rate pays for the hostel at Minnow, not the casino room at Barracuda
   await p.evaluate(() => { __bj.S.deals = { extstay: 1e9 }; });
-  check('hostelDealAtHostel', /A night in a hostel bed: free \(your weekly hostel rate\)/.test(await bill(3) || ''), await bill(3));
+  check('hostelDealAtHostel', /A night in the casino’s motel: free \(your weekly motel rate\)/.test(await bill(3) || ''), await bill(3));
   // Barracuda: $500, room half price
   b0 = await bank();
   const bc = await rankTo(5000, 'rank-barracuda');
-  check('barracudaGift', /Welcome gift from the casino: \$500 in free chips\. The casino gives you its room rate: half price\. \/ You pay \$30 a night for a standard room at the casino \(half price\), eat at a diner and get around by the city bus: \$85 a day in all\./.test(bc || '') && (await bank()) === b0 + 500, [bc, await bank() - b0]);
+  check('barracudaGift', /Welcome gift from the casino: \$500 in free chips\. The casino gives you its room rate: half price\. \/ You pay \$30 a night for a standard room at the casino \(half price\), eat at the casino’s diner and get around by the casino shuttle: \$85 a day in all\./.test(bc || '') && (await bank()) === b0 + 500, [bc, await bank() - b0]);
   check('hostelDealNotAtCasino', /A night in a standard room at the casino \(half price\): \$30/.test(await bill(3) || '') && !/hostel rate/.test(await p.evaluate(() => __bj.whoYouAre())), [await bill(3), await p.evaluate(() => __bj.whoYouAre())]);
   await p.evaluate(() => { __bj.S.deals = {}; });
   check('roomHalf', /A night in a standard room at the casino \(half price\): \$30/.test(await bill(3) || ''), await bill(3));

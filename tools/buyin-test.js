@@ -1,8 +1,8 @@
-// Tables open as you play: bet $5,000 in all this game to open 4 decks, $25,000 for 2 decks, $100,000 for 1 deck. Only
-// bets of up to 5% of your chips count; starting over resets it. You also need a table's minimum in chips to sit, and
+// Tables open as you play: 4 decks after 200 hands this game, 2 decks after 1,000, 1 deck after 5,000. Every hand counts,
+// whatever you bet; every $10 spent on things counts as a hand; starting over loses everything (a standing rule). You also need a table's minimum in chips to sit, and
 // falling below it moves you down. The 6-deck table is $5 to $250. Usage: node tools/buyin-test.js [shotsdir]
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname, shots = process.argv[2];
-const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openTables, moveTo, tableNo, tablesAfterHand, canSit, migrate, TABLES, newGame, maxBet };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, hideSheets, render, applyMotion, openTables, moveTo, tableNo, tablesAfterHand, canSit, migrate, TABLES, newGame, maxBet, fenceOffer, OFFERS };\n";
 fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 (async () => {
@@ -33,46 +33,54 @@ fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charse
   await p.evaluate(() => { const S = __bj.S; S.settings.rules.motion = false; __bj.applyMotion(); S.fenceLast = 1e9; S.settings.rules.fence = false; S.settings.rules.stay = false; __bj.hideSheets(); });
   // a new game: only the 6-deck table, $5 to $250
   check('start', (await p.evaluate(() => [0, 1, 2, 3].map(i => __bj.canSit(i)))).join() === 'true,false,false,false' && (await p.evaluate(() => __bj.maxBet())) === 250, await p.evaluate(() => [[0, 1, 2, 3].map(i => __bj.canSit(i)), __bj.maxBet()]));
-  // a $25 bet from $1,000 counts; a $100 bet (10%) does not
-  await playHand(25); const a1 = await p.evaluate(() => __bj.S.action);
-  await p.evaluate(() => { __bj.S.bankroll = 1000; }); await playHand(100); const a2 = await p.evaluate(() => __bj.S.action);
-  check('onlySensibleBetsCount', a1 === 25 && a2 === 25, [a1, a2]);
-  // a bet over 5% of chips says, before it's dealt, that it won't count
+  // every hand counts, whatever you bet; no bet is too big to count
+  const h0 = await p.evaluate(() => __bj.history.length);
+  await playHand(25); await p.evaluate(() => { __bj.S.bankroll = 1000; }); await playHand(250);
+  check('everyHandCounts', (await p.evaluate(() => __bj.history.length)) === h0 + 2, [h0, await p.evaluate(() => __bj.history.length)]);
   await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.bankroll = 1000; S.bet = 100; __bj.render(); }); await p.waitForTimeout(200);
-  const note1 = await p.isVisible('#betNote') ? await p.innerText('#betNote') : '';
-  if (shots) await p.screenshot({ path: shots + '/bi-0-betnote.png' });
-  await p.evaluate(() => { const S = __bj.S; S.bet = 25; __bj.render(); }); await p.waitForTimeout(200);
-  check('betNote', note1 === 'Over 5% of your chips: this bet won’t count toward opening new tables.' && !(await p.isVisible('#betNote')), note1);
+  check('noBetNote', !(await p.isVisible('#betNote')), '');
   await p.evaluate(() => { __bj.S.bet = 0; __bj.render(); });
   // the Tables screen shows progress
-  await p.evaluate(() => { const S = __bj.S; S.action = 3200; S.bankroll = 1000; __bj.openTables(); }); await p.waitForTimeout(300);
+  const pad = n => p.evaluate(n => { const H = __bj.history, last = H[H.length - 1]; while (H.length < n) H.push({ ...last, t: Date.now() }); }, n);
+  await pad(140); await p.evaluate(() => { __bj.S.bankroll = 1000; __bj.openTables(); }); await p.waitForTimeout(300);
   const r1 = await rows();
   if (shots) await p.locator('#tablesSheet .panel').screenshot({ path: shots + '/bi-1-tables.png' });
-  check('tablesScreen', /^6 decks \/ \$5 to \$250 \/ ✓ YOU’RE HERE$/i.test(r1[0]) && r1[1] === '4 decks / $25 to $5,000 / 🔒 Opens after $5,000 in bets. You’ve bet $3,200.' && /Opens after \$25,000 in bets\. You’ve bet \$3,200\./.test(r1[2]) && /Opens after \$100,000 in bets/.test(r1[3]), r1);
-  check('progressBar', (await p.evaluate(() => document.querySelector('#tablesList .trow:nth-child(2) .prog').getAttribute('aria-valuenow'))) === '3200', '');
-  check('tablesNote', /Tables open as you play: only bets of 5% of your chips or less count, and starting over starts again from zero\./.test(await p.innerText('#tablesNote')), await p.innerText('#tablesNote'));
-  // crossing $5,000 opens the 4-deck table, with a message
-  await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.action = 4990; S.bankroll = 1000; });
+  check('tablesScreen', /^6 decks \/ \$5 to \$250 \/ ✓ YOU’RE HERE$/i.test(r1[0]) && r1[1] === '4 decks / $25 to $5,000 / 🔒 Opens after 200 hands. You’ve played 140.' && /Opens after 1,000 hands\. You’ve played 140\./.test(r1[2]) && /Opens after 5,000 hands/.test(r1[3]), r1);
+  check('progressBar', (await p.evaluate(() => document.querySelector('#tablesList .trow:nth-child(2) .prog').getAttribute('aria-valuenow'))) === '140', '');
+  check('tablesNote', /Tables open as you play: every hand counts, whatever you bet, and every \$10 you spend on things counts as a hand\. Starting over starts everything from zero\./.test(await p.innerText('#tablesNote')), await p.innerText('#tablesNote'));
+  // the 200th hand opens the 4-deck table, with a message
+  await p.evaluate(() => { __bj.hideSheets(); __bj.S.bankroll = 1000; }); await pad(199);
   await playHand(25); await p.waitForTimeout(800);
   const opened = await sheet();
   if (shots && opened) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/bi-2-opened.png' });
-  check('openedMessage', /^A new table is open \| You’ve bet \$5,000 this game, so the 4-deck table is open to you: bets \$25 to \$5,000\./.test(opened || '') && (await p.evaluate(() => __bj.canSit(1))), opened);
+  check('openedMessage', /^A new table is open \| You’ve reached 200 hands, so the 4-deck table is open to you: bets \$25 to \$5,000\./.test(opened || '') && (await p.evaluate(() => __bj.canSit(1))), opened);
   await p.evaluate(() => { __bj.hideSheets(); __bj.openTables(); }); await p.waitForTimeout(300);
   if (shots) await p.locator('#tablesSheet .panel').screenshot({ path: shots + '/bi-3-tables-open.png' });
   check('moveRow', /Move to this table/.test((await rows())[1]), await rows());
   // the 1-deck table: opened by play, then losing below $2,500 moves you down to the best table you can afford
-  await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.action = 100000; S.bankroll = 2500; __bj.moveTo(3); __bj.render(); });
+  await pad(5000); await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.openSeen = 4; S.bankroll = 2500; __bj.moveTo(3); __bj.render(); });
   check('sitOneDeck', (await p.evaluate(() => __bj.tableNo())) === 3, '');
   await p.evaluate(() => { const S = __bj.S; S.bankroll = 2000; __bj.tablesAfterHand(); }); await p.waitForTimeout(1200);
   const cut = await sheet();
   check('cutOff', (await p.evaluate(() => __bj.tableNo())) === 2 && /^Cut off \| The 1-deck table’s minimum bet is \$2,500, and you have less than that\. You’re now at the 2-deck table/.test(cut || ''), [await p.evaluate(() => __bj.tableNo()), cut]);
   await p.evaluate(() => __bj.hideSheets());
-  // starting over starts from zero
+  // starting over loses everything, opened tables included
   await p.evaluate(() => { __bj.newGame(false); }); await p.waitForTimeout(400);
-  check('startOverResets', (await p.evaluate(() => [__bj.S.action, __bj.tableNo(), __bj.canSit(1)])).join() === '0,0,false', await p.evaluate(() => [__bj.S.action, __bj.tableNo(), __bj.canSit(1)]));
+  check('startOverLosesTables', (await p.evaluate(() => [__bj.tableNo(), __bj.canSit(1), __bj.canSit(2), __bj.canSit(3), __bj.S.spent])).join() === '0,false,false,false,0', await p.evaluate(() => [__bj.tableNo(), __bj.canSit(1), __bj.canSit(2), __bj.canSit(3), __bj.S.spent]));
+  // buying things counts: a $600 suit is 60 hands, and its offer says so
+  await p.evaluate(() => { __bj.hideSheets(); __bj.S.bankroll = 1000; __bj.S.settings.rules.fence = true; __bj.fenceOffer(__bj.OFFERS.find(o => o.id === 'suit')); }); await p.waitForTimeout(900);
+  const suit = await sheet();
+  check('offerSaysHands', /Counts as 60 hands toward opening the 4-deck table\./.test(suit || ''), suit);
+  if (shots && suit) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/bi-4-suit.png' });
+  await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(500);
+  await p.evaluate(() => { __bj.hideSheets(); __bj.openTables(); }); await p.waitForTimeout(300);
+  const r4 = await rows();
+  if (shots) await p.locator('#tablesSheet .panel').screenshot({ path: shots + '/bi-5-bought.png' });
+  check('boughtCounts', r4[1] === '4 decks / $25 to $5,000 / 🔒 Opens after 200 hands. You’ve played 0, plus 60 from what you’ve bought.', r4);
+  await p.evaluate(() => __bj.hideSheets());
   // a game saved before this keeps the table it was at; the tables are 6, 4, 2 and 1 deck
-  await p.evaluate(() => { const S = __bj.S; S.table = 2; delete S.action; S.settings.decks = 8; __bj.migrate(); });
-  check('oldSave', (await p.evaluate(() => [__bj.S.action, __bj.S.settings.decks, __bj.TABLES.map(t => t.d).join('')])).join() === '25000,2,6421', await p.evaluate(() => [__bj.S.action, __bj.S.settings.decks, __bj.TABLES.map(t => t.d).join('')]));
+  await p.evaluate(() => { const S = __bj.S; S.table = 2; S.settings.decks = 8; __bj.migrate(); });
+  check('oldSave', (await p.evaluate(() => [__bj.S.settings.decks, __bj.TABLES.map(t => t.d).join('')])).join() === '2,6421', await p.evaluate(() => [__bj.S.settings.decks, __bj.TABLES.map(t => t.d).join('')]));
   out.errors = errs; out.fails = fails; console.log(JSON.stringify(out, null, 1)); await b.close(); fs.unlinkSync(dir + '/bi-page.html');
   process.exit(fails.length || errs.length ? 1 : 0);
 })();
