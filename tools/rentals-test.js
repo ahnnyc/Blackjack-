@@ -24,7 +24,7 @@ fs.writeFileSync(dir + '/rn-page.html', '<!doctype html><html><head><meta charse
   // Shark: rent a condo, which counts nothing toward rank
   await p.evaluate(() => { __bj.S.playPres = 30000; __bj.render(); __bj.hideSheets(); });
   const pres0 = await p.evaluate(() => __bj.prestige());
-  check('condoRent', /^Rent a condo for a month \| Price: \$15,000 for 30 days\. \/ • A condo tells the casino you’re a big player, so it may offer you more credit at a better rate\. \/ • Pays for your room for 30 days\.$/.test(await offer('condorent', 'offer-condo') || ''), await sheet());
+  check('condoRent', /^Rent a condo for a month \| Price: \$15,000 for 30 days\. \/ • A condo tells the casino you’re a big player, so it may offer you more credit at a better rate\. \/ • Covers your room for 30 days: \$23,970 of bills for \$15,000, saving \$8,970\.$/.test(await offer('condorent', 'offer-condo') || ''), await sheet());
   check('rentButton', (await p.textContent('#fenceBtns button:last-child')) === 'Rent for $15,000', await p.textContent('#fenceBtns button:last-child'));
   await p.click('#fenceBtns button:last-child'); await p.waitForTimeout(300);
   check('rentSaid', (await p.textContent('#msg')) === 'You rented a condo for 30 days.', await p.textContent('#msg'));
@@ -46,7 +46,7 @@ fs.writeFileSync(dir + '/rn-page.html', '<!doctype html><html><head><meta charse
   const back = await p.evaluate(() => __bj.availableOffers().filter(x => x.o.kind === 'save').map(x => x.o.id + ':' + x.o.price));
   check('rentalsBackRepriced', back.includes('condorent:29500') && back.includes('carlease:15500') && back.includes('chefhire:19500') && !back.some(x => /^carrental/.test(x)), back);
   const cond = await p.evaluate(() => { const x = __bj.availableOffers().find(x => x.o.id === 'condorent'); __bj.fenceOffer(x.o); return 1; }); await p.waitForTimeout(300);
-  check('repricedOfferText', /^Rent a condo for a month \| Price: \$29,500 for 30 days\. \/ • A condo tells the casino you’re a big player, so it may offer you more credit at a better rate\. \/ • Pays for your room for 30 days\.$/.test(await sheet() || ''), await sheet());
+  check('repricedOfferText', /^Rent a condo for a month \| Price: \$29,500 for 30 days\. \/ • A condo tells the casino you’re a big player, so it may offer you more credit at a better rate\. \/ • Covers your room for 30 days: \$45,000 of bills for \$29,500, saving \$15,500\.$/.test(await sheet() || ''), await sheet());
   await p.evaluate(() => __bj.hideSheets());
   // nothing to rent once everything is comped
   await p.evaluate(() => { __bj.S.playPres = 6000000; __bj.render(); __bj.hideSheets(); });

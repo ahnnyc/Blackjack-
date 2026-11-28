@@ -3,7 +3,7 @@
 // (cut, taking stuff, the grave), out of chips, leaving town, the Stuff cards, and the books adding up.
 // Usage: node tools/cg-test.js   (reads tools/game.html)
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
-const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, OFFERS, fenceOffer, stayBill, sponsorDay, prestige, minBet, rankNo, availableOffers, hideSheets, openStuff, render, applyMotion, stayAfterHand, debtsAfterHand };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, OFFERS, fenceOffer, stayBill, sponsorDay, prestige, minBet, rankNo, availableOffers, hideSheets, openStuff, render, applyMotion, stayAfterHand, debtsAfterHand }; FEATURES.sponsors = true;   /* these checks cover the sponsor, which is on hold in the game */\n";
 fs.writeFileSync(dir + '/cg-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace("function checkLevel(){", "function checkLevel(){ S.level = levelOf(prestige()); return;").replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
