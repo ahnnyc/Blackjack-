@@ -497,8 +497,8 @@ body.still .card.flip{animation:none}
 (() => {
 'use strict';
 /* ---------- constants ---------- */
-// Four tables. Fewer decks, bigger bets, better odds. As in a real casino, you can sit at any table whose minimum
-// you can cover; your rank's minimum bet still applies, and a table whose maximum is under it is too small for you.
+// Four tables. Fewer decks, bigger bets, better odds. To sit at one you need its buy-in in chips (BUYIN times its
+// minimum bet; the 8-deck table only its minimum), and falling below it moves you down after the hand.
 const TABLES = [
   { d: 8, min: 5,   max: 500,    chips: [5, 25, 100, 500] },
   { d: 6, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000] },
@@ -843,7 +843,7 @@ const tableMin = () => tbl().min;
 const rankNo = () => levelOf(prestige());
 const life = () => LIFE[rankNo()];
 const minBet = () => tableMin();   // as in a real casino, the table's minimum; your rank only sets what the casino expects (LIFE.level)
-const openList = () => [true, true, true, true];   // every table is open to anyone who can cover its minimum
+const openList = () => TABLES.map((t, i) => canSit(i));   // the tables whose buy-in you can cover
 const betAtList = () => S.betAt || (S.betAt = [0, 0, 0, 0]);
 const ownChips = () => cents(S.bankroll - S.card - S.shark);
 const people = () => S.people || (S.people = {});
@@ -2115,7 +2115,11 @@ function sitDown(){
 }
 
 /* ---------- tables: 8 decks up to 1 deck (the counts Vegas uses) ---------- */
-function canSit(i){ return S.bankroll + S.bet >= TABLES[i].min; }
+// The buy-in: to sit at a table you need BUYIN of its minimum bets in chips (the 8-deck table only asks for its minimum),
+// so a new player can't jump straight to the 1-deck table's better odds. Fall below it and you're cut off: moved down.
+const BUYIN = 20;
+const buyIn = i => i === 0 ? TABLES[0].min : TABLES[i].min * BUYIN;
+function canSit(i){ return S.bankroll + S.bet >= buyIn(i); }
 function moveTo(i){
   if (S.round || i === tableNo()) return;
   S.table = i; S.settings.decks = TABLES[i].d;
@@ -2128,35 +2132,35 @@ function openTables(){
 }
 function renderTables(){
   const here = tableNo(), list = $('tablesList'); list.replaceChildren();
-  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. Sit at any table whose minimum you can cover.';
+  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. To sit, you need ' + BUYIN + ' times the table’s minimum bet in chips. If your chips fall below that, you’re moved down.';
   TABLES.forEach((t, i) => {
     const row = document.createElement('div');
     row.className = 'trow' + (i === here ? ' here' : '');
     const th = document.createElement('div'); th.className = 'th';
     const b = document.createElement('b'); b.textContent = deckWord(t.d);
-    const sp = document.createElement('span'); sp.className = 'num'; sp.textContent = money(t.min) + ' to ' + money(t.max);
+    const sp = document.createElement('span'); sp.className = 'num'; sp.textContent = money(t.min) + ' to ' + money(t.max) + (i ? ' · sit with ' + money(buyIn(i)) : '');
     th.append(b, sp); row.append(th);
     const st = document.createElement('div'); st.className = 'st';
     st.textContent = i === here ? '✓ You’re here' : '';
     row.append(st);
     if (i !== here){
       const ok = canSit(i) && !S.round;
-      const bt = btn(ok ? 'Move to this table' : S.round ? 'Finish this hand first' : 'You need ' + money(t.min) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
+      const bt = btn(ok ? 'Move to this table' : S.round ? 'Finish this hand first' : 'You need ' + money(buyIn(i)) + ' to sit here', () => { moveTo(i); hideSheets(); render(); }, { disabled: !ok });
       row.append(bt);
     }
     list.append(row);
   });
 }
-// After each hand: open any table you've earned; move you down if you can't cover the minimum.
+// After each hand: cut you off (move you down) if your chips fell below this table's buy-in.
 function tablesAfterHand(){
   if (S.round || S.dead) return false;
   // can't cover the minimum here: down to the best open table you can afford
-  if (tableNo() > 0 && S.bankroll + S.bet < tableMin()){
+  if (tableNo() > 0 && !canSit(tableNo())){
     const from = tbl();
     let to = -1; for (let i = tableNo() - 1; i >= 0; i--) if (canSit(i)){ to = i; break; }
     if (to < 0) return false;   // nowhere smaller fits your rank: the out-of-chips choices take over
     moveTo(to); render();
-    later(() => { guyOffer = false; fenceSheet('Moved down', '🎩', 'You can’t cover the ' + money(from.min) + ' minimum at the ' + deckTable(from.d) + '. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
+    later(() => { guyOffer = false; fenceSheet('Cut off', '🎩', 'The ' + deckTable(from.d) + ' needs ' + money(buyIn(TABLES.indexOf(from))) + ' in chips, and you’re below that. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
     return true;
   }
   return false;
@@ -2349,7 +2353,7 @@ addEventListener('visibilitychange', () => {
 function openBank(first, leave){
   $('bankH').textContent = first ? 'Vegas Whale' : leave ? 'Leave town?' : 'Start over?';
   $('bankNote').innerHTML = first
-    ? 'You start with $1,000.<br><br>' + nextGoal() + '<br><br>Sit at any table whose minimum you can cover: tap the Limits sign.'
+    ? 'You start with $1,000.<br><br>' + nextGoal() + '<br><br>Fewer decks mean better odds. To sit at one, you need 20 times its minimum bet in chips: tap the Limits sign.'
     : leave ? 'Everything is wiped: chips, debts, stuff, people and rank. You start again from the beginning with $1,000. Your record is kept.'
     : 'You start again from the beginning with $1,000. Debts, stuff, people and rank are cleared. Your record is kept.';
   $('bankStart').textContent = first ? 'Sit down with $1,000' : leave ? 'Leave town' : 'Start over with $1,000';
