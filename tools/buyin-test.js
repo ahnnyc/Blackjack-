@@ -2,7 +2,7 @@
 // can sit at the 8-, 6- and 2-deck tables; falling below a table's buy-in moves you down after the hand,
 // with a "Cut off" message. Usage: node tools/buyin-test.js [shotsdir]
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname, shots = process.argv[2];
-const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openTables, moveTo, tableNo, tablesAfterHand, canSit };\n";
+const HOOK = "window.__bj = { get S(){ return S; }, hideSheets, render, applyMotion, openTables, moveTo, tableNo, tablesAfterHand, canSit, migrate, TABLES };\n";
 fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}</style></head><body>' +
   fs.readFileSync(dir + '/game.html', 'utf8').replace('/* ---------- boot ---------- */', HOOK + '/* ---------- boot ---------- */') + '</body></html>');
 (async () => {
@@ -30,9 +30,12 @@ fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charse
   const cut = (await p.isVisible('#fenceSheet')) ? (await p.innerText('#fenceH')) + ' | ' + (await p.innerText('#fenceText')).replace(/\n+/g, ' / ') : null;
   if (shots && cut) await p.locator('#fenceSheet .panel').screenshot({ path: shots + '/bi-2-cut.png' });
   check('cutOff', (await p.evaluate(() => __bj.tableNo())) === 2 && /^Cut off \| The 1-deck table’s minimum bet is \$2,500, and you have less than that\. You’re now at the 2-deck table: bets \$500 to \$25,000\.$/.test(cut || ''), [await p.evaluate(() => __bj.tableNo()), cut]);
-  // the 8-deck table never cuts you off
+  // the 6-deck table never cuts you off
   await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.bankroll = 50; __bj.moveTo(0); __bj.tablesAfterHand(); });
   check('eightStays', (await p.evaluate(() => __bj.tableNo())) === 0, '');
+  // a game saved at the old 8-deck table is now at the 6-deck table; the tables are 6, 4, 2 and 1 deck
+  await p.evaluate(() => { const S = __bj.S; S.table = 0; S.settings.decks = 8; __bj.migrate(); });
+  check('oldEightDeck', (await p.evaluate(() => __bj.S.settings.decks)) === 6 && (await p.evaluate(() => __bj.TABLES.map(t => t.d).join()))  === '6,4,2,1', await p.evaluate(() => [__bj.S.settings.decks, __bj.TABLES.map(t => t.d)]));
   out.errors = errs; out.fails = fails; console.log(JSON.stringify(out, null, 1)); await b.close(); fs.unlinkSync(dir + '/bi-page.html');
   process.exit(fails.length || errs.length ? 1 : 0);
 })();

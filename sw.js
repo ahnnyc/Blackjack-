@@ -2,7 +2,7 @@
 // The game page itself is fetched fresh whenever the phone is online, so an update shows
 // on the very next open; the saved copy is used only when offline or the network is slow.
 // Change VERSION whenever index.html changes.
-const VERSION = 'bj-2026-11-28.5';
+const VERSION = 'bj-2026-11-28.6';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 const PAGE_WAIT_MS = 3000;   // how long to wait for the network before using the saved copy
 

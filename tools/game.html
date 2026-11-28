@@ -500,8 +500,8 @@ body.still .card.flip{animation:none}
 // Four tables. Fewer decks, bigger bets, better odds. To sit at one you need its minimum bet in chips, and falling
 // below it moves you down after the hand.
 const TABLES = [
-  { d: 8, min: 5,   max: 500,    chips: [5, 25, 100, 500] },
-  { d: 6, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000] },
+  { d: 6, min: 5,   max: 500,    chips: [5, 25, 100, 500] },
+  { d: 4, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000] },
   { d: 2, min: 500, max: 25000,  chips: [500, 1000, 5000, 25000] },
   { d: 1, min: 2500, max: 100000, chips: [500, 1000, 5000, 25000, 100000] },
 ];
@@ -791,6 +791,7 @@ function migrate(){
   if (!(st.fix >= 1)){ st.rules.resplitAces = true; st.fix = 1; }
   if (!(st.fix >= 2)){ S.table = 0; S.open = [true, false, false, false]; S.betAt = [0, 0, 0, 0]; st.fix = 2; }
   if (S.line && S.line.id === 'marker2' && S.line.limit < 1000000) S.line.limit = 1000000;   // the Whale marker grew to $1,000,000
+  if (S.settings && TABLES[tableNo()] && S.settings.decks !== TABLES[tableNo()].d){ S.settings.decks = TABLES[tableNo()].d; }   // the tables changed (no more 8 decks): your seat's decks
   if (S.line === undefined){ S.line = S.card > 0 ? { id:'card', name:'a credit card', limit: Math.max(10000, S.card), rate: 0.05 } : null; }   // the old credit card becomes a line
   if (!S.deals) S.deals = {};
   if (!S.day) S.day = { ok:0, all:0, bills:0 };
@@ -798,7 +799,7 @@ function migrate(){
   st.decks = tbl().d;   // the table sets the shoe
 }
 function freshState(amount = START){
-  return { v:2, settings:{ decks:8, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
+  return { v:2, settings:{ decks:6, fix:2, rules:{...DEFAULT_RULES} }, bankroll:amount, session:1,
     sessions:[{ s:1, start:amount, at:Date.now() }], bet:0, lastBet:0, round:null, shoe:null, pos:0, shoeDecks:0, updatedAt:0,
     card:0, shark:0, sharkNext:0, debtSeen:0, staySeen:0, people:{}, gone:{}, level:0, gifted:0, choice:{}, line:null, playPres:0, deals:{}, day:{ ok:0, all:0, bills:0 }, table:0, open:[true, false, false, false], betAt:[0, 0, 0, 0], stash:[], guy:{ lvl:0, no:0 }, dead:null, cash:[] };
 }
@@ -2127,7 +2128,7 @@ function sitDown(){
   newGame($('bankCancel').hidden ? false : true);   // first visit: sit straight down; start over: then the opening message
 }
 
-/* ---------- tables: 8 decks up to 1 deck (the counts Vegas uses) ---------- */
+/* ---------- tables: 6, 4, 2 and 1 deck ---------- */
 // To sit at a table you need chips for its minimum bet; the 2- and 1-deck tables' minimums ($500, $2,500) keep a new
 // player from jumping straight to their better odds. Fall below a table's minimum and you're cut off: moved down.
 const buyIn = i => TABLES[i].min;
