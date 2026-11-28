@@ -1,6 +1,6 @@
 // The casino rates your bets: no minimum by rank, but a day whose average bet is under what your rank is expected to bet
 // costs the sponsor's pay, comps, and eye candy and the entourage, and the end-of-day message says why. Nobody is warned
-// beforehand. Ranking up mid-day is rated against the lower level. A table needs 20 times its minimum bet in chips to sit (the 8-deck table only its minimum).
+// beforehand. Ranking up mid-day is rated against the lower level. A table needs its minimum bet in chips to sit.
 // Usage: node tools/rating-test.js   (reads tools/game.html)
 const { chromium } = require('playwright'); const fs = require('fs'); const dir = __dirname;
 const HOOK = "window.__bj = { get S(){ return S; }, get history(){ return history; }, prestige, minBet, maxBet, rankNo, hideSheets, render, applyMotion, openTables, tableNo, moveTo }; FEATURES.sponsors = true;   /* these checks cover the sponsor, which is on hold in the game */\n";
@@ -38,7 +38,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   // every table open from the start; nothing says what a rank must bet
   await p.evaluate(() => __bj.openTables()); await p.waitForTimeout(200);
   const rows = await p.$$eval('#tablesList .trow', rs => rs.map(r => r.innerText.replace(/\n+/g, ' / ')));
-  check('allOpen', /You’re here/i.test(rows[0]) && /Move to this table/.test(rows[1]) && /You need \$2,000 to sit here/.test(rows[2]) && /You need \$10,000 to sit here/.test(rows[3]), rows);
+  check('allOpen', /You’re here/i.test(rows[0]) && /Move to this table/.test(rows[1]) && /Move to this table/.test(rows[2]) && /You need \$2,500 to sit here/.test(rows[3]), rows);
   await p.evaluate(() => __bj.hideSheets());
   await playHand(); await sheets();
   // a Whale may sit at the 8-deck table and bet $5
@@ -64,7 +64,7 @@ const isChip = l => /^(5|25|100|500|1K|5K|25K|100K)$/.test(l);
   const up = await sheets();
   check('rankUpMidDay', !up.some(s => /^Low bets/.test(s)), up);
   // a Super Whale betting $100 loses the comps: today's comped room, meals and car are charged
-  await p.evaluate(() => { const S = __bj.S; S.playPres = 6000000; S.bankroll = 2000000; __bj.moveTo(2); __bj.render(); });
+  await p.evaluate(() => { const S = __bj.S; S.playPres = 6000000; S.bankroll = 2000000; __bj.moveTo(1); __bj.render(); });
   await endOfDay({ ok:149, all:149, bills:0, bet:149 * 100, hands:149, lvl:10000, comped:2500 });
   const before = await p.evaluate(() => __bj.S.bankroll);
   await playHand(100);

@@ -513,13 +513,13 @@ body.still .card.flip{animation:none}
 (() => {
 'use strict';
 /* ---------- constants ---------- */
-// Four tables. Fewer decks, bigger bets, better odds. To sit at one you need its buy-in in chips (BUYIN times its
-// minimum bet; the 8-deck table only its minimum), and falling below it moves you down after the hand.
+// Four tables. Fewer decks, bigger bets, better odds. To sit at one you need its minimum bet in chips, and falling
+// below it moves you down after the hand.
 const TABLES = [
   { d: 8, min: 5,   max: 500,    chips: [5, 25, 100, 500] },
   { d: 6, min: 25,  max: 5000,   chips: [25, 100, 500, 1000, 5000] },
-  { d: 2, min: 100, max: 25000,  chips: [100, 500, 1000, 5000, 25000] },
-  { d: 1, min: 500, max: 100000, chips: [500, 1000, 5000, 25000, 100000] },
+  { d: 2, min: 500, max: 25000,  chips: [500, 1000, 5000, 25000] },
+  { d: 1, min: 2500, max: 100000, chips: [500, 1000, 5000, 25000, 100000] },
 ];
 const DENOMS = [100000, 25000, 5000, 1000, 500, 100, 25, 5];
 const chipLabel = v => v >= 1000 ? (v / 1000) + 'K' : String(v);
@@ -2144,10 +2144,9 @@ function sitDown(){
 }
 
 /* ---------- tables: 8 decks up to 1 deck (the counts Vegas uses) ---------- */
-// The buy-in: to sit at a table you need BUYIN of its minimum bets in chips (the 8-deck table only asks for its minimum),
-// so a new player can't jump straight to the 1-deck table's better odds. Fall below it and you're cut off: moved down.
-const BUYIN = 20;
-const buyIn = i => i === 0 ? TABLES[0].min : TABLES[i].min * BUYIN;
+// To sit at a table you need chips for its minimum bet; the 2- and 1-deck tables' minimums ($500, $2,500) keep a new
+// player from jumping straight to their better odds. Fall below a table's minimum and you're cut off: moved down.
+const buyIn = i => TABLES[i].min;
 function canSit(i){ return S.bankroll + S.bet >= buyIn(i); }
 function moveTo(i){
   if (S.round || i === tableNo()) return;
@@ -2161,13 +2160,13 @@ function openTables(){
 }
 function renderTables(){
   const here = tableNo(), list = $('tablesList'); list.replaceChildren();
-  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. To sit, you need ' + BUYIN + ' times the table’s minimum bet in chips. If your chips fall below that, you’re moved down.';
+  $('tablesNote').textContent = (S.round ? 'Finish this hand to change tables. ' : '') + 'Fewer decks means bigger bets and better odds. You can sit at any table whose minimum bet you have in chips. If your chips fall below it, you’re moved down.';
   TABLES.forEach((t, i) => {
     const row = document.createElement('div');
     row.className = 'trow' + (i === here ? ' here' : '');
     const th = document.createElement('div'); th.className = 'th';
     const b = document.createElement('b'); b.textContent = deckWord(t.d);
-    const sp = document.createElement('span'); sp.className = 'num'; sp.textContent = money(t.min) + ' to ' + money(t.max) + (i ? ' · sit with ' + money(buyIn(i)) : '');
+    const sp = document.createElement('span'); sp.className = 'num'; sp.textContent = money(t.min) + ' to ' + money(t.max);
     th.append(b, sp); row.append(th);
     const st = document.createElement('div'); st.className = 'st';
     st.textContent = i === here ? '✓ You’re here' : '';
@@ -2189,7 +2188,7 @@ function tablesAfterHand(){
     let to = -1; for (let i = tableNo() - 1; i >= 0; i--) if (canSit(i)){ to = i; break; }
     if (to < 0) return false;   // nowhere smaller fits your rank: the out-of-chips choices take over
     moveTo(to); render();
-    later(() => { guyOffer = false; fenceSheet('Cut off', '🎩', 'The ' + deckTable(from.d) + ' needs ' + money(buyIn(TABLES.indexOf(from))) + ' in chips, and you’re below that. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
+    later(() => { guyOffer = false; fenceSheet('Cut off', '🎩', 'The ' + deckTable(from.d) + '’s minimum bet is ' + money(from.min) + ', and you have less than that. You’re now at the <b>' + deckTable(TABLES[to].d) + '</b>: bets ' + money(TABLES[to].min) + ' to ' + money(TABLES[to].max) + '.', [btn('OK', () => hideSheets(), { primary:true })]); });
     return true;
   }
   return false;
@@ -2382,7 +2381,7 @@ addEventListener('visibilitychange', () => {
 function openBank(first, leave){
   $('bankH').textContent = first ? 'Vegas Whale' : leave ? 'Leave town?' : 'Start over?';
   $('bankNote').innerHTML = first
-    ? 'You start with $1,000.<br><br>' + nextGoal() + '<br><br>Fewer decks mean better odds. To sit at one, you need 20 times its minimum bet in chips: tap the Limits sign.'
+    ? 'You start with $1,000.<br><br>' + nextGoal() + '<br><br>Fewer decks mean better odds. To sit at one, you need its minimum bet in chips: tap the Limits sign.'
     : leave ? 'Everything is wiped: chips, debts, stuff, people and rank. You start again from the beginning with $1,000. Your record is kept.'
     : 'You start again from the beginning with $1,000. Debts, stuff, people and rank are cleared. Your record is kept.';
   $('bankStart').textContent = first ? 'Sit down with $1,000' : leave ? 'Leave town' : 'Start over with $1,000';
