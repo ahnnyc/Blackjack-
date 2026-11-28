@@ -37,6 +37,13 @@ fs.writeFileSync(dir + '/bi-page.html', '<!doctype html><html><head><meta charse
   await playHand(25); const a1 = await p.evaluate(() => __bj.S.action);
   await p.evaluate(() => { __bj.S.bankroll = 1000; }); await playHand(100); const a2 = await p.evaluate(() => __bj.S.action);
   check('onlySensibleBetsCount', a1 === 25 && a2 === 25, [a1, a2]);
+  // a bet over 5% of chips says, before it's dealt, that it won't count
+  await p.evaluate(() => { __bj.hideSheets(); const S = __bj.S; S.bankroll = 1000; S.bet = 100; __bj.render(); }); await p.waitForTimeout(200);
+  const note1 = await p.isVisible('#betNote') ? await p.innerText('#betNote') : '';
+  if (shots) await p.screenshot({ path: shots + '/bi-0-betnote.png' });
+  await p.evaluate(() => { const S = __bj.S; S.bet = 25; __bj.render(); }); await p.waitForTimeout(200);
+  check('betNote', note1 === 'Over 5% of your chips: this bet won’t count toward opening new tables.' && !(await p.isVisible('#betNote')), note1);
+  await p.evaluate(() => { __bj.S.bet = 0; __bj.render(); });
   // the Tables screen shows progress
   await p.evaluate(() => { const S = __bj.S; S.action = 3200; S.bankroll = 1000; __bj.openTables(); }); await p.waitForTimeout(300);
   const r1 = await rows();
